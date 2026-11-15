@@ -71,17 +71,21 @@ export function EGauge({ value, max, display, unit, accent, color, reducedMotion
           center: ['50%', '54%'],
           min: 0,
           max,
+          // progress stays enabled even without data: toggling `progress.show` on a live series
+          // crashes ECharts' gauge diff (GaugeView keeps no previous progress list) – hide it via colour instead
           progress: {
-            show: available,
+            show: true,
             width: 6,
-            itemStyle: {
-              color: new echarts.graphic.LinearGradient(0, 1, 1, 0, [
-                { offset: 0, color: rgba(c, 0.35) },
-                { offset: 1, color: c },
-              ]),
-              shadowBlur: 12,
-              shadowColor: rgba(c, 0.9),
-            },
+            itemStyle: available
+              ? {
+                  color: new echarts.graphic.LinearGradient(0, 1, 1, 0, [
+                    { offset: 0, color: rgba(c, 0.35) },
+                    { offset: 1, color: c },
+                  ]),
+                  shadowBlur: 12,
+                  shadowColor: rgba(c, 0.9),
+                }
+              : { color: 'rgba(0,0,0,0)', shadowBlur: 0 },
           },
           axisLine: { lineStyle: { width: 6, color: [[1, rgba(accent, 0.1)]] } },
           axisTick: { show: false },

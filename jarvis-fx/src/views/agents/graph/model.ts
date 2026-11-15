@@ -61,54 +61,60 @@ export function particleSpeed(traffic: number, reduced: boolean): number {
 
 export const endpointId = (e: string | GNode) => (typeof e === 'string' ? e : e.id)
 
+/** Patch the pool in place from a snapshot; returns the (possibly new) graph data object. */
+function syncPool(pool: Pool, agents: Agent[], links: AgentLink[]): GraphData {
+  const topo = `${agents.map((a) => a.id).join(',')}|${links.map(linkKey).join(',')}`
+
+  for (const a of agents) {
+    const n = pool.nodes.get(a.id)
+    if (n) n.agent = a
+    else {
+      // seed new nodes next to their parent so they "bud" out of it instead of flying in
+      const parent = a.parentId ? pool.nodes.get(a.parentId) : undefined
+      const jitter = () => (Math.random() - 0.5) * 20
+      pool.nodes.set(a.id, parent?.x !== undefined ? { id: a.id, agent: a, x: parent.x + jitter(), y: (parent.y ?? 0) + jitter(), z: (parent.z ?? 0) + jitter() } : { id: a.id, agent: a })
+    }
+  }
+
+  if (topo !== pool.topo) {
+    const ids = new Set(agents.map((a) => a.id))
+    for (const id of [...pool.nodes.keys()]) if (!ids.has(id)) pool.nodes.delete(id)
+    const keys = new Set<string>()
+    const nextLinks: GLink[] = []
+    for (const l of links) {
+      const key = linkKey(l)
+      if (keys.has(key) || !ids.has(l.source) || !ids.has(l.target)) continue
+      keys.add(key)
+      let gl = pool.links.get(key)
+      if (!gl) {
+        gl = { key, source: l.source, target: l.target, kind: l.kind, traffic: l.traffic }
+        pool.links.set(key, gl)
+      }
+      gl.traffic = l.traffic
+      nextLinks.push(gl)
+    }
+    for (const k of [...pool.links.keys()]) if (!keys.has(k)) pool.links.delete(k)
+    pool.topo = topo
+    pool.data = { nodes: agents.map((a) => pool.nodes.get(a.id)!), links: nextLinks }
+  } else {
+    for (const l of links) {
+      const gl = pool.links.get(linkKey(l))
+      if (gl) gl.traffic = l.traffic
+    }
+  }
+  return pool.data
+}
+
+const createPool = (): Pool => ({ nodes: new Map(), links: new Map(), topo: '', data: { nodes: [], links: [] } })
+
 export function useGraphModel(snap: OrchestrationSnapshot | null, quality: Quality): GraphModel {
-  const [pool] = useState<Pool>(() => ({ nodes: new Map(), links: new Map(), topo: '', data: { nodes: [], links: [] } }))
+  // one mutable pool per graph instance (see note above) – lives as long as the component
+  const [pool] = useState(createPool)
   const maxParticles = quality === 'low' ? 3 : quality === 'med' ? 5 : 6
 
   return useMemo(() => {
-    const agents = snap?.agents ?? []
-    const links = snap?.links ?? []
-    const topo = `${agents.map((a) => a.id).join(',')}|${links.map(linkKey).join(',')}`
-
-    for (const a of agents) {
-      const n = pool.nodes.get(a.id)
-      if (n) n.agent = a
-      else {
-        // seed new nodes next to their parent so they "bud" out of it instead of flying in
-        const parent = a.parentId ? pool.nodes.get(a.parentId) : undefined
-        const jitter = () => (Math.random() - 0.5) * 20
-        pool.nodes.set(a.id, parent?.x !== undefined ? { id: a.id, agent: a, x: parent.x + jitter(), y: (parent.y ?? 0) + jitter(), z: (parent.z ?? 0) + jitter() } : { id: a.id, agent: a })
-      }
-    }
-
-    if (topo !== pool.topo) {
-      const ids = new Set(agents.map((a) => a.id))
-      for (const id of [...pool.nodes.keys()]) if (!ids.has(id)) pool.nodes.delete(id)
-      const keys = new Set<string>()
-      const nextLinks: GLink[] = []
-      for (const l of links) {
-        const key = linkKey(l)
-        if (keys.has(key) || !ids.has(l.source) || !ids.has(l.target)) continue
-        keys.add(key)
-        let gl = pool.links.get(key)
-        if (!gl) {
-          gl = { key, source: l.source, target: l.target, kind: l.kind, traffic: l.traffic }
-          pool.links.set(key, gl)
-        }
-        gl.traffic = l.traffic
-        nextLinks.push(gl)
-      }
-      for (const k of [...pool.links.keys()]) if (!keys.has(k)) pool.links.delete(k)
-      pool.topo = topo
-      pool.data = { nodes: agents.map((a) => pool.nodes.get(a.id)!), links: nextLinks }
-    } else {
-      for (const l of links) {
-        const gl = pool.links.get(linkKey(l))
-        if (gl) gl.traffic = l.traffic
-      }
-    }
-
-    const particleSig = pool.data.links.map((l) => particleCount(l.traffic, maxParticles)).join('')
-    return { data: pool.data, particleSig, maxParticles }
+    const data = syncPool(pool, snap?.agents ?? [], snap?.links ?? [])
+    const particleSig = data.links.map((l) => particleCount(l.traffic, maxParticles)).join('')
+    return { data, particleSig, maxParticles }
   }, [pool, snap, maxParticles])
 }

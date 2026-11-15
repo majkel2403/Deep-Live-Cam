@@ -46,7 +46,7 @@ export function DemoBadge({ synthetic, label, status, compact = false }: { synth
 /** Small green marker for metrics measured live in this browser. */
 export function LiveBadge({ title = 'Pomiar na żywo w tej przeglądarce' }: { title?: string }) {
   return (
-    <span className="bx-live inline-flex items-center gap-1 px-1.5 py-[1px] jx-label text-[0.58rem] text-jx-ok" title={title}>
+    <span className="bx-live inline-flex items-center gap-1 px-1.5 py-[1px] jx-label text-[0.58rem] text-jx-ok whitespace-nowrap shrink-0" title={title}>
       <StatusDot tone="ok" pulse />
       Na żywo
     </span>

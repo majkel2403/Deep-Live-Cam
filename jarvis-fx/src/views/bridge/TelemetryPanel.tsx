@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { IconActivityHeartbeat, IconBattery2, IconBatteryCharging, IconCpu, IconWifi, IconWifiOff, IconClockHour4 } from '@tabler/icons-react'
+import { IconActivityHeartbeat, IconBattery2, IconBatteryCharging, IconCpu, IconWifi, IconWifiOff, IconClockHour4, IconPlugConnected } from '@tabler/icons-react'
 import { Panel, SegBar, StatusDot } from '@/hud'
 import { useAccent } from '@/lib/store'
 import { ND, fmtDuration, useTelemetry, type TelemetrySnapshot } from '@/lib/telemetry'
@@ -64,11 +64,13 @@ export function TelemetryPanel({ reducedMotion }: { reducedMotion: boolean }) {
     <Panel
       title="Telemetria systemu"
       icon={<IconActivityHeartbeat />}
-      code="TLM-01"
-      actions={<LiveBadge />}
       className="h-full"
       bodyClassName="overflow-y-auto overflow-x-hidden px-3 pb-3 pt-2 flex flex-col gap-2.5"
     >
+      <div className="flex items-center justify-between gap-2 shrink-0 -mb-1">
+        <span className="jx-label text-[0.56rem] truncate" title="Wszystkie wartości mierzone na żywo w tej przeglądarce, próbkowanie 1 Hz">Pomiar lokalny · 1 Hz</span>
+        <LiveBadge />
+      </div>
       {/* gauges */}
       <div className="grid grid-cols-3 gap-1 shrink-0">
         {[
@@ -106,7 +108,7 @@ export function TelemetryPanel({ reducedMotion }: { reducedMotion: boolean }) {
           },
           {
             key: 'busy',
-            label: 'Blokada wątku',
+            label: 'Blokada',
             node: (
               <EGauge
                 value={busy === null ? null : busy * 100}
@@ -179,6 +181,7 @@ export function TelemetryPanel({ reducedMotion }: { reducedMotion: boolean }) {
       <PowerSection t={t} />
       <DeviceSection t={t} />
       <SessionSection t={t} />
+      <ApiSection t={t} />
     </Panel>
   )
 }
@@ -260,5 +263,39 @@ function SessionSection({ t }: { t: TelemetrySnapshot }) {
       />
       <Row k="Strefa" v={t.timeZone ?? nd} />
     </Section>
+  )
+}
+
+/** Honest support matrix: which Web APIs actually answered in this browser. */
+function ApiSection({ t }: { t: TelemetrySnapshot }) {
+  const apis: { k: string; ok: boolean | null; title: string }[] = [
+    { k: 'Sterta', ok: t.heap !== null, title: 'performance.memory (niestandardowe, Chromium)' },
+    { k: 'Sieć', ok: t.connection !== null, title: 'Network Information API – navigator.connection' },
+    { k: 'Bateria', ok: t.battery === undefined ? null : t.battery !== null, title: 'Battery Status API – navigator.getBattery()' },
+    { k: 'Dł. zadania', ok: t.longTasks.supported, title: "PerformanceObserver({ type: 'longtask' })" },
+    { k: 'Magazyn', ok: t.storage === undefined ? null : t.storage !== null, title: 'StorageManager.estimate()' },
+    { k: 'Pamięć urz.', ok: t.deviceMemoryGB !== null, title: 'navigator.deviceMemory' },
+  ]
+  return (
+    <section className="min-w-0">
+      <h3 className="flex items-center gap-1.5 mb-1 text-jx-accent [&>svg]:size-3.5">
+        <IconPlugConnected />
+        <span className="jx-label text-[0.62rem] text-jx-accent">Interfejsy przeglądarki</span>
+        <span className="flex-1 h-px bg-gradient-to-r from-[var(--jx-line)] to-transparent" />
+      </h3>
+      <ul className="grid grid-cols-3 gap-1 m-0 p-0 list-none">
+        {apis.map((a) => (
+          <li
+            key={a.k}
+            title={a.title}
+            className={`flex items-center gap-1 px-1.5 py-[2px] border text-[0.56rem] jx-label tracking-[0.08em] truncate ${a.ok ? 'border-[color-mix(in_srgb,var(--jx-ok)_45%,transparent)] text-jx-ok' : 'border-jx-line/40 text-jx-dim'}`}
+          >
+            <span aria-hidden="true">{a.ok === null ? '…' : a.ok ? '✓' : '×'}</span>
+            <span className="truncate">{a.k}</span>
+            <span className="bx-sr-only">{a.ok === null ? 'sprawdzanie' : a.ok ? 'dostępne' : 'niedostępne'}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   )
 }

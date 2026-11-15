@@ -70,7 +70,7 @@ export function aggregate(snap: OrchestrationSnapshot | null): BridgeAggregates 
 
 /** Raw (un-smoothed) mode for one snapshot. */
 function rawMode(snap: OrchestrationSnapshot, agg: BridgeAggregates): CoreMode {
-  const recentError = snap.events.some((e) => e.level === 'error' && e.ts > snap.ts - 6000)
+  const recentError = snap.events.some((e) => e.level === 'error' && e.ts > snap.ts - RECENT_ERROR_MS)
   if (agg.errored > 0 || recentError) return 'alarm'
   const early = snap.tasks.filter((t) => t.state === 'active' && t.progress < 0.3).length
   const late = snap.tasks.filter((t) => t.state === 'active' && t.progress >= 0.3).length
@@ -81,8 +81,11 @@ function rawMode(snap: OrchestrationSnapshot, agg: BridgeAggregates): CoreMode {
 }
 
 const HOLD_MS = 2600
-const ALARM_HOLD_MS = 4000
-const ALERT_GAP_MS = 6000
+const ALARM_HOLD_MS = 3000
+/** an error event keeps the core in alarm for this long */
+const RECENT_ERROR_MS = 3500
+/** minimum gap between audible alerts – errors are frequent in busy swarms, keep the bridge quiet */
+const ALERT_GAP_MS = 20_000
 
 export interface BridgeState {
   agg: BridgeAggregates

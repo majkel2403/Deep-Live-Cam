@@ -120,6 +120,11 @@ function readConnection(): ConnectionInfo | null {
   }
 }
 
+/** StorageManager.estimate() is missing in some embedded / insecure contexts despite the DOM typings. */
+function hasStorageEstimate(): boolean {
+  return typeof (navigator as { storage?: { estimate?: unknown } }).storage?.estimate === 'function'
+}
+
 function timeZone(): string | null {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone ?? null
@@ -148,7 +153,7 @@ function initial(): TelemetrySnapshot {
     timeZone: timeZone(),
     uptimeMs: hasWindow ? performance.now() : 0,
     longTasks: { supported: false, count: 0, totalMs: 0, lastMs: null, maxMs: 0, busy: 0 },
-    storage: hasWindow && navigator.storage?.estimate ? undefined : null,
+    storage: hasWindow && hasStorageEstimate() ? undefined : null,
     online: hasWindow ? navigator.onLine : true,
     visibility: hasWindow ? document.visibilityState : 'visible',
     history: { fps: [], heapMB: [], busy: [] },
@@ -258,7 +263,7 @@ function start(): () => void {
       .then((est) => alive && emit({ storage: { usageMB: (est.usage ?? 0) / MB, quotaMB: (est.quota ?? 0) / MB } }))
       .catch(() => alive && emit({ storage: null }))
   }
-  if (navigator.storage?.estimate) {
+  if (hasStorageEstimate()) {
     readStorage()
     const st = setInterval(readStorage, 30_000)
     cleanups.push(() => clearInterval(st))
@@ -272,10 +277,11 @@ function start(): () => void {
     let fps: number | null = null
     let frameMs: number | null = null
     let worstFrameMs: number | null = null
-    if (visible && elapsed > 200 && frames > 0) {
+    if (visible && elapsed > 200) {
+      // zero frames in a visible window is a real (blocked main thread) measurement, not "n/d"
       fps = (frames * 1000) / elapsed
-      frameMs = elapsed / frames
-      worstFrameMs = worst
+      frameMs = frames > 0 ? elapsed / frames : elapsed
+      worstFrameMs = frames > 0 ? Math.max(worst, now - lastFrame) : now - lastFrame
     }
     frames = 0
     worst = 0

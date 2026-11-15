@@ -24,6 +24,8 @@ interface Visual {
   shell: THREE.Mesh<THREE.IcosahedronGeometry, THREE.MeshBasicMaterial>
   halo: THREE.Sprite
   ring: THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>
+  /** partial gimbal arc – second half of the selection reticle */
+  gimbal: THREE.Mesh<THREE.TorusGeometry, THREE.MeshBasicMaterial>
   label: THREE.Sprite
   labelCanvas: HTMLCanvasElement
   labelTex: THREE.CanvasTexture
@@ -33,7 +35,7 @@ interface Visual {
   phase: number
 }
 
-export const nodeRadius = (load: number) => 3.4 + load * 6
+export const nodeRadius = (load: number) => 4.6 + load * 6.5
 
 function glowTexture(): THREE.CanvasTexture {
   const c = document.createElement('canvas')
@@ -55,7 +57,8 @@ export function createNodeKit(quality: Quality) {
   const detail = quality === 'low' ? 1 : 2
   const coreGeo = new THREE.IcosahedronGeometry(0.62, detail)
   const shellGeo = new THREE.IcosahedronGeometry(1, 1)
-  const ringGeo = new THREE.TorusGeometry(1.55, 0.035, 6, quality === 'low' ? 48 : 96)
+  const ringGeo = new THREE.TorusGeometry(1.6, 0.075, 6, quality === 'low' ? 48 : 96)
+  const gimbalGeo = new THREE.TorusGeometry(2.05, 0.055, 4, quality === 'low' ? 32 : 64, Math.PI * 1.25)
   const glow = glowTexture()
   const visuals = new Map<string, Visual>()
   const state: KitState = { accent: '#00d8ff', accent2: '#47e1ff', selectedId: null, reduced: false }
@@ -104,7 +107,9 @@ export function createNodeKit(quality: Quality) {
     v.targetScale = nodeRadius(a.load)
     const selected = state.selectedId === a.id
     v.ring.visible = selected
+    v.gimbal.visible = selected
     v.ring.material.color.set(state.accent2)
+    v.gimbal.material.color.set(state.accent)
     v.shell.material.opacity = a.status === 'offline' ? 0.15 : selected ? 0.75 : 0.42
     v.core.material.opacity = a.status === 'offline' ? 0.35 : 0.92
     drawLabel(v)
@@ -117,7 +122,8 @@ export function createNodeKit(quality: Quality) {
   }
 
   function create(node: GNode): THREE.Object3D {
-    visuals.get(node.id) && dispose(visuals.get(node.id)!)
+    const prev = visuals.get(node.id)
+    if (prev) dispose(prev)
     const root = new THREE.Group()
     const body = new THREE.Group()
     const core = new THREE.Mesh(coreGeo, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.92 }))
@@ -126,7 +132,9 @@ export function createNodeKit(quality: Quality) {
     halo.scale.setScalar(4.4)
     const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.95 }))
     ring.rotation.x = Math.PI / 2.4
-    body.add(halo, shell, core, ring)
+    const gimbal = new THREE.Mesh(gimbalGeo, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.8 }))
+    gimbal.rotation.y = Math.PI / 2.2
+    body.add(halo, shell, core, ring, gimbal)
     const labelCanvas = document.createElement('canvas')
     labelCanvas.width = 512
     labelCanvas.height = 140
@@ -134,7 +142,7 @@ export function createNodeKit(quality: Quality) {
     labelTex.colorSpace = THREE.SRGBColorSpace
     labelTex.anisotropy = 4
     const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex, transparent: true, depthWrite: false }))
-    label.scale.set(30, 8.2, 1)
+    label.scale.set(46, 12.6, 1)
     label.renderOrder = 20
     root.add(body, label)
 
@@ -146,6 +154,7 @@ export function createNodeKit(quality: Quality) {
       shell,
       halo,
       ring,
+      gimbal,
       label,
       labelCanvas,
       labelTex,
@@ -169,12 +178,13 @@ export function createNodeKit(quality: Quality) {
       shell.material.color.copy(core.material.color)
       const hm = halo.material as THREE.SpriteMaterial
       hm.color.copy(core.material.color)
-      label.position.y = s * 1.25 + 4.2
+      label.position.y = s * 1.3 + 7
       if (state.reduced) return
       const st = v.node.agent.status
       shell.rotation.y += st === 'running' ? 0.02 : st === 'thinking' ? 0.012 : 0.004
       shell.rotation.x += 0.002
       ring.rotation.z += 0.015
+      gimbal.rotation.z -= 0.022
       const pulse = st === 'thinking' ? 0.5 + 0.5 * Math.sin(t * 4 + v.phase) : st === 'error' ? (Math.sin(t * 10) > 0 ? 1 : 0.2) : 0.75
       hm.opacity = 0.35 + 0.45 * pulse
     }
@@ -189,6 +199,7 @@ export function createNodeKit(quality: Quality) {
     v.shell.material.dispose()
     ;(v.halo.material as THREE.SpriteMaterial).dispose()
     v.ring.material.dispose()
+    v.gimbal.material.dispose()
     ;(v.label.material as THREE.SpriteMaterial).dispose()
     v.labelTex.dispose()
     v.core.onBeforeRender = () => {}
@@ -222,6 +233,7 @@ export function createNodeKit(quality: Quality) {
       coreGeo.dispose()
       shellGeo.dispose()
       ringGeo.dispose()
+      gimbalGeo.dispose()
       glow.dispose()
     },
   }

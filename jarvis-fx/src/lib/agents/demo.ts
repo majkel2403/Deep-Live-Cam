@@ -34,6 +34,9 @@ const TOOL_LINKS: [string, string][] = [
   ['kowal', 'straz'],
 ]
 
+/** Simulated seconds run silently on subscribe so history, events and tasks are populated at first paint. */
+const WARMUP_STEPS = 90
+
 const TASKS = ['Poranny briefing', 'Analiza rynku BTC', 'Refaktor modułu okien', 'Streszczenie notatek', 'Plan podróży', 'Przegląd PR', 'Transkrypcja nagrania', 'Raport dnia']
 
 export function createDemoSource(): AgentSource {
@@ -44,6 +47,8 @@ export function createDemoSource(): AgentSource {
     subscribe(cb, onStatus) {
       let seq = 0
       let tick = 0
+      // simulation clock: starts WARMUP_STEPS seconds in the past, then follows wall time
+      let clock = Date.now() - WARMUP_STEPS * 1000
       const rnd = (() => {
         let s = 1337
         return () => ((s = (s * 16807) % 2147483647) - 1) / 2147483646
@@ -59,29 +64,29 @@ export function createDemoSource(): AgentSource {
         history: Array.from({ length: 40 }, () => rnd() * 0.3),
         uptime: Array.from({ length: 48 }, () => rnd() > 0.04),
       }))
-      const links: AgentLink[] = agents
-        .filter((a) => a.parentId)
-        .flatMap((a) => [
-          { source: a.parentId!, target: a.id, kind: 'delegates' as const, traffic: 0 },
-          { source: a.id, target: a.parentId!, kind: 'reports' as const, traffic: 0 },
-        ])
-        .concat(TOOL_LINKS.map(([source, target]) => ({ source, target, kind: 'tool' as const, traffic: 0 })))
+      const links: AgentLink[] = [
+        ...agents.filter((a) => a.parentId).flatMap((a): AgentLink[] => [
+          { source: a.parentId!, target: a.id, kind: 'delegates', traffic: 0 },
+          { source: a.id, target: a.parentId!, kind: 'reports', traffic: 0 },
+        ]),
+        ...TOOL_LINKS.map(([source, target]): AgentLink => ({ source, target, kind: 'tool', traffic: 0 })),
+      ]
       const events: AgentEvent[] = []
       const tasks: AgentTask[] = []
 
       const push = (agentId: string, level: EventLevel) => {
         const a = agents.find((x) => x.id === agentId)!
         const pool = LINES[level]
-        events.push({ id: `e${seq++}`, ts: Date.now(), agentId, level, text: `${a.name}: ${pool[Math.floor(rnd() * pool.length)]}` })
+        events.push({ id: `e${seq++}`, ts: clock, agentId, level, text: `${a.name}: ${pool[Math.floor(rnd() * pool.length)]}` })
         if (events.length > 200) events.splice(0, events.length - 200)
       }
 
-      const step = () => {
+      const step = (emit = true) => {
         tick++
         // spawn tasks
         if (tasks.filter((t) => t.state === 'active' || t.state === 'queued').length < 4 && rnd() < 0.35) {
           const owner = agents[1 + Math.floor(rnd() * (agents.length - 1))]
-          tasks.push({ id: `t${seq++}`, title: TASKS[Math.floor(rnd() * TASKS.length)], ownerId: owner.id, progress: 0, state: 'queued', startedAt: Date.now() })
+          tasks.push({ id: `t${seq++}`, title: TASKS[Math.floor(rnd() * TASKS.length)], ownerId: owner.id, progress: 0, state: 'queued', startedAt: clock })
           push('jarvis', 'info')
         }
         for (const t of tasks) {
@@ -124,12 +129,21 @@ export function createDemoSource(): AgentSource {
           const scale = l.kind === 'delegates' ? 40 : l.kind === 'reports' ? 25 : 14
           l.traffic = Math.round(src.load * scale + rnd() * (l.kind === 'tool' ? 2 : 4))
         }
-        cb({ ts: Date.now(), agents: agents.map((a) => ({ ...a, history: [...a.history], uptime: [...a.uptime] })), links: links.map((l) => ({ ...l })), events: [...events], tasks: tasks.map((t) => ({ ...t })) } satisfies OrchestrationSnapshot)
+        if (!emit) return
+        cb({ ts: clock, agents: agents.map((a) => ({ ...a, history: [...a.history], uptime: [...a.uptime] })), links: links.map((l) => ({ ...l })), events: [...events], tasks: tasks.map((t) => ({ ...t })) } satisfies OrchestrationSnapshot)
       }
 
+      for (let i = 0; i < WARMUP_STEPS; i++) {
+        step(false)
+        clock += 1000
+      }
+      clock = Date.now()
       onStatus?.('live')
       step()
-      const timer = setInterval(step, 1000)
+      const timer = setInterval(() => {
+        clock = Date.now()
+        step()
+      }, 1000)
       return () => clearInterval(timer)
     },
   }

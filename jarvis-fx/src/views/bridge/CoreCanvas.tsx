@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, type RefObject } from 'react'
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Sparkles } from '@react-three/drei'
+import { PerformanceMonitor, Sparkles } from '@react-three/drei'
 import { Bloom, Vignette } from '@react-three/postprocessing'
 import {
   AdditiveBlending,
@@ -541,9 +541,12 @@ export default function CoreCanvas({
   const speed = useRef(0.5)
   const kick = useRef(0)
   const rig = useRef<Group>(null)
-  const dpr: [number, number] = quality === 'high' ? [1, 2] : quality === 'med' ? [1, 1.5] : [1, 1]
+  const maxDpr = quality === 'high' ? 2 : quality === 'med' ? 1.5 : 1
+  // adaptive resolution (drei PerformanceMonitor): drop the pixel ratio on slow devices, raise it back when fps recovers
+  const [dprScale, setDprScale] = useState(1)
+  const deviceDpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+  const dpr = Math.max(0.5, Math.min(deviceDpr, maxDpr) * dprScale)
   const particleCount = quality === 'high' ? 3600 : quality === 'med' ? 2000 : 900
-  const pr = typeof window !== 'undefined' ? Math.min(window.devicePixelRatio || 1, dpr[1]) : 1
   const animate = running && !reducedMotion
 
   return (
@@ -555,6 +558,14 @@ export default function CoreCanvas({
       aria-hidden="true"
     >
       <color attach="background" args={[bg]} />
+      {animate && (
+        <PerformanceMonitor
+          flipflops={4}
+          onDecline={() => setDprScale((s) => Math.max(0.5, s - 0.25))}
+          onIncline={() => setDprScale((s) => Math.min(1, s + 0.25))}
+          onFallback={() => setDprScale(0.5)}
+        />
+      )}
       <CameraFit />
       {!animate && running && <Invalidator version={version} />}
       <Driver palette={palette} feed={feed} speed={speed} rig={rig} reduced={reducedMotion} />
@@ -562,7 +573,7 @@ export default function CoreCanvas({
         <Orb palette={palette} feed={feed} speed={speed} kick={kick} />
         <ReactorRings palette={palette} feed={feed} speed={speed} reduced={reducedMotion} />
         <AgentOrbits palette={palette} feed={feed} speed={speed} />
-        <Accretion palette={palette} speed={speed} count={particleCount} dpr={pr} />
+        <Accretion palette={palette} speed={speed} count={particleCount} dpr={dpr} />
         <Shockwaves palette={palette} feed={feed} kick={kick} reduced={reducedMotion} />
       </group>
       {quality !== 'low' && <Sparkles count={quality === 'high' ? 90 : 50} scale={[7, 4, 3]} size={1.6} speed={reducedMotion ? 0 : 0.25} opacity={0.45} color={accent} />}
