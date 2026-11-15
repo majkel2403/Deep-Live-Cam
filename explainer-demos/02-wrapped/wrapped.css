@@ -1,0 +1,19 @@
+:root{--forest:#13342a;--forest2:#1f5a43;--moss:#6bbf59;--red:#e8453c;--gold:#ffc94d;--bark:#7a4e2d;--cream:#fff4dc;--night:#0e1a2b;--accent:#ffc94d}
+#stage{background:#0e1a2b;color:var(--cream)}
+#cap{bottom:395px;font-size:58px}
+.scene{position:absolute;inset:0;overflow:hidden}
+.bg{position:absolute;inset:0}
+.a{box-sizing:border-box;position:absolute;left:0;width:1080px;text-align:center;will-change:transform}
+.kick{font-weight:800;font-size:44px;letter-spacing:12px;color:var(--accent);text-transform:uppercase}
+.num{font-weight:900;color:var(--cream);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-4px;text-shadow:0 10px 0 rgba(0,0,0,.28)}
+.lbl{font-weight:800;color:var(--cream)}
+.mut{font-weight:700;color:rgba(255,244,220,.65)}
+.pill{display:inline-block;padding:14px 38px;border-radius:99px;background:var(--accent);color:#13342a;font-weight:900;font-size:44px;letter-spacing:3px}
+.row{position:absolute;left:90px;width:900px;border-radius:44px;background:rgba(255,244,220,.1);border:3px solid rgba(255,244,220,.18)}
+.row.first{background:linear-gradient(100deg,rgba(255,244,220,.2),rgba(255,244,220,.08));border-color:var(--accent)}
+.medal{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;color:#13342a}
+.card{position:absolute;left:130px;top:300px;width:820px;height:1030px;border-radius:70px;background:var(--cream);color:#13342a;box-shadow:0 40px 0 rgba(0,0,0,.25),0 0 120px rgba(0,0,0,.35)}
+.chip{display:inline-block;margin:8px;padding:12px 28px;border-radius:99px;background:#13342a;color:var(--cream);font-weight:800;font-size:34px}
+svg{overflow:visible}
+
+.card .a{left:0;width:100%}
