@@ -1,0 +1,6 @@
+html,body{margin:0;height:100%;background:#0b0b10;overflow:hidden}
+#stage{position:absolute;left:50%;top:50%;width:1080px;height:1920px;margin:-960px 0 0 -540px;transform-origin:center;overflow:hidden;font-family:'Nunito','Trebuchet MS','DejaVu Sans',sans-serif}
+body.render #stage{transform:none!important}
+#cap{position:absolute;left:60px;right:60px;bottom:230px;text-align:center;font-weight:900;font-size:60px;line-height:1.2;color:#fff;
+ text-shadow:0 4px 0 rgba(0,0,0,.35),0 0 24px rgba(0,0,0,.45);z-index:50}
+#cap span{opacity:.55}#cap span.on{opacity:1;color:var(--accent,#ffd84d)}#cap span.past{opacity:.9}
