@@ -29,3 +29,6 @@ shots/
 node_modules/.vite*
 # root repo ignores *.png – re-include curated screenshots
 !docs/screens/*.png
+!src/**/*.png
+!public/**/*.png
+scripts/.probe-*
