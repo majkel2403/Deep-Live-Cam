@@ -1,0 +1,17 @@
+window.SCRIPT={"title":"Kopiec od środka","lang":"pl","duration":60,"music":{"style":"wonder","bpm":88,"root":62,"gain":0.9},
+"lines":[
+{"t":0.5,"text":"Zajrzyjmy do środka kopca elfikopków.","speed":160},
+{"t":4.2,"text":"Każdy kopiec ma pięć pięter. Budujemy go od korzeni, aż po miękki mech.","speed":160},
+{"t":11.4,"text":"Teraz rozsuwamy piętra.","speed":160},
+{"t":14.6,"text":"Na górze dach z mchu. Chroni przed deszczem i śniegiem.","speed":160},
+{"t":20.7,"text":"Pod nim strych. Latarnik hoduje tam świetliki lampki.","speed":160},
+{"t":26.3,"text":"Niżej izby. Tu elfikopki śpią, jedzą i opowiadają bajki.","speed":160},
+{"t":32.3,"text":"Spiżarnia trzyma żołędzie, jagody i grzyby na całą zimę.","speed":160},
+{"t":38.3,"text":"A piwnica z korzeni łączy kopiec z lasem.","speed":160},
+{"t":43.8,"text":"Po drabince wędrują Zbieracze, Budowniczowie, Latarnicy i Posłańcy.","speed":160},
+{"t":51.0,"text":"Złóżmy piętra. Mały elf, wielki las.","speed":160}],
+"sfx":[{"t":0.5,"type":"thud","gain":0.6},{"t":0.9,"type":"thud","gain":0.6},{"t":1.3,"type":"thud","gain":0.6},{"t":1.7,"type":"thud","gain":0.6},{"t":2.1,"type":"thud","gain":0.7},{"t":2.15,"type":"sparkle","gain":0.5},
+{"t":11.0,"type":"whoosh","gain":0.7},{"t":13.3,"type":"pop"},{"t":13.5,"type":"pop"},{"t":13.7,"type":"pop"},{"t":13.9,"type":"pop"},{"t":14.1,"type":"pop"},
+{"t":14.5,"type":"ding","gain":0.4},{"t":20.5,"type":"ding","gain":0.4},{"t":26.1,"type":"ding","gain":0.4},{"t":32.1,"type":"ding","gain":0.4},{"t":38.1,"type":"ding","gain":0.4},
+{"t":24.5,"type":"sparkle","gain":0.5},{"t":44.0,"type":"pop","gain":0.5},{"t":44.4,"type":"pop","gain":0.5},{"t":44.8,"type":"pop","gain":0.5},{"t":45.2,"type":"pop","gain":0.5},
+{"t":50.4,"type":"whoosh","gain":0.7},{"t":52.6,"type":"thud","gain":0.6},{"t":52.9,"type":"thud","gain":0.6},{"t":53.2,"type":"thud","gain":0.6},{"t":53.5,"type":"thud","gain":0.7},{"t":54.4,"type":"ding","gain":0.6},{"t":54.5,"type":"sparkle","gain":0.6}]};
