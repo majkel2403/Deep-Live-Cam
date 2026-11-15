@@ -1,0 +1,124 @@
+/* Shared HUD utility classes (non-Tailwind, semantic). */
+
+.jx-label {
+  font-family: var(--jx-font-label);
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--jx-text-dim);
+}
+
+.jx-title {
+  font-family: var(--jx-font-head);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--jx-accent);
+  text-shadow: var(--jx-text-glow);
+}
+
+.jx-display {
+  font-family: var(--jx-font-display);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.jx-num {
+  font-family: var(--jx-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.jx-glow-text { text-shadow: var(--jx-text-glow); }
+
+/* augmented-ui panel skin: <div data-augmented-ui="tl-clip br-clip border" class="jx-aug"> */
+.jx-aug {
+  --aug-border-all: 1px;
+  --aug-border-bg: linear-gradient(135deg, var(--jx-line-strong), var(--jx-line) 40%, var(--jx-line-strong));
+  --aug-tl: 12px;
+  --aug-br: 12px;
+  --aug-tr: 6px;
+  --aug-bl: 6px;
+  --aug-inlay-bg: hsl(var(--jx-hue) 70% 12% / 0.45);
+  background: var(--jx-panel);
+  backdrop-filter: blur(6px);
+}
+
+.jx-aug-btn {
+  --aug-border-all: 1px;
+  --aug-border-bg: var(--jx-line-strong);
+  --aug-tl: 8px;
+  --aug-br: 8px;
+  background: var(--jx-accent-faint);
+  color: var(--jx-text);
+  font-family: var(--jx-font-label);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.jx-aug-btn:hover { background: hsl(var(--jx-hue) 100% 50% / 0.22); color: #fff; }
+.jx-aug-btn[aria-pressed="true"], .jx-aug-btn[data-active="true"] {
+  background: hsl(var(--jx-hue) 100% 50% / 0.3);
+  color: #fff;
+  --aug-border-bg: var(--jx-accent);
+}
+.jx-aug-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* scanline + vignette overlay */
+.jx-scanlines {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background:
+    repeating-linear-gradient(to bottom, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 3px),
+    radial-gradient(ellipse at center, transparent 55%, rgb(0 0 0 / 0.55) 100%);
+  mix-blend-mode: screen;
+}
+
+.jx-grid-bg {
+  background-image:
+    linear-gradient(var(--jx-accent-faint) 1px, transparent 1px),
+    linear-gradient(90deg, var(--jx-accent-faint) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* status dot */
+.jx-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 6px currentColor;
+}
+.jx-dot[data-pulse="true"] { animation: jx-pulse 1.4s ease-in-out infinite; }
+
+@keyframes jx-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+@keyframes jx-spin { to { transform: rotate(360deg); } }
+@keyframes jx-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+.jx-caret::after {
+  content: "▋";
+  margin-left: 2px;
+  color: var(--jx-accent);
+  animation: jx-blink 1s steps(1) infinite;
+}
+
+/* ARWES frame host: absolutely positioned SVG behind content */
+.jx-frame-host { position: relative; isolation: isolate; }
+.jx-frame-host > svg[data-jx-frame] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: visible;
+  pointer-events: none;
+}

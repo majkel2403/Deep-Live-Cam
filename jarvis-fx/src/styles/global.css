@@ -1,0 +1,83 @@
+@import "tailwindcss";
+@import "augmented-ui/augmented-ui.min.css";
+@import "./tokens.css";
+@import "./hud.css";
+
+/*
+ * Tailwind v4 theme bridge – every design token is also a utility:
+ *   text-jx-accent, bg-jx-panel, border-jx-line, font-display, font-mono …
+ */
+@theme inline {
+  --color-jx-bg: var(--jx-bg);
+  --color-jx-bg-2: var(--jx-bg-2);
+  --color-jx-panel: var(--jx-panel);
+  --color-jx-panel-solid: var(--jx-panel-solid);
+  --color-jx-accent: var(--jx-accent);
+  --color-jx-accent-2: var(--jx-accent-2);
+  --color-jx-accent-dim: var(--jx-accent-dim);
+  --color-jx-line: var(--jx-line);
+  --color-jx-text: var(--jx-text);
+  --color-jx-dim: var(--jx-text-dim);
+  --color-jx-ok: var(--jx-ok);
+  --color-jx-warn: var(--jx-warn);
+  --color-jx-danger: var(--jx-danger);
+  --color-jx-violet: var(--jx-violet);
+
+  --font-display: var(--jx-font-display);
+  --font-head: var(--jx-font-head);
+  --font-label: var(--jx-font-label);
+  --font-ui: var(--jx-font-ui);
+  --font-cmd: var(--jx-font-cmd);
+  --font-mono: var(--jx-font-mono);
+  --font-term: var(--jx-font-term);
+  --font-plex: var(--jx-font-plex);
+  --font-space: var(--jx-font-space);
+  --font-exo: var(--jx-font-exo);
+  --font-audiowide: var(--jx-font-audiowide);
+  --font-spacemono: var(--jx-font-spacemono);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--jx-bg);
+  color: var(--jx-text);
+  font-family: var(--jx-font-ui);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+::selection { background: color-mix(in srgb, var(--jx-accent) 40%, transparent); color: #fff; }
+
+:focus-visible {
+  outline: 1px solid var(--jx-accent);
+  outline-offset: 2px;
+  box-shadow: var(--jx-glow-sm);
+}
+
+/* thin HUD scrollbars */
+* { scrollbar-width: thin; scrollbar-color: var(--jx-accent-dim) transparent; }
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-thumb { background: var(--jx-accent-dim); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) *,
+  :root:not([data-motion="full"]) *::before,
+  :root:not([data-motion="full"]) *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}

@@ -1,0 +1,66 @@
+/*
+ * JARVIS FX design tokens.
+ * The accent hue is runtime-adjustable (store → --jx-hue). Everything else derives from it.
+ */
+:root {
+  --jx-hue: 188;
+
+  /* surfaces */
+  --jx-bg: #02060c;
+  --jx-bg-2: #04101a;
+  --jx-panel: hsl(var(--jx-hue) 70% 8% / 0.62);
+  --jx-panel-solid: hsl(var(--jx-hue) 60% 7%);
+  --jx-panel-hi: hsl(var(--jx-hue) 70% 14% / 0.55);
+
+  /* accent */
+  --jx-accent: hsl(var(--jx-hue) 100% 52%);
+  --jx-accent-2: hsl(calc(var(--jx-hue) + 24) 100% 64%);
+  --jx-accent-dim: hsl(var(--jx-hue) 80% 38% / 0.55);
+  --jx-accent-faint: hsl(var(--jx-hue) 90% 50% / 0.12);
+  --jx-line: hsl(var(--jx-hue) 100% 60% / 0.34);
+  --jx-line-strong: hsl(var(--jx-hue) 100% 60% / 0.7);
+
+  /* text */
+  --jx-text: hsl(var(--jx-hue) 60% 90%);
+  --jx-text-dim: hsl(var(--jx-hue) 25% 60%);
+
+  /* semantic */
+  --jx-ok: #3dffa8;
+  --jx-warn: #ffb000;
+  --jx-danger: #ff3b5c;
+  --jx-violet: #8a7dff;
+
+  /* glow */
+  --jx-glow-sm: 0 0 6px hsl(var(--jx-hue) 100% 55% / 0.55);
+  --jx-glow: 0 0 14px hsl(var(--jx-hue) 100% 55% / 0.55), 0 0 2px hsl(var(--jx-hue) 100% 75% / 0.9);
+  --jx-text-glow: 0 0 8px hsl(var(--jx-hue) 100% 60% / 0.65);
+
+  /* typography (all SIL OFL 1.1, self-hosted via Fontsource) */
+  --jx-font-display: "Orbitron", "Michroma", system-ui, sans-serif;
+  --jx-font-cmd: "Michroma", "Orbitron", system-ui, sans-serif;
+  --jx-font-head: "Oxanium", "Chakra Petch", system-ui, sans-serif;
+  --jx-font-label: "Rajdhani", "Chakra Petch", system-ui, sans-serif;
+  --jx-font-ui: "Chakra Petch", "Rajdhani", system-ui, sans-serif;
+  --jx-font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+  --jx-font-term: "Share Tech Mono", "JetBrains Mono", ui-monospace, monospace;
+  --jx-font-plex: "IBM Plex Mono", ui-monospace, monospace;
+  --jx-font-space: "Space Grotesk Variable", "Space Grotesk", system-ui, sans-serif;
+  --jx-font-spacemono: "Space Mono", ui-monospace, monospace;
+  --jx-font-exo: "Exo 2 Variable", "Exo 2", system-ui, sans-serif;
+  --jx-font-audiowide: "Audiowide", system-ui, sans-serif;
+
+  /* ARWES frames read these */
+  --arwes-frames-bg-color: var(--jx-panel);
+  --arwes-frames-line-color: var(--jx-line-strong);
+  --arwes-frames-deco-color: var(--jx-accent);
+  --arwes-frames-line-filter: drop-shadow(0 0 3px hsl(var(--jx-hue) 100% 55% / 0.6));
+  --arwes-frames-deco-filter: drop-shadow(0 0 4px hsl(var(--jx-hue) 100% 55% / 0.9));
+
+  /* augmented-ui defaults */
+  --aug-border-all: 1px;
+  --aug-border-bg: var(--jx-line-strong);
+  --aug-inlay-all: 0px;
+  --aug-inlay-bg: var(--jx-panel);
+
+  color-scheme: dark;
+}
