@@ -26,6 +26,14 @@ const LINES: Record<EventLevel, string[]> = {
   error: ['narzędzie zwróciło błąd', 'przekroczono limit czasu', 'odmowa uprawnień'],
 }
 
+/** Cross-links where one agent calls another as a tool (memory lookups, intent checks…). */
+const TOOL_LINKS: [string, string][] = [
+  ['hermes', 'kronika'],
+  ['oko', 'kronika'],
+  ['lektor', 'jev'],
+  ['kowal', 'straz'],
+]
+
 const TASKS = ['Poranny briefing', 'Analiza rynku BTC', 'Refaktor modułu okien', 'Streszczenie notatek', 'Plan podróży', 'Przegląd PR', 'Transkrypcja nagrania', 'Raport dnia']
 
 export function createDemoSource(): AgentSource {
@@ -57,6 +65,7 @@ export function createDemoSource(): AgentSource {
           { source: a.parentId!, target: a.id, kind: 'delegates' as const, traffic: 0 },
           { source: a.id, target: a.parentId!, kind: 'reports' as const, traffic: 0 },
         ])
+        .concat(TOOL_LINKS.map(([source, target]) => ({ source, target, kind: 'tool' as const, traffic: 0 })))
       const events: AgentEvent[] = []
       const tasks: AgentTask[] = []
 
@@ -112,7 +121,8 @@ export function createDemoSource(): AgentSource {
         }
         for (const l of links) {
           const src = agents.find((a) => a.id === l.source)!
-          l.traffic = Math.round(src.load * (l.kind === 'delegates' ? 40 : 25) + rnd() * 4)
+          const scale = l.kind === 'delegates' ? 40 : l.kind === 'reports' ? 25 : 14
+          l.traffic = Math.round(src.load * scale + rnd() * (l.kind === 'tool' ? 2 : 4))
         }
         cb({ ts: Date.now(), agents: agents.map((a) => ({ ...a, history: [...a.history], uptime: [...a.uptime] })), links: links.map((l) => ({ ...l })), events: [...events], tasks: tasks.map((t) => ({ ...t })) } satisfies OrchestrationSnapshot)
       }
