@@ -35,7 +35,7 @@ const ITEMS: Item[] = [
     w: 300,
     h: 40,
     node: (
-      <div>
+      <div className="uvp-streaks">
         {[0, 1, 2].map((i) => (
           <div key={i} className="uvp-streak">
             <div className="uvp-light" />
@@ -70,7 +70,7 @@ export default function UiversePack({ reducedMotion, stage, paused }: FxProps) {
   const c = useFxControls({
     speed: { value: 1, min: 0.25, max: 3, step: 0.05, label: 'prędkość' },
     glow: { value: true, label: 'poświata' },
-    labels: { value: true, label: 'podpisy i autorzy' },
+    labels: { value: true, label: 'podpisy' },
   })
   const [ref, size] = useSize<HTMLDivElement>()
   const cols = stage ? (size.width > 900 ? 3 : 2) : 3

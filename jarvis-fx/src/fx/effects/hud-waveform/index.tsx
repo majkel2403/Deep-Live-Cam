@@ -28,12 +28,12 @@ interface Mic {
 
 export default function Waveform({ accent, accent2, quality, reducedMotion, stage, paused }: FxProps) {
   const c = useFxControls({
-    gain: { value: 1.6, min: 0.25, max: 6, step: 0.05, label: 'wzmocnienie' },
+    gain: { value: 1.6, min: 0.25, max: 6, step: 0.05, label: 'wzmocn.' },
     bars: { value: 56, min: 16, max: 128, step: 4, label: 'pasma' },
-    smoothing: { value: 0.82, min: 0, max: 0.97, step: 0.01, label: 'wygładzanie' },
-    timebase: { value: 20, min: 5, max: 40, step: 1, label: 'podstawa czasu (ms)' },
-    mirror: { value: false, label: 'widmo lustrzane' },
-    segments: { value: true, label: 'segmenty LED' },
+    smoothing: { value: 0.82, min: 0, max: 0.97, step: 0.01, label: 'wygładz.' },
+    timebase: { value: 20, min: 5, max: 40, step: 1, label: 'czas (ms)' },
+    mirror: { value: false, label: 'lustro' },
+    segments: { value: true, label: 'LED' },
   })
 
   const [mic, setMic] = useState<Mic | null>(null)

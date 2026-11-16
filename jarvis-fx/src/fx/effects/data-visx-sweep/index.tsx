@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Group } from '@visx/group'
 import { scaleBand, scaleRadial } from '@visx/scale'
 import { Arc } from '@visx/shape'
@@ -23,16 +23,20 @@ function seedValues(n: number): number[] {
   return Array.from({ length: n }, (_, i) => 0.22 + 0.32 * Math.abs(Math.sin(i * 0.37)) + r() * 0.16 + (r() < 0.08 ? 0.3 : 0))
 }
 
-export default function VisxSweep({ accent, accent2, reducedMotion, stage, paused }: FxProps) {
+export default function VisxSweep({ accent, accent2, quality, reducedMotion, stage, paused }: FxProps) {
   const c = useFxControls({
     channels: { value: 48, min: 16, max: 96, step: 4, label: 'kanały' },
-    rpm: { value: 10, min: 1, max: 40, step: 1, label: 'obroty / min' },
-    inner: { value: 0.32, min: 0.1, max: 0.6, step: 0.01, label: 'promień wewn.' },
-    afterglow: { value: 70, min: 10, max: 200, step: 5, label: 'poświata (°)' },
+    rpm: { value: 10, min: 1, max: 40, step: 1, label: 'obr./min' },
+    inner: { value: 0.32, min: 0.1, max: 0.6, step: 0.01, label: 'r. wewn.' },
+    afterglow: { value: 70, min: 10, max: 200, step: 5, label: 'smuga (°)' },
     labels: { value: true, label: 'etykiety' },
   })
   const n = stage ? c.channels : Math.min(36, c.channels)
   const [ref, size] = useSize<HTMLDivElement>()
+  // unique SVG ids: a gallery card and the stage may be mounted at the same time
+  const uid = useId().replace(/:/g, '')
+  const glowId = `vxs-glow-${uid}`
+  const beamId = `vxs-beam-${uid}`
   // seeded random walk (~1 Hz); re-seeded whenever the channel count changes
   const [walk, setWalk] = useState(() => ({ n, values: seedValues(n) }))
   const values = useMemo(() => (walk.n === n ? walk.values : seedValues(n)), [walk, n])
@@ -73,8 +77,10 @@ export default function VisxSweep({ accent, accent2, reducedMotion, stage, pause
     let last = performance.now()
     let lastIdx = -1
     const glow = (c.afterglow * Math.PI) / 180
+    const blur = quality !== 'low' // SVG blur filters are the expensive part on weak GPUs
     const tick = (now: number) => {
-      raf = requestAnimationFrame(tick)
+      // while paused: render this one frame (geometry / parameter changes) and stop
+      if (!paused) raf = requestAnimationFrame(tick)
       const dt = Math.min(0.1, (now - last) / 1000)
       last = now
       if (!paused) clock.current += dt * (reducedMotion ? 0.25 : 1)
@@ -90,7 +96,7 @@ export default function VisxSweep({ accent, accent2, reducedMotion, stage, pause
         const lit = behind < glow ? 1 - behind / glow : 0
         if (behind < bw * 1.2 && idx < 0) idx = i
         el.style.opacity = String(0.38 + 0.62 * lit)
-        el.style.filter = lit > 0.85 ? 'url(#vxs-glow)' : ''
+        el.style.filter = blur && lit > 0.85 ? `url(#${glowId})` : ''
       }
       if (idx >= 0 && idx !== lastIdx) {
         lastIdx = idx
@@ -101,7 +107,7 @@ export default function VisxSweep({ accent, accent2, reducedMotion, stage, pause
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [n, xScale, c.rpm, c.afterglow, paused, reducedMotion])
+  }, [n, xScale, c.rpm, c.afterglow, paused, reducedMotion, glowId, quality])
 
   const colorOf = (v: number) => (v > 0.92 ? SEM.danger : v > 0.8 ? SEM.warn : v > 0.6 ? accent2 : accent)
   const ticks = [0.25, 0.5, 0.75, 1]
@@ -111,14 +117,14 @@ export default function VisxSweep({ accent, accent2, reducedMotion, stage, pause
       {w > 0 && (
         <svg width={w} height={h} className="absolute inset-0" role="img" aria-label={`Radialny wykres ${n} kanałów z obracającą się wiązką (dane demonstracyjne)`}>
           <defs>
-            <filter id="vxs-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
               <feGaussianBlur stdDeviation="2.2" result="b" />
               <feMerge>
                 <feMergeNode in="b" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
-            <radialGradient id="vxs-beam" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform={`scale(${outer})`}>
+            <radialGradient id={beamId} cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform={`scale(${outer})`}>
               <stop offset="0" stopColor={accent} stopOpacity="0" />
               <stop offset="1" stopColor={accent} stopOpacity="0.2" />
             </radialGradient>
@@ -166,7 +172,7 @@ export default function VisxSweep({ accent, accent2, reducedMotion, stage, pause
 
             {/* sweep wedge (rotated by the rAF loop) */}
             <g ref={sweepRef}>
-              <Arc innerRadius={innerR - 2} outerRadius={outer + 8} startAngle={-(c.afterglow * Math.PI) / 180 / 2.4} endAngle={0} fill="url(#vxs-beam)" style={{ mixBlendMode: 'screen' }} pointerEvents="none" />
+              <Arc innerRadius={innerR - 2} outerRadius={outer + 8} startAngle={-(c.afterglow * Math.PI) / 180 / 2.4} endAngle={0} fill={`url(#${beamId})`} style={{ mixBlendMode: 'screen' }} pointerEvents="none" />
               <line x1={0} y1={-innerR + 2} x2={0} y2={-outer - 14} stroke={accent2} strokeWidth={1.5} />
             </g>
 

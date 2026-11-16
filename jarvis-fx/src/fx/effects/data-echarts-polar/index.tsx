@@ -4,7 +4,6 @@ import { EffectScatterChart, LineChart, ScatterChart } from 'echarts/charts'
 import { PolarComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import ReactEChartsCore from 'echarts-for-react/esm/core'
-import type EChartsReactCore from 'echarts-for-react/esm/core'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
 import { DemoBadge, HudChrome } from '../hud-kit/HudChrome'
@@ -52,12 +51,15 @@ export default function EchartsPolar({ accent, accent2, reducedMotion, stage, pa
   const c = useFxControls({
     satellites: { value: 6, min: 2, max: 8, step: 1, label: 'satelity' },
     speed: { value: 1, min: 0, max: 4, step: 0.1, label: 'prędkość' },
-    petals: { value: 5, min: 2, max: 9, step: 1, label: 'płatki rozety' },
+    petals: { value: 5, min: 2, max: 9, step: 1, label: 'płatki' },
     trails: { value: true, label: 'smugi' },
   })
   const count = stage ? c.satellites : Math.min(4, c.satellites)
   const sats = useMemo(() => makeSats(count), [count])
-  const chartRef = useRef<EChartsReactCore>(null)
+  // echarts-for-react first creates a temporary instance, disposes it and re-inits before applying
+  // `option`; data pushes must wait for onChartReady or they hit a chart without our series.
+  const chartRef = useRef<echarts.ECharts | null>(null)
+  const pushRef = useRef<() => void>(() => {})
   const colOf = (k: Sat['col']) => (k === 'a' ? accent : k === 'b' ? accent2 : k === 'ok' ? SEM.ok : SEM.warn)
 
   const option = useMemo(() => {
@@ -146,7 +148,7 @@ export default function EchartsPolar({ accent, accent2, reducedMotion, stage, pa
     let acc = 0
     const fps = stage ? (quality === 'low' ? 24 : 40) : 15
     const push = () => {
-      const chart = chartRef.current?.getEchartsInstance()
+      const chart = chartRef.current
       if (!chart || chart.isDisposed()) return
       const t = clock.current
       const k = c.petals
@@ -165,25 +167,37 @@ export default function EchartsPolar({ accent, accent2, reducedMotion, stage, pa
       raf = requestAnimationFrame(loop)
       const dt = Math.min(0.1, (now - last) / 1000)
       last = now
-      if (paused) return
       acc += dt
       if (acc < 1 / fps) return
       clock.current += acc * c.speed * (reducedMotion ? 0.2 : 1)
       acc = 0
       push()
     }
-    // initial frame (also covers paused cards)
+    // initial frame (also covers paused cards); no rAF is scheduled at all while paused
+    pushRef.current = push
     const first = setTimeout(push, 50)
-    raf = requestAnimationFrame(loop)
+    if (!paused) raf = requestAnimationFrame(loop)
     return () => {
       cancelAnimationFrame(raf)
       clearTimeout(first)
+      pushRef.current = () => {}
     }
   }, [sats, c.speed, c.petals, c.trails, paused, reducedMotion, stage, quality, option])
 
   return (
     <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(circle_at_50%_53%,var(--jx-accent-faint),transparent_60%)]">
-      <ReactEChartsCore ref={chartRef} echarts={echarts} option={option} notMerge style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} opts={{ renderer: 'canvas' }} />
+      <ReactEChartsCore
+        echarts={echarts}
+        option={option}
+        onChartReady={(inst: echarts.ECharts) => {
+          chartRef.current = inst
+          pushRef.current()
+        }}
+        notMerge
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+        opts={{ renderer: 'canvas' }}
+      />
+      <span className="sr-only">{`Biegunowy wykres orbitalny: ${sats.length} satelitów krąży po orbitach ze smugami wokół animowanej rozety o ${c.petals} płatkach – dane demonstracyjne.`}</span>
       <HudChrome
         code="ORB-07 · POLAR"
         title="Plot orbitalny"

@@ -28,6 +28,8 @@ interface Contact {
 }
 
 const TAU = Math.PI * 2
+/** phosphor decay time as a fraction of one antenna revolution */
+const PERSISTENCE = 0.85
 const KIND_COLOR: Record<Kind, string> = { friend: SEM.ok, unknown: SEM.warn, hostile: SEM.danger }
 const KIND_LABEL: Record<Kind, string> = { friend: 'SWÓJ', unknown: 'NIEZNANY', hostile: 'WROGI' }
 
@@ -66,13 +68,12 @@ const bearingOf = (x: number, y: number) => ((Math.atan2(y, x) + Math.PI / 2 + T
 
 export default function RadarSweep({ accent, accent2, quality, reducedMotion, stage, paused }: FxProps) {
   const c = useFxControls({
-    rpm: { value: 18, min: 4, max: 60, step: 1, label: 'obroty / min' },
+    rpm: { value: 18, min: 4, max: 60, step: 1, label: 'obr./min' },
     trail: { value: 75, min: 15, max: 200, step: 5, label: 'ślad (°)' },
     contacts: { value: 10, min: 2, max: 24, step: 1, label: 'kontakty' },
-    rings: { value: 4, min: 2, max: 6, step: 1, label: 'pierścienie' },
-    persistence: { value: 0.85, min: 0.2, max: 1.5, step: 0.05, label: 'poświata' },
+    rings: { value: 4, min: 2, max: 6, step: 1, label: 'okręgi' },
     labels: { value: true, label: 'etykiety' },
-    ping: { value: false, label: 'dźwięk echa' },
+    ping: { value: false, label: 'dźwięk' },
   })
 
   const contactsRef = useRef<Contact[]>([])
@@ -210,7 +211,7 @@ export default function RadarSweep({ accent, accent2, quality, reducedMotion, st
       if (sweep - prev >= TAU) return true
       return p <= s ? b > p && b <= s : b > p || b <= s
     }
-    const fade = rev * c.persistence
+    const fade = rev * PERSISTENCE
     for (const k of contactsRef.current) {
       const b = advance(k, dt)
       if (dt > 0 && swept(b)) {

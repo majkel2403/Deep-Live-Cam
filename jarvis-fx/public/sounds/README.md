@@ -77,7 +77,7 @@ naszego autorstwa). Każdy nowy plik z zewnątrz → wpis w tej tabeli + autor/l
 
 ## Polityka dźwięku
 
-- bleepy UI trwają **< 150 ms** (wyjątki: `boot` ≈ 0,7 s, sekwencja rozruchu; `error`/`alert` to podwójne sygnały ≈ 0,25 s),
+- bleepy UI trwają **< 150 ms** (wyjątki: `boot` ≈ 0,7 s, sekwencja rozruchu; `error`/`alert` to podwójne sygnały ≈ 0,2 s — zmierzone na żywo w Laboratorium dźwięku),
 - domyślna głośność **35%**, szczyty plików 0,03–0,21 FS — dźwięk ma podpowiadać, nie dominować,
 - użytkownik może w każdej chwili **wyciszyć** dźwięk (ikona głośnika w nagłówku, Laboratorium dźwięku) lub zmienić głośność,
 - nic nie gra przed pierwszą interakcją (polityka autoplay przeglądarek), a powtarzane dźwięki są ograniczane (`type` co ≥ 30 ms, `hover` co ≥ 60 ms).

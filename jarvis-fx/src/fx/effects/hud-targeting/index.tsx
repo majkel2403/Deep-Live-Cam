@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { AnimatePresence, motion, motionValue, useAnimationFrame, useMotionValue, useSpring, useTransform, type MotionValue } from 'motion/react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { AnimatePresence, motion, motionValue, useMotionValue, useSpring, useTransform, type MotionValue } from 'motion/react'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
 import { playBleep } from '@/lib/sound'
@@ -149,32 +149,49 @@ export default function Targeting({ accent, accent2, reducedMotion, stage, pause
   const c = useFxControls({
     targets: { value: 5, min: 1, max: 8, step: 1, label: 'cele' },
     speed: { value: 1, min: 0.2, max: 3, step: 0.1, label: 'prędkość' },
-    lockEvery: { value: 3.5, min: 1.5, max: 10, step: 0.5, label: 'zmiana celu (s)' },
-    stiffness: { value: 90, min: 20, max: 400, step: 10, label: 'sztywność śledzenia' },
-    sound: { value: false, label: 'dźwięk namierzania' },
+    lockEvery: { value: 3.5, min: 1.5, max: 10, step: 0.5, label: 'cykl (s)' },
+    stiffness: { value: 90, min: 20, max: 400, step: 10, label: 'sztywność' },
+    sound: { value: false, label: 'dźwięk' },
   })
   const count = stage ? c.targets : Math.min(3, c.targets)
   const tracks = useMemo(() => makeTracks(count), [count])
   const [ref, size] = useSize<HTMLDivElement>()
+  const fadeId = `tg-fade-${useId().replace(/:/g, '')}`
   const clock = useMotionValue(0)
   // the gun-sight ring turns with the shared clock, so pausing freezes it too
   const sightRot = useTransform(clock, (t) => t * 9)
   const [locked, setLocked] = useState(0)
   const [lockInfo, setLockInfo] = useState({ d: 0, brg: 0 })
 
-  useAnimationFrame((_, delta) => {
-    if (paused || !size.width) return
-    const t = clock.get() + (Math.min(delta, 100) / 1000) * c.speed * (reducedMotion ? 0.25 : 1)
-    clock.set(t)
-    for (const tr of tracks) {
-      const p = place(tr, t, size.width, size.height)
-      const q = place(tr, t + 0.05, size.width, size.height)
-      tr.x.set(p.x)
-      tr.y.set(p.y)
-      tr.d.set(p.d)
-      tr.hdg.set((Math.atan2(q.y - p.y, q.x - p.x) * 180) / Math.PI)
+  // one rAF advances the shared clock and every track; no frames are scheduled while paused
+  const step = useRef((_delta: number) => {})
+  useEffect(() => {
+    step.current = (delta) => {
+      if (!size.width) return
+      const t = clock.get() + (Math.min(delta, 100) / 1000) * c.speed * (reducedMotion ? 0.25 : 1)
+      clock.set(t)
+      for (const tr of tracks) {
+        const p = place(tr, t, size.width, size.height)
+        const q = place(tr, t + 0.05, size.width, size.height)
+        tr.x.set(p.x)
+        tr.y.set(p.y)
+        tr.d.set(p.d)
+        tr.hdg.set((Math.atan2(q.y - p.y, q.x - p.x) * 180) / Math.PI)
+      }
     }
   })
+  useEffect(() => {
+    if (paused) return
+    let raf = 0
+    let last = performance.now()
+    const loop = (now: number) => {
+      raf = requestAnimationFrame(loop)
+      step.current(now - last)
+      last = now
+    }
+    raf = requestAnimationFrame(loop)
+    return () => cancelAnimationFrame(raf)
+  }, [paused])
 
   // initial placement so the first paint (and paused cards) shows targets in place
   useEffect(() => {
@@ -220,7 +237,7 @@ export default function Targeting({ accent, accent2, reducedMotion, stage, pause
       {/* backdrop: horizon + perspective grid + pitch ladder */}
       <svg className="absolute inset-0 h-full w-full" aria-hidden="true">
         <defs>
-          <linearGradient id="tg-fade" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={fadeId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor={accent} stopOpacity="0" />
             <stop offset="1" stopColor={accent} stopOpacity="0.35" />
           </linearGradient>
@@ -230,7 +247,7 @@ export default function Targeting({ accent, accent2, reducedMotion, stage, pause
             <line x1="0" x2={size.width} y1={size.height * 0.62} y2={size.height * 0.62} stroke={accent} strokeOpacity="0.35" />
             {Array.from({ length: 13 }, (_, i) => {
               const x = (i / 12) * size.width
-              return <line key={i} x1={size.width / 2 + (x - size.width / 2) * 0.12} y1={size.height * 0.62} x2={x + (x - size.width / 2) * 1.4} y2={size.height} stroke="url(#tg-fade)" />
+              return <line key={i} x1={size.width / 2 + (x - size.width / 2) * 0.12} y1={size.height * 0.62} x2={x + (x - size.width / 2) * 1.4} y2={size.height} stroke={`url(#${fadeId})`} />
             })}
             {Array.from({ length: 6 }, (_, i) => {
               const y = size.height * 0.62 + Math.pow((i + 1) / 6, 2) * size.height * 0.38
@@ -264,6 +281,7 @@ export default function Targeting({ accent, accent2, reducedMotion, stage, pause
 
       {stage && size.width > 0 && <Tapes clock={clock} accent={accent} accent2={accent2} h={size.height} />}
 
+      <span className="sr-only">{`System namierzania: śledzonych celów ${tracks.length}, namierzony cel ${lt?.id ?? 'brak'} – symulacja demonstracyjna.`}</span>
       <HudChrome
         code="TGT-03 · ŚLEDZENIE"
         title="System namierzania"

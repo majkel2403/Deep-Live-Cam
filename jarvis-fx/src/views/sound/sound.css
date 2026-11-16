@@ -1,0 +1,96 @@
+/* Sound Lab — cards without backdrop blur (cheap to repaint while waveforms animate). */
+.jxs-card {
+  --aug-border-all: 1px;
+  --aug-border-bg: var(--jx-line);
+  --aug-tl: 10px;
+  --aug-br: 10px;
+  background: linear-gradient(180deg, hsl(var(--jx-hue) 70% 10% / 0.55), hsl(var(--jx-hue) 70% 6% / 0.55));
+  transition: background 0.2s;
+}
+.jxs-card:hover,
+.jxs-card:focus-within {
+  --aug-border-bg: var(--jx-line-strong);
+}
+.jxs-card[data-hot] {
+  --aug-border-bg: var(--jx-accent);
+  background: linear-gradient(180deg, hsl(var(--jx-hue) 90% 22% / 0.6), hsl(var(--jx-hue) 70% 8% / 0.6));
+}
+
+.jxs-play {
+  --aug-border-all: 1px;
+  --aug-border-bg: var(--jx-line-strong);
+  --aug-tl: 6px;
+  --aug-br: 6px;
+  background: var(--jx-accent-faint);
+  color: var(--jx-accent);
+  transition: background 0.15s, color 0.15s;
+}
+.jxs-play:hover {
+  background: hsl(var(--jx-hue) 100% 50% / 0.25);
+  color: #fff;
+}
+.jxs-play:active { transform: translateY(1px); }
+
+.jxs-range {
+  accent-color: var(--jx-accent);
+  width: 100%;
+  cursor: pointer;
+}
+
+.jxs-seg {
+  display: inline-flex;
+  border: 1px solid var(--jx-line);
+}
+.jxs-seg > button {
+  font-family: var(--jx-font-label);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+  padding: 0.3rem 0.65rem;
+  color: var(--jx-text-dim);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.jxs-seg > button + button { border-left: 1px solid var(--jx-line); }
+.jxs-seg > button:hover { color: var(--jx-text); background: var(--jx-accent-faint); }
+.jxs-seg > button[aria-checked="true"] {
+  color: #fff;
+  background: hsl(var(--jx-hue) 100% 50% / 0.28);
+  box-shadow: inset 0 -2px 0 var(--jx-accent);
+}
+.jxs-seg > button[aria-disabled="true"] { opacity: 0.4; cursor: not-allowed; }
+
+.jxs-table th {
+  font-family: var(--jx-font-label);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  color: var(--jx-text-dim);
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--jx-line);
+}
+.jxs-table td {
+  padding: 0.4rem 0.5rem;
+  vertical-align: top;
+  border-bottom: 1px solid hsl(var(--jx-hue) 100% 60% / 0.12);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.jxs-code {
+  font-family: var(--jx-font-mono);
+  font-size: 0.68rem;
+  line-height: 1.55;
+  color: var(--jx-text);
+  background: rgb(0 0 0 / 0.35);
+  border: 1px solid var(--jx-line);
+  padding: 0.5rem 0.65rem;
+  overflow-x: auto;
+  white-space: pre;
+}
+.jxs-code .k { color: var(--jx-accent); }
+.jxs-code .s { color: var(--jx-ok); }
+.jxs-code .c { color: var(--jx-text-dim); }

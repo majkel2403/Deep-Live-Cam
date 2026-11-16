@@ -97,38 +97,41 @@ const TileView = memo(function TileView({ tile, size, caption }: { tile: Tile; s
 
 export default function IconMatrix({ reducedMotion, stage, paused }: FxProps) {
   const c = useFxControls({
-    tile: { value: 74, min: 48, max: 120, step: 2, label: 'rozmiar kafla' },
-    stagger: { value: 90, min: 20, max: 200, step: 5, label: 'opóźnienie fali (ms)' },
-    origin: { value: 'losowe', options: ['losowe', 'środek', 'pierwszy', 'ostatni'], label: 'źródło fali' },
-    flips: { value: true, label: 'podmiana ikon' },
-    captions: { value: true, label: 'podpisy zestawów' },
+    tile: { value: 74, min: 48, max: 120, step: 2, label: 'rozmiar' },
+    stagger: { value: 90, min: 20, max: 200, step: 5, label: 'fala (ms)' },
+    origin: { value: 'losowe', options: ['losowe', 'środek', 'pierwszy', 'ostatni'], label: 'źródło' },
+    flips: { value: true, label: 'podmiana' },
+    captions: { value: true, label: 'podpisy' },
   })
   const [ref, size] = useSize<HTMLDivElement>()
   const gridRef = useRef<HTMLDivElement>(null)
-  const tilePx = stage ? c.tile : 34
+  const tilePx = stage && Number.isFinite(c.tile) ? c.tile : stage ? 74 : 34
   const footerPx = stage ? 64 : 26
   const headPx = stage ? 46 : 22
   const cols = Math.max(3, Math.floor((size.width - (stage ? 48 : 16)) / (tilePx + 6)))
   const rows = Math.max(2, Math.floor((size.height - footerPx - headPx) / (tilePx + 6)))
   const count = size.width ? cols * rows : 0
 
-  const [tiles, setTiles] = useState<Tile[]>([])
-  useEffect(() => {
+  // tiles are derived synchronously from the grid size (no empty first pass), flips patch them
+  const [grid, setGrid] = useState<{ count: number; tiles: Tile[] }>({ count: 0, tiles: [] })
+  let tiles = grid.tiles
+  if (grid.count !== count) {
     const r = rng(77)
-    setTiles(Array.from({ length: count }, () => pick(r)))
-  }, [count])
+    tiles = Array.from({ length: count }, () => pick(r))
+    setGrid({ count, tiles })
+  }
 
   // occasional glyph swap
   useEffect(() => {
     if (!c.flips || paused || reducedMotion || !count) return
     const r = rng(Date.now() & 0xffff)
     const id = setInterval(() => {
-      setTiles((ts) => {
-        if (!ts.length) return ts
-        const i = Math.floor(r() * ts.length)
-        const next = ts.slice()
-        next[i] = { ...pick(r), rev: ts[i].rev + 1 }
-        return next
+      setGrid((g) => {
+        if (!g.tiles.length) return g
+        const i = Math.floor(r() * g.tiles.length)
+        const next = g.tiles.slice()
+        next[i] = { ...pick(r), rev: g.tiles[i].rev + 1 }
+        return { count: g.count, tiles: next }
       })
     }, stage ? 650 : 1400)
     return () => clearInterval(id)

@@ -94,21 +94,22 @@
 
 /* 3 ─ Light streak · ported from Uiverse.io by Smit-Prajapati (loaders/Smit-Prajapati_soft-donkey-32.html), MIT
  *     adapted: three staggered rails instead of one */
+.uvp-streaks { filter: drop-shadow(0 0 5px var(--uvp-accent)); }
 .uvp-streak {
-  height: 2px;
+  height: 3px;
   width: 300px;
-  background: hsl(var(--jx-hue) 30% 16%);
+  background: hsl(var(--jx-hue) 45% 20%);
   position: relative;
   overflow: hidden;
 }
 .uvp-streak + .uvp-streak { margin-top: 14px; }
 .uvp-streak .uvp-overlay {
-  background: linear-gradient(87deg, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0.14) 30%, rgba(0, 0, 0, 0.14) 70%, rgb(0, 0, 0) 100%);
+  background: linear-gradient(87deg, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0) 70%, rgb(0, 0, 0) 100%);
   position: absolute;
   inset: 0px;
 }
 .uvp-streak .uvp-light {
-  width: 70px;
+  width: 90px;
   height: 100%;
   position: absolute;
   left: -20%;
@@ -117,7 +118,7 @@
   animation: uvp-light calc(2s / var(--uvp-speed)) infinite ease-in-out;
 }
 .uvp-streak:nth-child(2) .uvp-light { animation-delay: calc(-0.66s / var(--uvp-speed)); background: linear-gradient(87deg, transparent 0%, var(--uvp-accent2) 40%, var(--uvp-accent2) 60%, transparent 100%); }
-.uvp-streak:nth-child(3) .uvp-light { animation-delay: calc(-1.33s / var(--uvp-speed)); }
+.uvp-streak:nth-child(3) .uvp-light { animation-delay: calc(-1.33s / var(--uvp-speed)); background: linear-gradient(87deg, transparent 0%, var(--uvp-accent3) 40%, var(--uvp-accent3) 60%, transparent 100%); }
 @keyframes uvp-light {
   from { left: -30%; }
   to { left: 100%; }

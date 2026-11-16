@@ -54,11 +54,11 @@ function buildGraph(hubCount: number, leavesPer: number): { nodes: N[]; links: L
 
 const idOf = (e: string | NodeObject<N> | undefined) => (typeof e === 'object' ? String(e.id) : String(e))
 
-export default function ForceGraphFx({ accent, accent2, reducedMotion, stage, paused }: FxProps) {
+export default function ForceGraphFx({ accent, accent2, quality, reducedMotion, stage, paused }: FxProps) {
   const c = useFxControls({
-    particles: { value: 2, min: 0, max: 6, step: 1, label: 'cząstki / łącze' },
-    speed: { value: 1, min: 0.2, max: 4, step: 0.1, label: 'prędkość cząstek' },
-    charge: { value: -140, min: -400, max: -20, step: 10, label: 'odpychanie' },
+    particles: { value: 2, min: 0, max: 6, step: 1, label: 'cząstki' },
+    speed: { value: 1, min: 0.2, max: 4, step: 0.1, label: 'prędkość' },
+    charge: { value: -140, min: -400, max: -20, step: 10, label: 'ładunek' },
     bursts: { value: true, label: 'impulsy' },
     labels: { value: true, label: 'etykiety' },
   })
@@ -116,7 +116,8 @@ export default function ForceGraphFx({ accent, accent2, reducedMotion, stage, pa
 
   // auto-fit while the layout settles
   useEffect(() => {
-    const ts = [600, 1800, 4000].map((ms) => setTimeout(() => fgRef.current?.zoomToFit(500, stage ? 70 : 14), ms))
+    // the layout is pre-computed with warmupTicks, so the first fit is already close to final
+    const ts = [150, 1200, 3000, 6500].map((ms) => setTimeout(() => fgRef.current?.zoomToFit(ms < 200 ? 0 : 500, stage ? 70 : 14), ms))
     return () => ts.forEach(clearTimeout)
   }, [stage, size.width, size.height])
 
@@ -213,7 +214,11 @@ export default function ForceGraphFx({ accent, accent2, reducedMotion, stage, pa
   const linkColor = useCallback((l: GL) => hexA(l.kind === 'trunk' ? accent2 : l.kind === 'mesh' ? SEM.violet : accent, l.kind === 'trunk' ? 0.55 : 0.3), [accent, accent2])
   const linkWidth = useCallback((l: GL) => (l.kind === 'trunk' ? 1.6 : l.kind === 'mesh' ? 0.6 : 0.8), [])
   const linkDash = useCallback((l: GL) => (l.kind === 'mesh' ? [3, 3] : null), [])
-  const pCount = useCallback((l: GL) => (reducedMotion ? 0 : l.kind === 'mesh' ? 0 : Math.round(c.particles * (l.kind === 'trunk' ? 1.5 : 0.5 + l.rate))), [c.particles, reducedMotion])
+  const pScale = quality === 'low' ? 0.5 : 1
+  const pCount = useCallback(
+    (l: GL) => (reducedMotion ? 0 : l.kind === 'mesh' ? 0 : Math.round(c.particles * pScale * (l.kind === 'trunk' ? 1.5 : 0.5 + l.rate))),
+    [c.particles, reducedMotion, pScale],
+  )
   const pSpeed = useCallback((l: GL) => 0.004 * c.speed * (0.6 + l.rate), [c.speed])
   const pColor = useCallback((l: GL) => (l.kind === 'trunk' ? '#e8fbff' : accent2), [accent2])
   const pWidth = useCallback((l: GL) => (l.kind === 'trunk' ? 3 : 2), [])
@@ -242,6 +247,7 @@ export default function ForceGraphFx({ accent, accent2, reducedMotion, stage, pa
           linkDirectionalParticleColor={pColor}
           linkDirectionalParticleWidth={pWidth}
           autoPauseRedraw={false}
+          warmupTicks={stage ? 160 : 120}
           cooldownTime={stage ? 8000 : 4000}
           d3VelocityDecay={0.32}
           enablePointerInteraction={stage}
@@ -252,6 +258,9 @@ export default function ForceGraphFx({ accent, accent2, reducedMotion, stage, pa
           onEngineStop={() => fgRef.current?.zoomToFit(600, stage ? 70 : 14)}
         />
       )}
+      <span className="sr-only">
+        {`Graf sieci przepływu danych: rdzeń J.A.R.V.I.S., ${data.nodes.filter((n) => n.kind === 'hub').length} podsystemów i ${data.nodes.filter((n) => n.kind === 'leaf').length} czujników – topologia demonstracyjna.`}
+      </span>
       <HudChrome
         code="NET-08 · TOPOLOGIA"
         title="Sieć przepływu danych"

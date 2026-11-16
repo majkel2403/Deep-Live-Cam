@@ -1,0 +1,282 @@
+/* Boot sequence stage (BootStage). All colours derive from the runtime accent hue. */
+
+.jxb-root {
+  container-type: size;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--jx-bg);
+  color: var(--jx-text);
+  user-select: none;
+  will-change: transform; /* own compositing layer: repaints here never touch blurred panels behind */
+}
+
+.jxb-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 44%, hsl(var(--jx-hue) 100% 45% / 0.16), transparent 70%),
+    radial-gradient(ellipse at center, transparent 50%, rgb(0 0 0 / 0.7) 100%),
+    var(--jx-bg);
+}
+.jxb-grid {
+  position: absolute;
+  inset: -2px;
+  background-image:
+    linear-gradient(hsl(var(--jx-hue) 90% 50% / 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--jx-hue) 90% 50% / 0.09) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center;
+  mask-image: radial-gradient(ellipse 70% 65% at 50% 45%, #000 20%, transparent 75%);
+}
+.jxb-scan {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--jx-accent) 20%, #fff 50%, var(--jx-accent) 80%, transparent);
+  box-shadow: 0 0 18px 4px hsl(var(--jx-hue) 100% 55% / 0.45);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.jxb-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 45%, #fff 0%, hsl(var(--jx-hue) 100% 70% / 0.7) 35%, transparent 75%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+  mix-blend-mode: screen;
+}
+
+/* corner brackets */
+.jxb-corner {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-color: var(--jx-line-strong);
+  border-style: solid;
+  border-width: 0;
+}
+.jxb-corner[data-c="tl"] { top: 14px; left: 14px; border-top-width: 1px; border-left-width: 1px; }
+.jxb-corner[data-c="tr"] { top: 14px; right: 14px; border-top-width: 1px; border-right-width: 1px; }
+.jxb-corner[data-c="bl"] { bottom: 14px; left: 14px; border-bottom-width: 1px; border-left-width: 1px; }
+.jxb-corner[data-c="br"] { bottom: 14px; right: 14px; border-bottom-width: 1px; border-right-width: 1px; }
+
+/* top bar */
+.jxb-top {
+  position: absolute;
+  top: 22px;
+  left: 48px;
+  right: 48px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11px;
+}
+.jxb-top .jxb-rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--jx-line-strong), transparent);
+  transform-origin: left center;
+}
+
+/* centre column: reactor + title */
+.jxb-center {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4cqmin;
+  width: 100%;
+  pointer-events: none;
+}
+.jxb-reactor {
+  position: relative;
+  width: 52cqmin;
+  height: 52cqmin;
+  flex-shrink: 0;
+}
+.jxb-layer {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+.jxb-layer svg,
+svg.jxb-layer {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.jxb-root[data-q="med"] .jxb-layer,
+.jxb-root[data-q="high"] .jxb-layer {
+  filter: drop-shadow(0 0 5px hsl(var(--jx-hue) 100% 55% / 0.65));
+}
+.jxb-s-line { fill: none; stroke: var(--jx-line-strong); }
+.jxb-s-acc { fill: none; stroke: var(--jx-accent); }
+.jxb-s-band { fill: none; stroke: hsl(var(--jx-hue) 100% 50% / 0.38); }
+.jxb-f-acc { fill: var(--jx-accent); }
+.jxb-coil { fill: hsl(var(--jx-hue) 100% 50% / 0.16); stroke: var(--jx-accent); stroke-width: 1.2; }
+.jxb-core { fill: hsl(var(--jx-hue) 100% 70% / 0.22); stroke: hsl(var(--jx-hue) 100% 82%); stroke-linejoin: round; }
+
+.jxb-title-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9cqmin;
+}
+.jxb-title {
+  margin: 0;
+  font-family: var(--jx-font-display);
+  font-weight: 900;
+  font-size: clamp(22px, 6.4cqmin, 84px);
+  line-height: 1;
+  letter-spacing: 0.3em;
+  padding-left: 0.3em; /* balance the trailing letter-spacing */
+  color: var(--jx-accent);
+  text-shadow: 0 0 18px hsl(var(--jx-hue) 100% 55% / 0.7), 0 0 2px hsl(var(--jx-hue) 100% 85% / 0.9);
+  white-space: nowrap;
+}
+.jxb-title .jxb-char { display: inline-block; will-change: transform, opacity; }
+.jxb-sub {
+  margin: 0;
+  font-family: var(--jx-font-cmd);
+  font-size: clamp(8px, 1.45cqmin, 13px);
+  letter-spacing: 0.42em;
+  padding-left: 0.42em;
+  color: var(--jx-text-dim);
+  white-space: nowrap;
+  min-height: 1.2em;
+}
+.jxb-tag {
+  margin: 0.6cqmin 0 0;
+  font-family: var(--jx-font-label);
+  font-weight: 600;
+  font-size: clamp(10px, 1.5cqmin, 13px);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--jx-accent);
+  white-space: nowrap;
+}
+
+/* side columns */
+.jxb-log,
+.jxb-status {
+  position: absolute;
+  top: 70px;
+  width: min(29cqw, 400px);
+  font-family: var(--jx-font-mono);
+  font-size: clamp(10px, 1.35cqmin, 11.5px);
+  line-height: 1.75;
+}
+.jxb-log { left: 48px; }
+.jxb-status { right: 48px; text-align: right; }
+.jxb-col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--jx-line);
+}
+.jxb-status .jxb-col-head { flex-direction: row-reverse; }
+.jxb-line {
+  display: flex;
+  gap: 0.8em;
+  white-space: nowrap;
+  opacity: 0;
+}
+.jxb-line .jxb-pct { color: var(--jx-text-dim); flex-shrink: 0; }
+.jxb-line .jxb-txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--jx-text); }
+.jxb-line .jxb-tag-ok { color: var(--jx-ok); flex-shrink: 0; min-width: 3.2em; text-align: right; }
+.jxb-line .jxb-tag-info { color: var(--jx-accent); flex-shrink: 0; min-width: 3.2em; text-align: right; }
+.jxb-line .jxb-tag-off { color: var(--jx-warn); flex-shrink: 0; min-width: 3.2em; text-align: right; }
+.jxb-status-line {
+  display: block;
+  font-family: var(--jx-font-head);
+  font-size: clamp(11px, 1.7cqmin, 15px);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--jx-text);
+  line-height: 1.9;
+  white-space: nowrap;
+}
+.jxb-status-line[data-accent] { color: var(--jx-accent); text-shadow: var(--jx-text-glow); }
+
+/* bottom: progress + skip */
+.jxb-bottom {
+  position: absolute;
+  left: 48px;
+  right: 48px;
+  bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.jxb-track {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  background: hsl(var(--jx-hue) 80% 40% / 0.18);
+  border: 1px solid var(--jx-line);
+}
+.jxb-bar {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, hsl(var(--jx-hue) 100% 40%), var(--jx-accent) 70%, #fff);
+  box-shadow: 0 0 10px hsl(var(--jx-hue) 100% 55% / 0.7);
+}
+.jxb-track-ticks {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(90deg, var(--jx-bg) 1px, transparent 1px);
+  background-size: 10% 100%;
+  pointer-events: none;
+}
+.jxb-pct-big {
+  font-family: var(--jx-font-mono);
+  font-size: clamp(14px, 2.4cqmin, 22px);
+  color: var(--jx-accent);
+  text-shadow: var(--jx-text-glow);
+  min-width: 4.2ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.jxb-skip kbd {
+  font-family: var(--jx-font-mono);
+  font-size: 0.85em;
+  padding: 0 4px;
+  border: 1px solid var(--jx-line);
+  color: var(--jx-text-dim);
+  margin-left: 4px;
+}
+
+/* compact containers (inline preview, phones) */
+@container (max-width: 980px) {
+  .jxb-log, .jxb-status { top: 52px; width: 30cqw; }
+  .jxb-log { left: 20px; }
+  .jxb-status { right: 20px; }
+  .jxb-top { left: 20px; right: 20px; top: 16px; }
+  .jxb-bottom { left: 20px; right: 20px; bottom: 18px; }
+  .jxb-line .jxb-pct { display: none; }
+}
+@container (max-width: 640px) {
+  .jxb-status { display: none; }
+  .jxb-top [data-wide] { display: none; }
+  .jxb-top { white-space: nowrap; }
+  .jxb-log { display: none; }
+  .jxb-reactor { width: 62cqmin; height: 62cqmin; }
+  .jxb-sub { letter-spacing: 0.16em; padding-left: 0.16em; font-size: 7.5px; }
+  .jxb-tag { letter-spacing: 0.2em; }
+}
+/* tall narrow screens (phone overlay): the log fits below the title */
+@container (max-width: 640px) and (min-height: 700px) {
+  .jxb-log { display: block; width: auto; right: 20px; top: auto; bottom: 64px; }
+  .jxb-center { top: 38%; }
+}

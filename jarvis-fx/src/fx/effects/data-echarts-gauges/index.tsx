@@ -39,10 +39,10 @@ function walk(v: Vals): Vals {
 
 export default function EchartsGauges({ accent, accent2, reducedMotion, stage, paused }: FxProps) {
   const c = useFxControls({
-    interval: { value: 1.2, min: 0.4, max: 5, step: 0.1, label: 'odświeżanie (s)' },
+    interval: { value: 1.2, min: 0.4, max: 5, step: 0.1, label: 'takt (s)' },
     glow: { value: 0.6, min: 0, max: 1, step: 0.05, label: 'poświata' },
-    blur: { value: false, label: 'cienie canvas (wolniej)' },
-    ease: { value: 900, min: 100, max: 2500, step: 50, label: 'animacja (ms)' },
+    blur: { value: false, label: 'cienie' },
+    ease: { value: 900, min: 100, max: 2500, step: 50, label: 'anim. ms' },
     ticks: { value: true, label: 'podziałka' },
   })
   const [vals, setVals] = useState<Vals>({ power: 64, sync: 82, temp: 1480, shield: 71 })

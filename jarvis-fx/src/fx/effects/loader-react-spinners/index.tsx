@@ -30,10 +30,10 @@ const SPECS: Spec[] = [
 
 export default function ReactSpinners({ accent, accent2, reducedMotion, stage, paused }: FxProps) {
   const c = useFxControls({
-    speed: { value: 1, min: 0.2, max: 3, step: 0.05, label: 'mnożnik prędkości' },
+    speed: { value: 1, min: 0.2, max: 3, step: 0.05, label: 'prędkość' },
     scale: { value: 1.6, min: 0.6, max: 2.2, step: 0.05, label: 'skala' },
     glow: { value: true, label: 'poświata' },
-    twoTone: { value: true, label: 'drugi kolor akcentu' },
+    twoTone: { value: true, label: 'akcent 2' },
   })
   const [ref, size] = useSize<HTMLDivElement>()
   const cols = stage ? (size.width > 1000 ? 4 : 3) : 4
@@ -68,11 +68,11 @@ export default function ReactSpinners({ accent, accent2, reducedMotion, stage, p
               <div className="flex items-center justify-center">{sp.render({ color: accent, color2, s, speed })}</div>
             </div>
             {stage && (
-              <div className="flex items-baseline gap-2 px-3 pb-2">
-                <span className="jx-num text-[0.6rem] text-jx-accent">{sp.code}</span>
-                <span className={`${LBL} truncate text-[0.7rem] text-jx-text`}>{sp.name}</span>
+              <div className="flex min-w-0 items-baseline gap-2 whitespace-nowrap px-3 pb-2">
+                <span className="jx-num shrink-0 text-[0.6rem] text-jx-accent">{sp.code}</span>
+                <span className={`${LBL} min-w-0 truncate text-[0.7rem] text-jx-text`}>{sp.name}</span>
                 <span className="flex-1" />
-                <span className="jx-num text-[0.58rem] text-jx-dim">{`<${sp.lib} />`}</span>
+                <span className="jx-num min-w-0 truncate text-[0.58rem] text-jx-dim" title={`<${sp.lib} />`}>{`<${sp.lib} />`}</span>
               </div>
             )}
           </div>

@@ -3,4 +3,5 @@
 .rsp-root[data-paused="true"] *::before,
 .rsp-root[data-paused="true"] *::after { animation-play-state: paused !important; }
 .rsp-root[data-glow="true"] .rsp-cell > div > span { filter: drop-shadow(0 0 6px var(--rsp-glow)); }
-.rsp-cell { white-space: nowrap; }
+/* GridLoader relies on inline-block wrapping inside a fixed-width box: never force nowrap here */
+.rsp-cell { white-space: normal; line-height: 0; }

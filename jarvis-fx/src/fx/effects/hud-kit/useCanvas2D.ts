@@ -26,7 +26,7 @@ const DPR_CAP: Record<Quality, number> = { low: 1, med: 1.5, high: 2 }
 
 /**
  * Canvas 2D render loop shared by the HUD effects: DPR-aware sizing via ResizeObserver,
- * a pausable rAF loop with its own clock and an optional FPS cap. The latest `draw`
+ * a pausable rAF loop with its own clock and an optional FPS cap (no frames are scheduled while paused). The latest `draw`
  * closure is always used, so callers can read props / Leva values directly.
  * Everything (rAF, observer) is torn down on unmount.
  */
@@ -40,10 +40,13 @@ export function useCanvas2D(draw: (f: Frame2D) => void, { paused, quality, maxFp
   useEffect(() => {
     drawRef.current = draw
   })
+  const start = useRef<() => void>(() => {})
   useEffect(() => {
     optsRef.current = { paused, maxFps, timeScale }
-    // repaint once when paused so parameter changes are still visible
+    // paused: the loop stops by itself; repaint once so parameter changes are still visible.
+    // resumed: restart the loop.
     if (paused) redraw.current()
+    else start.current()
   }, [paused, maxFps, timeScale])
 
   useEffect(() => {
@@ -77,11 +80,15 @@ export function useCanvas2D(draw: (f: Frame2D) => void, { paused, quality, maxFp
     let last = performance.now()
     let acc = 0
     const loop = (now: number) => {
-      raf = requestAnimationFrame(loop)
       const o = optsRef.current
+      if (o.paused) {
+        // stop scheduling frames entirely while paused (restarted via start.current)
+        raf = 0
+        return
+      }
+      raf = requestAnimationFrame(loop)
       const real = Math.min(0.1, (now - last) / 1000)
       last = now
-      if (o.paused) return
       acc += real
       const minStep = 1 / o.maxFps
       if (acc + 0.002 < minStep) return
@@ -90,12 +97,20 @@ export function useCanvas2D(draw: (f: Frame2D) => void, { paused, quality, maxFp
       clock.current += dt
       paint(dt)
     }
+    start.current = () => {
+      if (raf) return
+      last = performance.now()
+      acc = 0
+      raf = requestAnimationFrame(loop)
+    }
     paint(0)
-    raf = requestAnimationFrame(loop)
+    if (!optsRef.current.paused) start.current()
     return () => {
       cancelAnimationFrame(raf)
+      raf = 0
       ro.disconnect()
       redraw.current = () => {}
+      start.current = () => {}
     }
   }, [quality])
 

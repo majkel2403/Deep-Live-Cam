@@ -23,10 +23,10 @@ const STAGES: [number, string][] = [
 
 export default function ScanBar({ accent, accent2, quality, reducedMotion, stage, paused }: FxProps) {
   const c = useFxControls({
-    duration: { value: 5.5, min: 2, max: 14, step: 0.5, label: 'czas skanu (s)' },
-    density: { value: 1, min: 0.5, max: 1.8, step: 0.1, label: 'gęstość siatki' },
+    duration: { value: 5.5, min: 2, max: 14, step: 0.5, label: 'czas (s)' },
+    density: { value: 1, min: 0.5, max: 1.8, step: 0.1, label: 'gęstość' },
     turn: { value: 0.35, min: 0, max: 1.5, step: 0.05, label: 'obrót' },
-    ghost: { value: true, label: 'kontur przed skanem' },
+    ghost: { value: true, label: 'kontur' },
   })
   const density = stage ? c.density : Math.min(0.7, c.density)
   const mesh = useMemo(() => buildBust(density), [density])

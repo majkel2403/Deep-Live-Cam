@@ -20,7 +20,7 @@ const PHRASES = ['Synteza odpowiedzi', 'Przeszukiwanie pamięci', 'Kalibracja mo
 export default function LottieOrb({ accent, accent2, reducedMotion, stage, paused }: FxProps) {
   const c = useFxControls({
     speed: { value: 1, min: 0.25, max: 3, step: 0.05, label: 'prędkość' },
-    recolor: { value: true, label: 'kolor akcentu' },
+    recolor: { value: true, label: 'akcent' },
     caption: { value: true, label: 'podpis' },
   })
   const data = useMemo(() => (c.recolor ? buildOrb(rgb01(accent), rgb01(accent2)) : buildOrb([0, 0.9, 1], [0.35, 0.95, 1])), [accent, accent2, c.recolor])
