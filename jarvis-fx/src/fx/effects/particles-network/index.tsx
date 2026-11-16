@@ -3,6 +3,7 @@ import type { ISourceOptions } from '@tsparticles/engine'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
 import { deepBg } from '../bg-kit/color'
+import { hueToHex } from '@/lib/store'
 import { ParticlesFx } from '../particles-kit/ParticlesFx'
 import { baseOptions, budget } from '../particles-kit/options'
 
@@ -15,6 +16,8 @@ export default function ParticlesNetwork({ accent, accent2, hue, quality, reduce
     triangles: { value: true, label: 'wypełnienie trójkątów' },
   })
   const bg = deepBg(hue)
+  // near-white highlight tinted by the runtime hue (never a fixed cyan)
+  const highlight = hueToHex(hue, 50, 94)
   const count = Math.round(c.count * (stage ? budget(quality, stage) : 0.25))
 
   const options = useMemo<ISourceOptions>(
@@ -23,7 +26,7 @@ export default function ParticlesNetwork({ accent, accent2, hue, quality, reduce
       particles: {
         // density scaling only on the stage – in a 260×160 card it would cull almost every node
         number: { value: count, density: { enable: stage, width: 1400, height: 900 } },
-        paint: { fill: { enable: true, color: { value: [accent, accent, accent2, '#e8fdff'] } } },
+        paint: { fill: { enable: true, color: { value: [accent, accent, accent2, highlight] } } },
         shape: { type: 'circle' },
         opacity: {
           value: { min: 0.35, max: 0.95 },
@@ -34,10 +37,10 @@ export default function ParticlesNetwork({ accent, accent2, hue, quality, reduce
           enable: true,
           distance: stage ? c.linkDistance : c.linkDistance * 0.4,
           color: accent,
-          opacity: 0.32,
+          opacity: 0.44,
           width: 1,
           // in a card almost every pair links up and stacked triangles saturate → stage only
-          triangles: { enable: c.triangles && stage, color: accent, opacity: 0.035 },
+          triangles: { enable: c.triangles && stage, color: accent, opacity: 0.05 },
         },
         move: {
           enable: !reducedMotion && c.speed > 0,
@@ -61,7 +64,7 @@ export default function ParticlesNetwork({ accent, accent2, hue, quality, reduce
         },
       },
     }),
-    [accent, accent2, quality, stage, count, c.linkDistance, c.speed, c.grab, c.triangles, reducedMotion],
+    [accent, accent2, highlight, quality, stage, count, c.linkDistance, c.speed, c.grab, c.triangles, reducedMotion],
   )
 
   return (

@@ -16,6 +16,10 @@ type FG = ForceGraphMethods<GNode, GLink>
 
 const radius2d = (load: number) => 5 + load * 9
 
+/** Screen-space room kept free of nodes: top readout line, bottom legend, label room under each node. */
+const VIEW_PAD = { top: 46, bottom: 66, x: 24 }
+const LABEL = { below: 34, half: 56 }
+
 /**
  * Asymmetric fit: the built-in zoomToFit pads all sides equally, so bottom nodes end up under
  * the legend overlay. Reserve the top readout line and the bottom legend, plus label room
@@ -35,15 +39,45 @@ function fit2D(fg: FG, nodes: GNode[], w: number, h: number, ms: number) {
     minY = Math.min(minY, n.y! - r)
     maxY = Math.max(maxY, n.y! + r)
   }
-  const pad = { top: 46, bottom: 66, x: 24 }
-  const label = { below: 34, half: 56 }
   const bw = Math.max(1, maxX - minX)
   const bh = Math.max(1, maxY - minY)
-  const k = Math.max(0.4, Math.min(4, (w - 2 * pad.x - 2 * label.half) / bw, (h - pad.top - pad.bottom - label.below) / bh))
-  const avail = h - pad.top - pad.bottom
-  const top = pad.top + Math.max(0, (avail - (bh * k + label.below)) / 2)
+  const k = Math.max(0.4, Math.min(4, (w - 2 * VIEW_PAD.x - 2 * LABEL.half) / bw, (h - VIEW_PAD.top - VIEW_PAD.bottom - LABEL.below) / bh))
+  const avail = h - VIEW_PAD.top - VIEW_PAD.bottom
+  const top = VIEW_PAD.top + Math.max(0, (avail - (bh * k + LABEL.below)) / 2)
   fg.centerAt((minX + maxX) / 2, minY - (top - h / 2) / k, ms)
   fg.zoom(k, ms)
+}
+
+interface SimNode {
+  x?: number
+  y?: number
+  vx?: number
+  vy?: number
+}
+
+/**
+ * d3 force that keeps every node inside the area that is currently visible between the overlays.
+ * The bounds are read from the live view (screen → graph coordinates), so pan and zoom stay correct.
+ * Without it the simulation drifts nodes under the bottom legend after the one-off auto-fit.
+ */
+function keepInView(getBounds: () => { minX: number; maxX: number; minY: number; maxY: number } | null) {
+  let nodes: SimNode[] = []
+  const force = (alpha: number) => {
+    if (alpha <= 0) return
+    const b = getBounds()
+    if (!b) return
+    for (const n of nodes) {
+      if (n.x === undefined || n.y === undefined) continue
+      if (n.x < b.minX) { n.x = b.minX; n.vx = 0 }
+      else if (n.x > b.maxX) { n.x = b.maxX; n.vx = 0 }
+      if (n.y < b.minY) { n.y = b.minY; n.vy = 0 }
+      else if (n.y > b.maxY) { n.y = b.maxY; n.vy = 0 }
+    }
+  }
+  force.initialize = (ns: SimNode[]) => {
+    nodes = ns
+  }
+  return force
 }
 
 export default function Graph2D({ snapshot, selectedId, onSelect, width, height, accent, accent2, reduced, quality, fitSignal }: GraphViewProps) {
@@ -62,6 +96,17 @@ export default function Graph2D({ snapshot, selectedId, onSelect, width, height,
     if (!fg) return
     fg.d3Force('charge')?.strength(-220)
     fg.d3Force('link')?.distance((l: GLink) => (l.kind === 'tool' ? 80 : 46))
+    fg.d3Force(
+      'keepInView',
+      keepInView(() => {
+        const g = fgRef.current
+        const { width: w, height: h } = sizeRef.current
+        if (!g || w <= 0 || h <= 0) return null
+        const a = g.screen2GraphCoords(VIEW_PAD.x, VIEW_PAD.top)
+        const c = g.screen2GraphCoords(w - VIEW_PAD.x, h - VIEW_PAD.bottom - LABEL.below)
+        return { minX: Math.min(a.x, c.x), maxX: Math.max(a.x, c.x), minY: Math.min(a.y, c.y), maxY: Math.max(a.y, c.y) }
+      }),
+    )
     fg.d3ReheatSimulation()
     fg.resumeAnimation()
     return () => {

@@ -42,23 +42,26 @@ export function BgHud({
       <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 50% 50%, transparent 52%, rgb(0 0 0 / ${vignette}) 100%)` }} />
       {stage && (
         <>
+          {/* soft scrims keep the HUD captions readable over busy fields (glyph rain, dense particles) */}
+          <div className="absolute inset-x-0 top-0 h-28" style={{ background: 'linear-gradient(to bottom, rgb(0 0 0 / 0.55), transparent)' }} />
+          <div className="absolute inset-x-0 bottom-0 h-24" style={{ background: 'linear-gradient(to top, rgb(0 0 0 / 0.5), transparent)' }} />
           <Corner pos="tl" />
           <Corner pos="tr" />
           <Corner pos="bl" />
           <Corner pos="br" />
           <div className="absolute left-6 top-5 flex flex-col gap-1">
             <span className="jx-label text-jx-accent jx-glow-text">{code}</span>
-            {hint && <span className="jx-label text-[0.62rem] text-jx-dim normal-case tracking-wider">{hint}</span>}
+            {hint && <span className="jx-label text-[0.7rem] text-jx-dim normal-case tracking-wider">{hint}</span>}
           </div>
           <div className="absolute bottom-5 right-6 flex items-end gap-5">
             {stats.map((s) => (
               <span key={s.label} className="flex flex-col items-end leading-none">
-                <span className="jx-label text-[0.58rem]">{s.label}</span>
+                <span className="jx-label text-[0.66rem]">{s.label}</span>
                 <span className="jx-num text-xs text-jx-accent">{s.value}</span>
               </span>
             ))}
             <span className="flex flex-col items-end leading-none">
-              <span className="jx-label text-[0.58rem]">{paused ? 'Wstrzymano' : 'Klatki/s'}</span>
+              <span className="jx-label text-[0.66rem]">{paused ? 'Wstrzymano' : 'Klatki/s'}</span>
               <span className="jx-num text-xs text-jx-accent">{paused ? '—' : (fps ?? '··')}</span>
             </span>
           </div>

@@ -32,7 +32,7 @@ export default function VantaWaves({ accent, hue, quality, reducedMotion, stage,
     const want = fx.options.jxWire === true
     let wire = fx.jxWireMesh as V3Object | undefined
     if (want && !wire) {
-      wire = new Mesh(plane.geometry, new MeshBasicMaterial({ wireframe: true, transparent: true, opacity: 0.42 })) as V3Object
+      wire = new Mesh(plane.geometry, new MeshBasicMaterial({ wireframe: true, transparent: true, opacity: 0.6 })) as V3Object
       fx.jxWireMesh = wire
       scene.add(wire)
     }

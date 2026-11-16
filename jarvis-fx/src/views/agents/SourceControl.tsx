@@ -66,7 +66,7 @@ export function SourceControl({ info }: { info: SourceInfo }) {
         }}
       >
         <Dialog.Trigger asChild>
-          <HudButton size="sm" icon={<IconPlugConnected />} title="Zmień źródło danych agentów">
+          <HudButton size="sm" icon={<IconPlugConnected />} aria-label="Zmień źródło danych agentów" title="Zmień źródło danych agentów">
             Źródło
           </HudButton>
         </Dialog.Trigger>

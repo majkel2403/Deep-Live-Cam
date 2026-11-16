@@ -43,8 +43,24 @@ export function useRedrawOn(params: unknown) {
   }, [key, invalidate])
 }
 
-export function Redraw({ on }: { on: unknown }) {
+/**
+ * R3F does not restart its render loop when `frameloop` switches from "demand" back to "always" (pause ends,
+ * tab becomes visible again, reduced motion is switched off), so the scene would stay frozen until something
+ * else invalidates it. Request one frame once the new prop has been applied.
+ */
+export function useResumeFrames(still: boolean) {
+  const invalidate = useThree((s) => s.invalidate)
+  useEffect(() => {
+    if (still) return
+    const id = requestAnimationFrame(() => invalidate())
+    return () => cancelAnimationFrame(id)
+  }, [still, invalidate])
+}
+
+/** Redraw on live-parameter changes, and resume the loop when the scene leaves a still state. Place inside <Canvas>. */
+export function Redraw({ on, still = false }: { on: unknown; still?: boolean }) {
   useRedrawOn(on)
+  useResumeFrames(still)
   return null
 }
 

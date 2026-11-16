@@ -252,7 +252,7 @@ export default function DataTunnel({ accent, accent2, quality, stage, paused, re
     prędkość: { value: 1.2, min: 0, max: 4, step: 0.05 },
     gęstość: { value: 1, min: 0.3, max: 1.6, step: 0.05 },
     skręt: { value: 0.6, min: 0, max: 1.5, step: 0.05 },
-    aberracja: { value: 0.003, min: 0, max: 0.012, step: 0.0005 },
+    aberracja: { value: 0.003, min: 0, max: 0.012, step: 0.0005, format: (v: number) => v.toFixed(4) },
     bloom: { value: 1.3, min: 0, max: 3, step: 0.05 },
   })
   const still = paused || reducedMotion
@@ -279,10 +279,11 @@ export default function DataTunnel({ accent, accent2, quality, stage, paused, re
       camera={{ position: [0, 0, 0], fov: 66, near: 0.05, far: 200 }}
       frameloop={still ? 'demand' : 'always'}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
+      role="img"
       aria-label="Tunel danych z pierścieniami i smugami lecącymi ku kamerze"
     >
       <color attach="background" args={['#010409']} />
-      <Redraw on={[c, accent, accent2]} />
+      <Redraw on={[c, accent, accent2]} still={still} />
       <Driver shared={shared} speed={reducedMotion ? 0 : c.prędkość} twist={c.skręt} still={still} />
       <Core shared={shared} />
       <RingLayer shared={shared} count={n(26)} inner={R * 0.985} outer={R} mode={0} seed={1} />

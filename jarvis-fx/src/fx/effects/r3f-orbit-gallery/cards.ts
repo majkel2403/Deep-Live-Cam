@@ -36,8 +36,8 @@ export function collectFacts(gl: WebGLRenderer, hue: number): CardFact[] {
   const now = new Date()
   const mem = nav.deviceMemory
   return [
-    { code: 'CPU-01', title: 'Procesor', value: String(nav.hardwareConcurrency || '—'), sub: 'rdzeni logicznych · hardwareConcurrency' },
-    { code: 'MEM-02', title: 'Pamięć RAM', value: mem ? `${mem} GB` : '—', sub: mem ? 'deviceMemory · wartość przybliżona' : 'API niedostępne w tej przeglądarce' },
+    { code: 'CPU-01', title: 'Procesor', value: String(nav.hardwareConcurrency || 'n/d'), sub: 'rdzeni logicznych · hardwareConcurrency' },
+    { code: 'MEM-02', title: 'Pamięć RAM', value: mem ? `${mem} GB` : 'n/d', sub: mem ? 'deviceMemory · wartość przybliżona' : 'API niedostępne w tej przeglądarce' },
     { code: 'DSP-03', title: 'Ekran', value: `${screen.width}×${screen.height}`, sub: `głębia koloru ${screen.colorDepth} bit` },
     { code: 'DPR-04', title: 'Gęstość pikseli', value: `${window.devicePixelRatio.toFixed(2)}×`, sub: 'devicePixelRatio' },
     { code: 'GPU-05', title: 'Procesor grafiki', value: gpu, sub: 'WEBGL_debug_renderer_info' },
@@ -200,16 +200,17 @@ export function drawCard(fact: CardFact, index: number, total: number, accent: s
   ctx.fillStyle = ink(0.7, 0.8)
   ctx.fillText(fact.sub, P + 30, P + 228)
 
-  // decorative ruler (no data)
+  // decorative ruler (no data) sits above the source footer so the two never share pixels
+  const rulerY = CARD_H - P - 40
   ctx.fillStyle = a(0.55)
   for (let i = 0; i < 40; i++) {
     const h = i % 5 === 0 ? 14 : 7
-    ctx.fillRect(P + 30 + i * 10, CARD_H - P - 30 - h, 2, h)
+    ctx.fillRect(P + 30 + i * 10, rulerY - h, 2, h)
   }
   ctx.font = '400 14px "JetBrains Mono", monospace'
   ctx.fillStyle = a(0.75)
   ctx.textAlign = 'right'
-  ctx.fillText('ŹRÓDŁO: PRZEGLĄDARKA', CARD_W - P - 26, CARD_H - P - 30)
+  ctx.fillText('ŹRÓDŁO: PRZEGLĄDARKA', CARD_W - P - 26, CARD_H - P - 14)
   ctx.textAlign = 'left'
 
   const tex = new CanvasTexture(cv)

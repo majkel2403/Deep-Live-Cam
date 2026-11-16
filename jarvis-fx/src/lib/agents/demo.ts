@@ -8,8 +8,9 @@ import type { Agent, AgentEvent, AgentLink, AgentSource, AgentStatus, AgentTask,
  * Behaviour model (tuned so a session reads like a real assistant, not a permanent fire drill):
  *  - demand rises and falls in slow waves (~2.5 min), so the swarm alternates between quiet
  *    stand-by, planning bursts (fresh tasks → owners "think") and execution (owners "run");
- *  - incidents are rare: a task fails or an agent faults roughly once every 1.5–2 minutes on
- *    average, the fault lasts a few seconds and is reported as an `error` event;
+ *  - incidents are occasional: a task fails or an agent faults roughly once every 4–6 minutes
+ *    on average (≈2–4 % of the time in ALARM), the fault lasts a few seconds and is reported as
+ *    an `error` event; at least 60 s pass between two incidents;
  *  - the simulator opens calm: no incidents in the last seconds of warm-up or the first live
  *    seconds, so the first paint is never an alarm that the data did not earn.
  */
@@ -49,12 +50,12 @@ const CALM_BEFORE = 12
 const CALM_AFTER = 20
 /** Demand wave period (simulated seconds). */
 const DEMAND_PERIOD = 150
-/** Per active task, per second. ~2–3 active tasks on average → a failure every ~3 min. */
-const TASK_FAIL_P = 0.002
-/** Whole swarm, per second: chance that one busy agent faults (→ every ~3 min). */
-const AGENT_FAULT_P = 0.006
+/** Per active task, per second. ~2–3 active tasks on average → a task failure every ~5 min. */
+const TASK_FAIL_P = 0.0012
+/** Whole swarm, per second: chance that one busy agent faults (→ every ~6 min). */
+const AGENT_FAULT_P = 0.0025
 /** Minimum simulated seconds between two incidents (no alarm storms). */
-const INCIDENT_GAP = 40
+const INCIDENT_GAP = 60
 
 const TASKS = ['Poranny briefing', 'Analiza rynku BTC', 'Refaktor modułu okien', 'Streszczenie notatek', 'Plan podróży', 'Przegląd PR', 'Transkrypcja nagrania', 'Raport dnia']
 

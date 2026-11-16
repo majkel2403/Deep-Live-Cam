@@ -150,12 +150,14 @@ function Scene({ accent, accent2, count, speed, length, still, stage, guides }: 
     return new CanvasTexture(cv)
   }, [])
   useEffect(() => () => halo.dispose(), [halo])
+  // camera height matches the <Canvas camera> prop (lower on cards, where the orbits fill less of the frame)
+  const camY = stage ? 3.4 : 2.9
   useFrame((state, dt) => {
     // pointer parallax moves the camera (not the scene) so world-space trails stay consistent
     const cam = state.camera
     const k = 1 - Math.exp(-Math.min(dt, 0.05) * 2)
     cam.position.x += (state.pointer.x * 1.6 - cam.position.x) * k
-    cam.position.y += (3.4 + state.pointer.y * 1.2 - cam.position.y) * k
+    cam.position.y += (camY + state.pointer.y * 1.2 - cam.position.y) * k
     cam.lookAt(0, 0, 0)
   })
   return (
@@ -164,7 +166,7 @@ function Scene({ accent, accent2, count, speed, length, still, stage, guides }: 
       {orbits.map((o, i) => (
         <group key={`${i}-${o.color}-${count}`}>
           {guides && <Guide o={o} />}
-          <Comet o={o} speed={speed} length={length} width={stage ? 2 : 1.6} still={still} halo={halo} />
+          <Comet o={o} speed={speed} length={length} width={stage ? 2 : 2.6} still={still} halo={halo} />
         </group>
       ))}
     </group>
@@ -176,7 +178,7 @@ export default function CometTrails({ accent, accent2, quality, stage, paused, r
     komety: { value: 9, min: 3, max: 14, step: 1 },
     prędkość: { value: 1, min: 0.1, max: 3, step: 0.05 },
     ogon: { value: 7, min: 2, max: 14, step: 0.5 },
-    aberracja: { value: 0.0025, min: 0, max: 0.012, step: 0.0005 },
+    aberracja: { value: 0.0025, min: 0, max: 0.012, step: 0.0005, format: (v: number) => v.toFixed(4) },
     bloom: { value: 1.4, min: 0, max: 3, step: 0.05 },
   })
   const still = paused || reducedMotion
@@ -184,13 +186,14 @@ export default function CometTrails({ accent, accent2, quality, stage, paused, r
   return (
     <Canvas
       dpr={dpr}
-      camera={{ position: [0, 3.4, stage ? 8.6 : 7.4], fov: 45 }}
+      camera={{ position: [0, stage ? 3.4 : 2.9, stage ? 8.6 : 6.1], fov: 45 }}
       frameloop={still ? 'demand' : 'always'}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
+      role="img"
       aria-label="Komety z ogonami krążące po orbitach eliptycznych"
     >
       <color attach="background" args={['#02060c']} />
-      <Redraw on={[c, accent, accent2]} />
+      <Redraw on={[c, accent, accent2]} still={still} />
       <Scene accent={accent} accent2={accent2} count={stage ? c.komety : 6} speed={c.prędkość} length={c.ogon} still={still} stage={stage} guides={stage || reducedMotion} />
       <Sparkles count={stage ? 160 : 50} scale={[11, 6, 11]} size={1.8} speed={still ? 0 : 0.35} color={accent} opacity={0.7} />
       <Stars radius={60} depth={30} count={stage ? 2200 : 400} factor={stage ? 3 : 2} fade speed={still ? 0 : 0.5} />

@@ -266,10 +266,11 @@ export default function HologramShader({ accent, accent2, quality, stage, paused
         camera={{ position: [0, 0.1, stage ? 6.4 : 6.1], fov: 40 }}
         frameloop={still ? 'demand' : 'always'}
         gl={{ antialias: false, powerPreference: 'high-performance' }}
+        role="img"
         aria-label="Hologram popiersia z liniami skanowania i zakłóceniami"
       >
         <color attach="background" args={['#02060c']} />
-        <Redraw on={[c, accent, accent2]} />
+        <Redraw on={[c, accent, accent2]} still={still} />
         <ambientLight intensity={0.3} />
         <pointLight position={[0, 2, 3]} intensity={6} color={accent} />
         <Clock uniforms={uniforms} still={still} />

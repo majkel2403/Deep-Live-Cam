@@ -3,6 +3,7 @@ import type { ISourceOptions } from '@tsparticles/engine'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
 import { deepBg } from '../bg-kit/color'
+import { hueToHex } from '@/lib/store'
 import { DATA_GLYPHS, GLYPH_SHAPE, hasGlyphShape, useParticlesReady } from '../particles-kit/engine'
 import { ParticlesFx } from '../particles-kit/ParticlesFx'
 import { baseOptions, budget, trailVeil } from '../particles-kit/options'
@@ -23,6 +24,8 @@ export default function ParticlesDataRain({ accent, accent2, hue, quality, reduc
     repulse: { value: true, label: 'odpychanie kursorem' },
   })
   const bg = deepBg(hue, 2.2)
+  // near-white highlight tinted by the runtime hue (never a fixed cyan)
+  const highlight = hueToHex(hue, 55, 93)
   const count = Math.round(c.density * (stage ? budget(quality, stage) : 0.2))
   const trails = !reducedMotion && c.trail > 0.02
   // the glyph shape is known only after the shared engine has initialised
@@ -36,7 +39,7 @@ export default function ParticlesDataRain({ accent, accent2, hue, quality, reduc
       background: trails ? { color: 'transparent', draw: trailVeil(bg, 1 - c.trail) } : { color: 'transparent' },
       particles: {
         number: { value: count, density: { enable: stage, width: 1200, height: 800 } },
-        paint: { fill: { enable: true, color: { value: [accent, accent, accent2, '#eafcff'] } } },
+        paint: { fill: { enable: true, color: { value: [accent, accent, accent2, highlight] } } },
         // custom glyph drawer when registered; plain squares if tsParticles was initialised elsewhere first
         shape: glyph
           ? { type: GLYPH_SHAPE, options: { [GLYPH_SHAPE]: { glyphs: c.glyphs, flicker: reducedMotion ? 0 : 0.45 } } }
@@ -59,10 +62,11 @@ export default function ParticlesDataRain({ accent, accent2, hue, quality, reduc
       interactivity: {
         detectsOn: 'window',
         events: { onHover: { enable: c.repulse && !reducedMotion, mode: 'repulse' } },
-        modes: { repulse: { distance: 110, duration: 0.4, speed: 0.6 } },
+        // the repulse bubble is sized for the stage; in a 260 px card it would clear half the field
+        modes: { repulse: { distance: stage ? 110 : 36, duration: 0.4, speed: 0.6 } },
       },
     }),
-    [accent, accent2, bg, quality, stage, count, c.speed, c.trail, c.glyphs, c.repulse, trails, glyph, reducedMotion],
+    [accent, accent2, bg, highlight, quality, stage, count, c.speed, c.trail, c.glyphs, c.repulse, trails, glyph, reducedMotion],
   )
 
   if (!ready) return <div className="absolute inset-0" style={{ background: bg }} />
@@ -73,7 +77,7 @@ export default function ParticlesDataRain({ accent, accent2, hue, quality, reduc
       stage={stage}
       background={bg}
       code="PTC/DATA-RAIN"
-      hint={glyph ? 'Własny kształt „jx-glyph” · kursor odpycha strumień' : 'Tryb zastępczy: kwadraty (kształt glifów niedostępny)'}
+      hint={glyph ? 'Glify rysowane własnym kształtem · kursor odpycha strumień' : 'Tryb zastępczy: kwadraty (kształt glifów niedostępny)'}
       stats={[{ label: 'Znaki', value: count }]}
       label="Pionowy strumień migoczących znaków"
     />

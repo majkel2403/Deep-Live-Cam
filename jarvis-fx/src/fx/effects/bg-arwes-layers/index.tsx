@@ -147,7 +147,7 @@ export default function ArwesLayers({ hue, reducedMotion, stage, paused }: FxPro
                 <li key={l.id} className="flex items-center gap-2 text-xs">
                   <StatusDot tone={enabled[l.id] ? 'ok' : 'dim'} pulse={enabled[l.id] && (state === 'entering' || state === 'exiting')} />
                   <span className="font-ui text-jx-text">{l.label}</span>
-                  <span className="jx-num ml-auto truncate text-[0.6rem] text-jx-dim">{l.api}</span>
+                  <span className="jx-num ml-auto truncate text-[0.66rem] text-jx-dim">{l.api}</span>
                 </li>
               ))}
             </ul>

@@ -12,7 +12,7 @@ export default function VantaHalo({ accent, accent2, hue, quality, reducedMotion
     size: { value: 1.4, min: 0.5, max: 2.6, step: 0.05, label: 'rozmiar' },
     amplitudeFactor: { value: 1.2, min: 0, max: 3, step: 0.05, label: 'amplituda' },
     speed: { value: 1, min: 0.1, max: 2.5, step: 0.05, label: 'prędkość' },
-    xOffset: { value: 0.15, min: -0.5, max: 0.5, step: 0.01, label: 'przesunięcie X' },
+    xOffset: { value: 0.04, min: -0.5, max: 0.5, step: 0.01, label: 'przesunięcie X' },
     tint: { value: 0.75, min: 0, max: 1, step: 0.05, label: 'barwienie akcentem' },
   })
   const bg = deepBg(hue, 2.5)

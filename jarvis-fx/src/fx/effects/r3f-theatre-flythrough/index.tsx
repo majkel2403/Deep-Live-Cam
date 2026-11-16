@@ -377,7 +377,7 @@ export default function TheatreFlythrough({ accent, accent2, quality, stage, pau
   const c = useFxControls({
     tempo: { value: 1, min: 0.25, max: 2, step: 0.05 },
     mgła: { value: 72, min: 30, max: 130, step: 1, label: 'zasięg mgły' },
-    wysokość: { value: 1, min: 0.4, max: 2, step: 0.05, label: 'wysokość zabudowy' },
+    wysokość: { value: 1, min: 0.4, max: 2, step: 0.05, label: 'zabudowa' },
     ruch: { value: true, label: 'ruch uliczny' },
     bloom: { value: 1.2, min: 0, max: 3, step: 0.05 },
   })
@@ -385,10 +385,11 @@ export default function TheatreFlythrough({ accent, accent2, quality, stage, pau
   const dpr: [number, number] = quality === 'high' ? [1, 2] : quality === 'med' ? [1, 1.5] : [1, 1]
   const uTime = useMemo(() => ({ value: 0 }), [])
   // sequence position goes straight to the overlay (re-rendering the whole canvas tree 8×/s is wasteful)
-  const tick = useMemo(() => {
-    let listener: ((p: number) => void) | null = null
-    return { set: (fn: ((p: number) => void) | null) => void (listener = fn), emit: (p: number) => listener?.(p) }
-  }, [])
+  const listener = useRef<((p: number) => void) | null>(null)
+  const tick = useMemo(
+    () => ({ set: (fn: ((p: number) => void) | null) => void (listener.current = fn), emit: (p: number) => listener.current?.(p) }),
+    [],
+  )
   return (
     <div className="absolute inset-0">
       <Canvas
@@ -396,10 +397,11 @@ export default function TheatreFlythrough({ accent, accent2, quality, stage, pau
         camera={{ position: [CAMERA_DEFAULTS.x, CAMERA_DEFAULTS.y, CAMERA_DEFAULTS.z], fov: CAMERA_DEFAULTS.fov, near: 0.1, far: 400 }}
         frameloop={still ? 'demand' : 'always'}
         gl={{ antialias: false, powerPreference: 'high-performance' }}
+        role="img"
         aria-label="Przelot kamery nad neonowym miastem"
       >
         <color attach="background" args={[BG]} />
-        <Redraw on={[c, accent, accent2]} />
+        <Redraw on={[c, accent, accent2]} still={still} />
         <Clock uTime={uTime} still={still} />
         <Flight rate={c.tempo} still={still} reducedMotion={reducedMotion} onTick={tick.emit} />
         <Sky accent={accent} />

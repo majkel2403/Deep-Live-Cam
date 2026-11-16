@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Environment, Lightformer, MeshTransmissionMaterial, Sparkles } from '@react-three/drei'
 import { Bloom, ChromaticAberration, Noise, Vignette } from '@react-three/postprocessing'
@@ -194,21 +194,25 @@ function Backdrop({ accent, count, still }: { accent: string; count: number; sti
     return g
   }, [])
   useEffect(() => () => ticks.dispose(), [ticks])
-  const place = (t: number) => {
-    const m = bars.current
-    if (!m) return
-    for (let i = 0; i < count; i++) {
-      const a = (i / count) * Math.PI * 2
-      const h = seeds[i] * (0.75 + 0.25 * Math.sin(t * 1.3 + i * 0.7))
-      dummy.position.set(Math.cos(a) * (3.4 + h * 0.4), Math.sin(a) * (3.4 + h * 0.4), 0)
-      dummy.rotation.set(0, 0, a - Math.PI / 2)
-      dummy.scale.set(1, h * 0.8, 1)
-      dummy.updateMatrix()
-      m.setMatrixAt(i, dummy.matrix)
-    }
-    m.instanceMatrix.needsUpdate = true
-  }
-  useLayoutEffect(() => place(0))
+  const place = useCallback(
+    (t: number) => {
+      const m = bars.current
+      if (!m) return
+      for (let i = 0; i < count; i++) {
+        const a = (i / count) * Math.PI * 2
+        const h = seeds[i] * (0.75 + 0.25 * Math.sin(t * 1.3 + i * 0.7))
+        dummy.position.set(Math.cos(a) * (3.4 + h * 0.4), Math.sin(a) * (3.4 + h * 0.4), 0)
+        dummy.rotation.set(0, 0, a - Math.PI / 2)
+        dummy.scale.set(1, h * 0.8, 1)
+        dummy.updateMatrix()
+        m.setMatrixAt(i, dummy.matrix)
+      }
+      m.instanceMatrix.needsUpdate = true
+    },
+    [count, seeds, dummy],
+  )
+  // initial bar layout before the first frame (re-runs only when the instance count changes)
+  useLayoutEffect(() => place(0), [place])
   useFrame((state) => {
     if (!still) place(state.clock.elapsedTime)
   })
@@ -262,10 +266,11 @@ export default function GlassShard({ accent, accent2, quality, stage, paused, re
       camera={{ position: [0, 0.2, stage ? 6.4 : 7], fov: 40 }}
       frameloop={still ? 'demand' : 'always'}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
+      role="img"
       aria-label="Obracający się szklany kryształ w pierścieniach światła"
     >
       <color attach="background" args={['#02060c']} />
-      <Redraw on={[c, accent, accent2]} />
+      <Redraw on={[c, accent, accent2]} still={still} />
       <ambientLight intensity={0.25} />
       <directionalLight position={[3, 4, 5]} intensity={1.5} />
       <Environment key={accent} resolution={hq ? 256 : 128} frames={1}>

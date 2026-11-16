@@ -60,7 +60,7 @@ function ModeSegments({ mode, reducedMotion }: { mode: CoreMode; reducedMotion: 
 
 function Stat({ label, children, unit, tone = 'accent', hint }: { label: string; children: ReactNode; unit?: string; tone?: Tone; hint?: string }) {
   return (
-    <div className="flex flex-col shrink-0 min-w-0 px-2.5 2xl:px-3.5 border-l border-jx-line/50 first:border-l-0 max-sm:[&:nth-child(3n+1)]:border-l-0" title={hint}>
+    <div className="flex flex-col shrink-0 min-w-0 px-2 xl:px-2.5 2xl:px-3.5 border-l border-jx-line/50 first:border-l-0 max-sm:[&:nth-child(3n+1)]:border-l-0" title={hint}>
       <span className="jx-label text-[0.625rem] whitespace-nowrap">{label}</span>
       <span className={`jx-num text-[1.02rem] leading-tight jx-glow-text ${TEXT_TONE[tone]} whitespace-nowrap`}>
         {children}
@@ -109,7 +109,7 @@ export function StatusStrip({
   return (
     <header
       data-augmented-ui="tl-clip br-clip tr-clip bl-clip b-clip-x border"
-      className="bx-strip jx-aug flex flex-wrap lg:flex-nowrap items-center gap-x-4 gap-y-2 px-4 py-2"
+      className="bx-strip jx-aug flex flex-wrap lg:flex-nowrap items-center gap-x-3 xl:gap-x-4 gap-y-2 px-4 py-2"
       aria-label="Pasek stanu misji"
     >
       <div className="flex items-center gap-3 shrink-0">
@@ -157,7 +157,7 @@ export function StatusStrip({
         </span>
         <Stat label="Błędy · 5 min" tone={agg.errored || agg.errors5m ? 'danger' : 'dim'} hint={`Zdarzenia błędu w ostatnich 5 minutach · agenci w stanie błędu teraz: ${agg.errored}`}>
           <AnimatedNumber value={agg.errors5m} />
-          {agg.errored > 0 && <span className="text-[0.62em] ml-1">({agg.errored} akt.)</span>}
+          {agg.errored > 0 && <span className="hidden xl:inline text-[0.62em] ml-1">({agg.errored} akt.)</span>}
         </Stat>
       </div>
 

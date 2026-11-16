@@ -133,7 +133,7 @@ export default function HoloCore({ accent, accent2, quality, stage, paused, redu
   const c = useFxControls({
     speed: { value: 1, min: 0, max: 4, step: 0.1, label: 'prędkość' },
     bloom: { value: 1.5, min: 0, max: 4, step: 0.1 },
-    aberration: { value: 0.0015, min: 0, max: 0.01, step: 0.0005, label: 'aberracja' },
+    aberration: { value: 0.0015, min: 0, max: 0.01, step: 0.0005, label: 'aberracja', format: (v: number) => v.toFixed(4) },
     scanlines: { value: 0.25, min: 0, max: 1, step: 0.05, label: 'skanlinie' },
     sparkles: { value: true, label: 'iskry' },
   })
@@ -145,10 +145,11 @@ export default function HoloCore({ accent, accent2, quality, stage, paused, redu
       camera={{ position: [0, 0, stage ? 6.6 : 6.2], fov: 45 }}
       frameloop={still ? 'demand' : 'always'}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
+      role="img"
       aria-label="Holograficzny rdzeń z pierścieniami orbit"
     >
       <color attach="background" args={['#02060c']} />
-      <Redraw on={[c, accent, accent2]} />
+      <Redraw on={[c, accent, accent2]} still={still} />
       <Core accent={accent} accent2={accent2} speed={c.speed} paused={still} />
       <Dial accent={accent} accent2={accent2} speed={c.speed} paused={still} />
       {c.sparkles && <Sparkles count={stage ? 120 : 30} scale={5} size={2} speed={still ? 0 : 0.4} color={accent} />}

@@ -11,7 +11,7 @@ const load = () => import('vanta/dist/vanta.globe.min')
 
 export default function VantaGlobe({ accent, accent2, hue, quality, reducedMotion, stage, paused }: FxProps) {
   const c = useFxControls({
-    size: { value: 1.1, min: 0.6, max: 1.6, step: 0.05, label: 'rozmiar kuli' },
+    size: { value: 0.95, min: 0.6, max: 1.6, step: 0.05, label: 'rozmiar kuli' },
     points: { value: 10, min: 5, max: 14, step: 1, label: 'węzły / oś' },
     maxDistance: { value: 20, min: 10, max: 30, step: 1, label: 'zasięg połączeń' },
     showDots: { value: true, label: 'pokaż węzły' },

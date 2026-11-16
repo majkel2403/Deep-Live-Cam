@@ -229,7 +229,7 @@ function HudPanel({ accent, accent2, alpha, still, compact, reduced }: PanelProp
               BUDŻET KLATKI 60 HZ
             </Text>
             <Text fontSize={11} color={budget > 100 ? '#ffb000' : accent2}>
-              {m.ms ? `${budget.toFixed(0)}%` : '—'}
+              {m.ms ? (budget > 999 ? '>999%' : `${budget.toFixed(0)}%`) : '—'}
             </Text>
           </Container>
         )}
@@ -241,10 +241,10 @@ function HudPanel({ accent, accent2, alpha, still, compact, reduced }: PanelProp
       {/* environment */}
       <Container flexDirection="row" justifyContent="space-between" marginTop={2} display={compact ? 'none' : 'flex'}>
         {[
-          ['RDZENIE', String(navigator.hardwareConcurrency || '—')],
-          ['PAMIĘĆ', nav.deviceMemory ? `${nav.deviceMemory} GB` : '—'],
+          ['RDZENIE', String(navigator.hardwareConcurrency || 'n/d')],
+          ['PAMIĘĆ', nav.deviceMemory ? `${nav.deviceMemory} GB` : 'n/d'],
           ['DPR', window.devicePixelRatio.toFixed(2)],
-          ['STERTA JS', m.heapMb !== null ? `${m.heapMb.toFixed(0)} MB` : '—'],
+          ['STERTA JS', m.heapMb !== null ? `${m.heapMb.toFixed(0)} MB` : 'n/d'],
           ['CZAS PRACY', up],
         ]
           .map(([k, v]) => (
@@ -366,11 +366,12 @@ export default function UikitPanel({ accent, accent2, quality, stage, paused, re
       dpr={dpr}
       camera={{ position: [0, 0.35, stage ? 6.9 : 6.4], fov: 42 }}
       frameloop={still ? 'demand' : 'always'}
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
+      gl={{ antialias: stage, powerPreference: 'high-performance' }}
+      role="img"
       aria-label="Trójwymiarowy panel diagnostyczny z pomiarami klatek"
     >
       <color attach="background" args={['#02060c']} />
-      <Redraw on={[c, accent, accent2]} />
+      <Redraw on={[c, accent, accent2]} still={still} />
       <fog attach="fog" args={['#02060c', 8, 22]} />
       <Scene accent={accent} accent2={accent2} alpha={c.tło} tilt={c.pochylenie} grid={c.siatka} still={still} stage={stage} reduced={reducedMotion} />
       <HudComposer>

@@ -390,10 +390,11 @@ export default function HoloGlobe({ accent, accent2, quality, stage, paused, red
         camera={{ position: [0, 0, stage ? 6.6 : 5.6], fov: 42 }}
         frameloop={still ? 'demand' : 'always'}
         gl={{ antialias: false, powerPreference: 'high-performance' }}
+        role="img"
         aria-label="Holograficzny glob z punktami lądów i łukami połączeń"
       >
         <color attach="background" args={['#02060c']} />
-        <Redraw on={[c, accent, accent2]} />
+        <Redraw on={[c, accent, accent2]} still={still} />
         <Globe accent={accent} accent2={accent2} speed={c.obrót} arcs={stage ? c.łuki : 7} dotSize={c.punkty * (stage ? 1 : 1.1)} atmo={c.atmosfera} still={still} stage={stage} />
         <Stars radius={50} depth={25} count={stage ? 1800 : 500} factor={2.5} fade speed={still ? 0 : 0.4} />
         <HudComposer>

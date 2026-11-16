@@ -35,7 +35,7 @@ interface Visual {
   labelKey: string
   /** drawn width of the widest label line (canvas px) – used for screen-space decluttering */
   labelW: number
-  /** label opacity the per-frame easing heads to (dimmed when it overlaps a nearer label) */
+  /** label opacity the per-frame easing heads to (faded out when it overlaps a nearer label) */
   labelAlpha: number
   targetScale: number
   targetColor: THREE.Color
@@ -255,7 +255,8 @@ export function createNodeKit(quality: Quality) {
     },
     /**
      * Screen-space declutter: labels are tested nearest-first; one that overlaps an already placed
-     * label is dimmed (the selected agent always stays fully visible and wins the overlap test).
+     * label fades out (the node dot stays, its name is in the tooltip and the roster). The selected
+     * agent always stays fully visible and wins the overlap test.
      */
     declutter(camera: THREE.Camera, viewW: number, viewH: number) {
       if (viewW <= 0 || viewH <= 0) return
@@ -276,7 +277,7 @@ export function createNodeKit(quality: Quality) {
       const placed: { l: number; r: number; t: number; b: number }[] = []
       for (const it of items) {
         const hit = !it.behind && placed.some((p) => it.r.l < p.r && it.r.r > p.l && it.r.t < p.b && it.r.b > p.t)
-        it.v.labelAlpha = hit ? 0.16 : 1
+        it.v.labelAlpha = hit ? 0 : 1
         if (!hit) placed.push(it.r)
       }
     },

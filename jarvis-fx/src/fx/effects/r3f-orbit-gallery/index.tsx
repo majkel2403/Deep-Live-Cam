@@ -311,10 +311,11 @@ export default function OrbitGallery({ accent, accent2, hue, quality, stage, pau
       camera={{ position: [0, 1.35, stage ? 7.4 : 7.0], fov: 42 }}
       frameloop={still ? 'demand' : 'always'}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
+      role="img"
       aria-label="Galeria orbitalna: karty z parametrami przeglądarki krążące wokół rdzenia"
     >
       <color attach="background" args={['#02060c']} />
-      <Redraw on={[c, accent, accent2]} />
+      <Redraw on={[c, accent, accent2]} still={still} />
       <Scene
         accent={accent}
         accent2={accent2}

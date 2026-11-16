@@ -275,10 +275,11 @@ export default function SpringReactor({ accent, accent2, quality, stage, paused,
         camera={{ position: [0, 0, stage ? 7.2 : 7.6], fov: 42 }}
         frameloop={still ? 'demand' : 'always'}
         gl={{ antialias: false, powerPreference: 'high-performance' }}
+        role="img"
         aria-label={`Reaktor łukowy, faza: ${PHASE_LABEL[phase]}`}
       >
         <color attach="background" args={['#02060c']} />
-        <Redraw on={[c, accent, accent2]} />
+        <Redraw on={[c, accent, accent2]} still={still} />
         <ambientLight intensity={0.25} />
         <directionalLight position={[-3, 4, 5]} intensity={1.6} />
         <Environment key={accent} resolution={128} frames={1}>
@@ -301,7 +302,7 @@ export default function SpringReactor({ accent, accent2, quality, stage, paused,
         </HudComposer>
       </Canvas>
       {stage && (
-        <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1.5" aria-live="polite">
+        <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1.5">
           <span className="jx-label text-jx-accent">Cykl reaktora · sprężyny fizyczne</span>
           <div className="flex gap-1">
             {PHASES.map((p) => (
