@@ -5,6 +5,7 @@ import type { ISheet, ISheetObject, IRafDriver } from '@theatre/core'
 import { BackSide, BoxGeometry, Color, InstancedBufferAttribute, Matrix4, Vector3, type Group, type InstancedMesh, type PerspectiveCamera } from 'three'
 import { HudComposer } from '@/fx/three/HudComposer'
 import { useFxControls } from '@/fx/controls'
+import { Redraw, uniformArgs } from '../r3f-kit/util'
 import type { FxProps } from '@/fx/types'
 import { CAMERA_DEFAULTS, CITY_PERIOD, OBJECT_KEY, SEQ_LENGTH, SHEET_ID, createRafDriver, getFlythroughProject } from './sequence'
 
@@ -144,7 +145,7 @@ function City({ accent, accent2, cols, heightMul, fogFar, uTime }: { accent: str
   }, [lots, heightMul])
   return (
     <instancedMesh ref={ref} args={[geo, undefined, lots.length]} frustumCulled={false}>
-      <shaderMaterial vertexShader={bVert} fragmentShader={bFrag} uniforms={uniforms} />
+      <shaderMaterial vertexShader={bVert} fragmentShader={bFrag} args={uniformArgs(uniforms)} />
     </instancedMesh>
   )
 }
@@ -194,7 +195,7 @@ function Ground({ accent, fogFar, uTime }: { accent: string; fogFar: number; uTi
   return (
     <mesh rotation-x={-Math.PI / 2} position={[0, 0, (Z_MAX + Z_MIN) / 2]}>
       <planeGeometry args={[220, Z_MAX - Z_MIN + 40]} />
-      <shaderMaterial vertexShader={gVert} fragmentShader={gFrag} uniforms={uniforms} />
+      <shaderMaterial vertexShader={gVert} fragmentShader={gFrag} args={uniformArgs(uniforms)} />
     </mesh>
   )
 }
@@ -249,7 +250,7 @@ function Traffic({ accent, count, fogFar, uTime }: { accent: string; count: numb
   uniforms.uFogFar.value = fogFar
   return (
     <instancedMesh args={[geo, undefined, count]} frustumCulled={false}>
-      <shaderMaterial vertexShader={tVert} fragmentShader={tFrag} uniforms={uniforms} toneMapped={false} />
+      <shaderMaterial vertexShader={tVert} fragmentShader={tFrag} args={uniformArgs(uniforms)} toneMapped={false} />
     </instancedMesh>
   )
 }
@@ -287,7 +288,7 @@ function Sky({ accent }: { accent: string }) {
     <group ref={ref}>
       <mesh renderOrder={-10}>
         <sphereGeometry args={[150, 32, 16]} />
-        <shaderMaterial vertexShader={skyVert} fragmentShader={skyFrag} uniforms={uniforms} side={BackSide} depthWrite={false} />
+        <shaderMaterial vertexShader={skyVert} fragmentShader={skyFrag} args={uniformArgs(uniforms)} side={BackSide} depthWrite={false} />
       </mesh>
     </group>
   )
@@ -383,7 +384,11 @@ export default function TheatreFlythrough({ accent, accent2, quality, stage, pau
   const still = paused || reducedMotion
   const dpr: [number, number] = quality === 'high' ? [1, 2] : quality === 'med' ? [1, 1.5] : [1, 1]
   const uTime = useMemo(() => ({ value: 0 }), [])
-  const [pos, setPos] = useState(0)
+  // sequence position goes straight to the overlay (re-rendering the whole canvas tree 8×/s is wasteful)
+  const tick = useMemo(() => {
+    let listener: ((p: number) => void) | null = null
+    return { set: (fn: ((p: number) => void) | null) => void (listener = fn), emit: (p: number) => listener?.(p) }
+  }, [])
   return (
     <div className="absolute inset-0">
       <Canvas
@@ -394,8 +399,9 @@ export default function TheatreFlythrough({ accent, accent2, quality, stage, pau
         aria-label="Przelot kamery nad neonowym miastem"
       >
         <color attach="background" args={[BG]} />
+        <Redraw on={[c, accent, accent2]} />
         <Clock uTime={uTime} still={still} />
-        <Flight rate={c.tempo} still={still} reducedMotion={reducedMotion} onTick={stage ? setPos : () => {}} />
+        <Flight rate={c.tempo} still={still} reducedMotion={reducedMotion} onTick={tick.emit} />
         <Sky accent={accent} />
         <Ground accent={accent} fogFar={c.mgła} uTime={uTime} />
         <City accent={accent} accent2={accent2} cols={stage ? 11 : 7} heightMul={c.wysokość} fogFar={c.mgła} uTime={uTime} />
@@ -410,20 +416,29 @@ export default function TheatreFlythrough({ accent, accent2, quality, stage, pau
             : [<Bloom key="b" intensity={c.bloom * 0.8} luminanceThreshold={0.25} luminanceSmoothing={0.3} mipmapBlur />]}
         </HudComposer>
       </Canvas>
-      {stage && (
-        <div className="pointer-events-none absolute left-3 top-3 flex w-64 flex-col gap-1 whitespace-nowrap">
-          <span className="jx-label text-jx-accent">Sekwencja Theatre.js · kamera</span>
-          <div className="flex items-center justify-between gap-3">
-            <span className="jx-label text-[0.65rem] text-jx-dim">klatki kluczowe w kodzie</span>
-            <span className="jx-num text-[0.7rem] text-jx-text">
-              {pos.toFixed(1).padStart(4, '0')} / {SEQ_LENGTH.toFixed(1)} s
-            </span>
-          </div>
-          <div className="h-1 w-full bg-jx-line/40">
-            <div className="h-full bg-jx-accent" style={{ width: `${(pos / SEQ_LENGTH) * 100}%` }} />
-          </div>
-        </div>
-      )}
+      {stage && <Timeline tick={tick} />}
+    </div>
+  )
+}
+
+function Timeline({ tick }: { tick: { set: (fn: ((p: number) => void) | null) => void } }) {
+  const [pos, setPos] = useState(0)
+  useEffect(() => {
+    tick.set(setPos)
+    return () => tick.set(null)
+  }, [tick])
+  return (
+    <div className="pointer-events-none absolute left-3 top-3 flex w-64 flex-col gap-1 whitespace-nowrap border-l-2 border-jx-accent/70 bg-jx-bg/60 px-2.5 py-2">
+      <span className="jx-label text-jx-accent">Sekwencja Theatre.js · kamera</span>
+      <div className="flex items-center justify-between gap-3">
+        <span className="jx-label text-[0.65rem] text-jx-dim">klatki kluczowe w kodzie</span>
+        <span className="jx-num text-[0.7rem] text-jx-text">
+          {pos.toFixed(1).padStart(4, '0')} / {SEQ_LENGTH.toFixed(1)} s
+        </span>
+      </div>
+      <div className="h-1 w-full bg-jx-line/40" role="progressbar" aria-label="Postęp sekwencji kamery" aria-valuemin={0} aria-valuemax={SEQ_LENGTH} aria-valuenow={Math.round(pos * 10) / 10}>
+        <div className="h-full bg-jx-accent" style={{ width: `${(pos / SEQ_LENGTH) * 100}%` }} />
+      </div>
     </div>
   )
 }

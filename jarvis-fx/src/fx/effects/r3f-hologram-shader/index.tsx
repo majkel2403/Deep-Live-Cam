@@ -5,6 +5,7 @@ import { BlendFunction, GlitchMode } from 'postprocessing'
 import { AdditiveBlending, BufferAttribute, BufferGeometry, Color, DoubleSide, FrontSide, TorusKnotGeometry, Vector2, type Group } from 'three'
 import { HudComposer } from '@/fx/three/HudComposer'
 import { useFxControls } from '@/fx/controls'
+import { Redraw, uniformArgs } from '../r3f-kit/util'
 import type { FxProps } from '@/fx/types'
 import { makeHead, makeShoulders } from './bust'
 
@@ -82,11 +83,11 @@ function HoloMesh({ geometry, uniforms, prepass }: { geometry: BufferGeometry; u
     <>
       {prepass && (
         <mesh geometry={geometry} renderOrder={0}>
-          <shaderMaterial vertexShader={holoVert} fragmentShader={depthFrag} uniforms={uniforms} colorWrite={false} />
+          <shaderMaterial vertexShader={holoVert} fragmentShader={depthFrag} args={uniformArgs(uniforms)} colorWrite={false} />
         </mesh>
       )}
       <mesh geometry={geometry} renderOrder={1}>
-        <shaderMaterial vertexShader={holoVert} fragmentShader={holoFrag} uniforms={uniforms} transparent depthWrite={false} blending={AdditiveBlending} side={prepass ? FrontSide : DoubleSide} />
+        <shaderMaterial vertexShader={holoVert} fragmentShader={holoFrag} args={uniformArgs(uniforms)} transparent depthWrite={false} blending={AdditiveBlending} side={prepass ? FrontSide : DoubleSide} />
       </mesh>
     </>
   )
@@ -171,7 +172,7 @@ function Projector({ accent, still, motes }: { accent: string; still: boolean; m
     <group position-y={-2.05}>
       <mesh rotation-x={-Math.PI / 2}>
         <planeGeometry args={[2.6, 2.6]} />
-        <shaderMaterial vertexShader={uvVert} fragmentShader={padFrag} uniforms={u} transparent depthWrite={false} blending={AdditiveBlending} />
+        <shaderMaterial vertexShader={uvVert} fragmentShader={padFrag} args={uniformArgs(u)} transparent depthWrite={false} blending={AdditiveBlending} />
       </mesh>
       <mesh position-y={-0.08}>
         <cylinderGeometry args={[1.32, 1.4, 0.14, 64, 1]} />
@@ -179,10 +180,10 @@ function Projector({ accent, still, motes }: { accent: string; still: boolean; m
       </mesh>
       <mesh position-y={1.7}>
         <cylinderGeometry args={[1.9, 0.62, 3.4, 64, 1, true]} />
-        <shaderMaterial vertexShader={uvVert} fragmentShader={coneFrag} uniforms={u} transparent depthWrite={false} blending={AdditiveBlending} side={DoubleSide} />
+        <shaderMaterial vertexShader={uvVert} fragmentShader={coneFrag} args={uniformArgs(u)} transparent depthWrite={false} blending={AdditiveBlending} side={DoubleSide} />
       </mesh>
       <points geometry={moteGeo} frustumCulled={false}>
-        <shaderMaterial vertexShader={moteVert} fragmentShader={moteFrag} uniforms={u} transparent depthWrite={false} blending={AdditiveBlending} />
+        <shaderMaterial vertexShader={moteVert} fragmentShader={moteFrag} args={uniformArgs(u)} transparent depthWrite={false} blending={AdditiveBlending} />
       </points>
     </group>
   )
@@ -262,12 +263,13 @@ export default function HologramShader({ accent, accent2, quality, stage, paused
     <div className="absolute inset-0">
       <Canvas
         dpr={dpr}
-        camera={{ position: [0, 0.1, stage ? 6.4 : 7], fov: 40 }}
+        camera={{ position: [0, 0.1, stage ? 6.4 : 6.1], fov: 40 }}
         frameloop={still ? 'demand' : 'always'}
         gl={{ antialias: false, powerPreference: 'high-performance' }}
         aria-label="Hologram popiersia z liniami skanowania i zakłóceniami"
       >
         <color attach="background" args={['#02060c']} />
+        <Redraw on={[c, accent, accent2]} />
         <ambientLight intensity={0.3} />
         <pointLight position={[0, 2, 3]} intensity={6} color={accent} />
         <Clock uniforms={uniforms} still={still} />

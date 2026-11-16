@@ -20,6 +20,8 @@ export interface BridgeAggregates {
   tasksDone: number
   tasksFailed: number
   eventsPerMin: number
+  /** error events in the last 5 minutes (what the ALARM state reacts to) */
+  errors5m: number
   lastEvent: AgentEvent | null
 }
 
@@ -39,6 +41,7 @@ const EMPTY: BridgeAggregates = {
   tasksDone: 0,
   tasksFailed: 0,
   eventsPerMin: 0,
+  errors5m: 0,
   lastEvent: null,
 }
 
@@ -64,6 +67,7 @@ export function aggregate(snap: OrchestrationSnapshot | null): BridgeAggregates 
     tasksDone: snap.tasks.filter((t) => t.state === 'done').length,
     tasksFailed: snap.tasks.filter((t) => t.state === 'failed').length,
     eventsPerMin: snap.events.filter((e) => e.ts > now - 60_000).length,
+    errors5m: snap.events.filter((e) => e.level === 'error' && e.ts > now - 300_000).length,
     lastEvent: snap.events.at(-1) ?? null,
   }
 }
@@ -108,7 +112,7 @@ export function useBridgeState(snapshot: OrchestrationSnapshot | null, status: '
   const agg = useMemo(() => aggregate(snapshot), [snapshot])
   const [mode, setMode] = useState<CoreMode>('standby')
   const [seq, setSeq] = useState({ eventSeq: 0, errorSeq: 0 })
-  const held = useRef({ mode: 'standby' as CoreMode, candidate: 'standby' as CoreMode, since: 0, lockUntil: 0 })
+  const held = useRef({ mode: 'standby' as CoreMode, candidate: 'standby' as CoreMode, since: 0, lockUntil: 0, settled: false })
   const seen = useRef<{ lastId: string | null; lastTs: number; primed: boolean }>({ lastId: null, lastTs: 0, primed: false })
   const lastAlert = useRef(0)
   const [liveSince] = useState(() => Date.now())
@@ -120,7 +124,14 @@ export function useBridgeState(snapshot: OrchestrationSnapshot | null, status: '
     // --- mode with hysteresis -----------------------------------------------------------
     const raw = status === 'live' ? rawMode(snapshot, agg) : 'standby'
     const h = held.current
-    if (raw === 'alarm' && h.mode !== 'alarm') {
+    if (!h.settled && status === 'live') {
+      // first live snapshot: adopt its mode at once (no hysteresis to sit through at first paint)
+      h.settled = true
+      h.mode = raw
+      h.candidate = raw
+      h.lockUntil = now + (raw === 'alarm' ? ALARM_HOLD_MS : HOLD_MS)
+      setMode(raw)
+    } else if (raw === 'alarm' && h.mode !== 'alarm') {
       h.mode = 'alarm'
       h.candidate = 'alarm'
       h.lockUntil = now + ALARM_HOLD_MS

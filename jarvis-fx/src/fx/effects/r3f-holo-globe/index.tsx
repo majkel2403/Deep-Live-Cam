@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Line, Stars } from '@react-three/drei'
 import { Bloom, Noise, Vignette } from '@react-three/postprocessing'
-import { AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, QuadraticBezierCurve3, Quaternion, Vector3, type Group, type Mesh, type MeshBasicMaterial } from 'three'
+import { AdditiveBlending, BackSide, BufferAttribute, BufferGeometry, Color, QuadraticBezierCurve3, Quaternion, Vector3, type Group, type Mesh, type MeshBasicMaterial, type PerspectiveCamera } from 'three'
 import type { Line2, LineMaterial } from 'three-stdlib'
 import { HudComposer } from '@/fx/three/HudComposer'
 import { useFxControls } from '@/fx/controls'
+import { Redraw, uniformArgs, useFitAspect } from '../r3f-kit/util'
 import type { FxProps } from '@/fx/types'
 import { LAND_B64, LAND_H, LAND_W } from './landmask'
 
@@ -60,13 +61,15 @@ const LINKS: [number, number][] = [
 const dotVert = /* glsl */ `
   uniform float uSize;
   uniform float uTime;
-  uniform float uPr;
+  uniform float uPx;
+  uniform float uSpacing;
   attribute float aRand;
   varying float vBright;
   void main() {
     vec4 mv = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mv;
-    gl_PointSize = uSize * uPr * (30.0 / -mv.z);
+    // dot size = fraction of the projected sample spacing, so cards and the stage keep the same look
+    gl_PointSize = max(1.5, uSize * uSpacing * uPx / -mv.z);
     float lon = atan(position.x, position.z);
     float band = pow(0.5 + 0.5 * cos(lon - uTime * 0.55), 24.0);
     vBright = 0.85 + 0.25 * sin(uTime * 1.3 + aRand * 40.0) + band * 1.4;
@@ -89,6 +92,8 @@ const dotFrag = /* glsl */ `
 
 function LandDots({ accent, count, size, still }: { accent: string; count: number; size: number; still: boolean }) {
   const pr = useThree((s) => s.viewport.dpr)
+  const height = useThree((s) => s.size.height)
+  const fov = useThree((s) => (s.camera as PerspectiveCamera).fov)
   const geo = useMemo(() => {
     const pts: number[] = []
     const rnd: number[] = []
@@ -109,16 +114,18 @@ function LandDots({ accent, count, size, still }: { accent: string; count: numbe
     return g
   }, [count])
   useEffect(() => () => geo.dispose(), [geo])
-  const uniforms = useMemo(() => ({ uColor: { value: new Color() }, uTime: { value: 2 }, uSize: { value: 1 }, uPr: { value: 1 } }), [])
+  const uniforms = useMemo(() => ({ uColor: { value: new Color() }, uTime: { value: 2 }, uSize: { value: 1 }, uPx: { value: 1 }, uSpacing: { value: 0.05 } }), [])
   uniforms.uColor.value.set(accent)
-  uniforms.uSize.value = size
-  uniforms.uPr.value = pr
+  uniforms.uSize.value = size * 0.65
+  // drawing-buffer pixels per world unit at distance 1, and the mean angular spacing of the samples
+  uniforms.uPx.value = (height * pr) / (2 * Math.tan((fov * Math.PI) / 360))
+  uniforms.uSpacing.value = Math.sqrt((4 * Math.PI) / count) * R
   useFrame((_, dt) => {
     if (!still) uniforms.uTime.value += Math.min(dt, 0.05)
   })
   return (
     <points geometry={geo}>
-      <shaderMaterial vertexShader={dotVert} fragmentShader={dotFrag} uniforms={uniforms} transparent depthWrite={false} blending={AdditiveBlending} toneMapped={false} />
+      <shaderMaterial vertexShader={dotVert} fragmentShader={dotFrag} args={uniformArgs(uniforms)} transparent depthWrite={false} blending={AdditiveBlending} toneMapped={false} />
     </points>
   )
 }
@@ -189,11 +196,11 @@ function Atmosphere({ accent, strength }: { accent: string; strength: number }) 
     <>
       <mesh>
         <sphereGeometry args={[R * 1.01, 64, 64]} />
-        <shaderMaterial vertexShader={rimVert} fragmentShader={rimFrag} uniforms={rim} transparent depthWrite={false} blending={AdditiveBlending} />
+        <shaderMaterial vertexShader={rimVert} fragmentShader={rimFrag} args={uniformArgs(rim)} transparent depthWrite={false} blending={AdditiveBlending} />
       </mesh>
       <mesh>
         <sphereGeometry args={[R * 1.2, 64, 64]} />
-        <shaderMaterial vertexShader={rimVert} fragmentShader={rimFrag} uniforms={halo} transparent depthWrite={false} blending={AdditiveBlending} side={BackSide} />
+        <shaderMaterial vertexShader={rimVert} fragmentShader={rimFrag} args={uniformArgs(halo)} transparent depthWrite={false} blending={AdditiveBlending} side={BackSide} />
       </mesh>
     </>
   )
@@ -326,6 +333,8 @@ interface SceneProps {
 }
 
 function Globe({ accent, accent2, speed, arcs, dotSize, atmo, still, stage }: SceneProps) {
+  // leave breathing room around the rings (and the stage caption) on narrower canvases
+  useFitAspect(stage ? 6.6 : 5.6, 1.5, 1.3)
   const spin = useRef<Group>(null)
   const tiltRef = useRef<Group>(null)
   useFrame((state, dt) => {
@@ -349,7 +358,7 @@ function Globe({ accent, accent2, speed, arcs, dotSize, atmo, still, stage }: Sc
             <meshBasicMaterial color="#010409" />
           </mesh>
           <Graticule accent={accent} />
-          <LandDots accent={accent} count={stage ? 16000 : 7000} size={dotSize} still={still} />
+          <LandDots accent={accent} count={stage ? 16000 : 5200} size={dotSize} still={still} />
           {links.map(([a, b], i) => (
             <Arc key={`${a}-${b}`} a={a} b={b} color={i % 3 === 2 ? accent2 : accent} speed={1 + (i % 4) * 0.25} phase={i * 0.73} still={still} width={stage ? 1.2 : 0.9} />
           ))}
@@ -378,13 +387,14 @@ export default function HoloGlobe({ accent, accent2, quality, stage, paused, red
     <div className="absolute inset-0">
       <Canvas
         dpr={dpr}
-        camera={{ position: [0, 0, stage ? 6.2 : 5.6], fov: 42 }}
+        camera={{ position: [0, 0, stage ? 6.6 : 5.6], fov: 42 }}
         frameloop={still ? 'demand' : 'always'}
         gl={{ antialias: false, powerPreference: 'high-performance' }}
         aria-label="Holograficzny glob z punktami lądów i łukami połączeń"
       >
         <color attach="background" args={['#02060c']} />
-        <Globe accent={accent} accent2={accent2} speed={c.obrót} arcs={stage ? c.łuki : 7} dotSize={c.punkty * (stage ? 1 : 1.25)} atmo={c.atmosfera} still={still} stage={stage} />
+        <Redraw on={[c, accent, accent2]} />
+        <Globe accent={accent} accent2={accent2} speed={c.obrót} arcs={stage ? c.łuki : 7} dotSize={c.punkty * (stage ? 1 : 1.1)} atmo={c.atmosfera} still={still} stage={stage} />
         <Stars radius={50} depth={25} count={stage ? 1800 : 500} factor={2.5} fade speed={still ? 0 : 0.4} />
         <HudComposer>
           {stage

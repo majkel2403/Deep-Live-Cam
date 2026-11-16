@@ -57,6 +57,14 @@ export function hasWebGL(): boolean {
   return webglCache
 }
 
+/** Near-white text colour tinted with the accent (follows the runtime hue; `amount` = share of the accent). */
+export function tintWhite(hex: string, amount = 0.12, alpha = 1): string {
+  const h = hex.replace('#', '')
+  const n = parseInt(h.length === 3 ? h.replace(/(.)/g, '$1$1') : h, 16)
+  const m = (x: number) => Math.round(255 - (255 - x) * amount)
+  return `rgba(${m((n >> 16) & 255)},${m((n >> 8) & 255)},${m(n & 255)},${alpha})`
+}
+
 /** `#rrggbb` + alpha → `rgba()` string (force-graph parses alpha from colour strings). */
 export function hexA(hex: string, alpha: number): string {
   const h = hex.replace('#', '')

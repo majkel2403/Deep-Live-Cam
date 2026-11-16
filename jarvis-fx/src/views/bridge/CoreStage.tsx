@@ -45,7 +45,7 @@ class CanvasBoundary extends Component<{ children: ReactNode }, { failed: boolea
     if (this.state.failed)
       return (
         <div className="absolute inset-0 grid place-items-center">
-          <p className="jx-label text-[0.6rem] text-jx-warn mt-40">WebGL niedostępny · rdzeń w trybie 2D</p>
+          <p className="jx-label text-[0.625rem] text-jx-warn mt-40">WebGL niedostępny · rdzeń w trybie 2D</p>
         </div>
       )
     return this.props.children
@@ -111,6 +111,7 @@ function Corner({ pos, children, className = '' }: { pos: 'tl' | 'tr' | 'bl' | '
 
 export function CoreStage({
   snapshot,
+  status = 'live',
   bridge,
   accent,
   accent2,
@@ -118,6 +119,8 @@ export function CoreStage({
   reducedMotion,
 }: {
   snapshot: OrchestrationSnapshot | null
+  /** link state of the agent source – without data the core must not claim "all systems ready" */
+  status?: 'connecting' | 'live' | 'error'
   bridge: BridgeState
   accent: string
   accent2: string
@@ -152,9 +155,11 @@ export function CoreStage({
   }, [agents, root, mode, agg.avgLoad, eventSeq, errorSeq])
 
   // ---- mode timing --------------------------------------------------------------------------
-  const [modeSince, setModeSince] = useState(() => Date.now())
-  useEffect(() => setModeSince(Date.now()), [mode])
-  const now = snapshot?.ts ?? Date.now()
+  // mode start on the data clock (snapshot.ts): derived during render, no effect round-trip
+  const [modeClock, setModeClock] = useState(() => ({ mode, since: snapshot?.ts ?? 0 }))
+  if (modeClock.mode !== mode) setModeClock({ mode, since: snapshot?.ts ?? 0 })
+  const now = snapshot?.ts ?? modeClock.since
+  const modeSince = modeClock.since || now
 
   // ---- per-second event flow, last 30 s (from the snapshot's event buffer) -----------------
   const flow = useMemo(() => {
@@ -172,7 +177,8 @@ export function CoreStage({
   const radialAgents = useMemo<RadialAgent[]>(() => (agents ?? []).map((a) => ({ id: a.id, name: a.name, status: a.status, load: a.load })), [agents])
   const modeMeta = MODES.find((m) => m.id === mode)!
   const lastEvent = agg.lastEvent
-  const subline = lastEvent ? lastEvent.text : MODE_LINE[mode]
+  const subline =
+    status === 'error' && !snapshot ? 'Brak łącza ze źródłem agentów – czekam na dane' : status === 'connecting' && !snapshot ? 'Łączenie ze źródłem agentów' : lastEvent ? lastEvent.text : MODE_LINE[mode]
   const rootMeta = root ? STATUS_META[root.status] : null
   const demandVersion = reducedMotion || !running ? version : 0
 
@@ -185,7 +191,7 @@ export function CoreStage({
         <div className="absolute inset-0 bx-boot bx-core-mask" aria-hidden="true" />
         <div className="absolute inset-0 bx-core-mask">
           <CanvasBoundary>
-            <Suspense fallback={<p className="absolute inset-0 grid place-items-center jx-label text-[0.6rem] jx-caret">Rozruch rdzenia</p>}>
+            <Suspense fallback={<p className="absolute inset-0 grid place-items-center jx-label text-[0.625rem] jx-caret">Rozruch rdzenia</p>}>
               <CoreCanvas feed={feed} accent={accent} hot={accent2} bg="#02060c" quality={quality} reducedMotion={reducedMotion} running={running} version={demandVersion} />
             </Suspense>
           </CanvasBoundary>
@@ -195,37 +201,37 @@ export function CoreStage({
 
       {/* corner readouts */}
       <Corner pos="tl">
-        <span className="jx-label text-[0.56rem]">Rdzeń · {root?.model ?? '—'}</span>
+        <span className="jx-label text-[0.625rem]">Rdzeń · {root?.model ?? '—'}</span>
         <span className="flex items-center gap-1.5">
-          <span className="font-display text-[0.8rem] tracking-[0.2em] text-jx-accent jx-glow-text">{root?.name ?? 'J.A.R.V.I.S'}</span>
+          <span className="font-cmd text-[0.78rem] tracking-[0.2em] text-jx-accent jx-glow-text">{root?.name ?? 'J.A.R.V.I.S'}</span>
           {rootMeta && <StatusDot tone={rootMeta.tone === 'violet' ? 'accent' : rootMeta.tone} pulse={rootMeta.pulse} />}
         </span>
-        <span className="jx-num text-[0.62rem] text-jx-dim">
+        <span className="jx-num text-[0.625rem] text-jx-dim">
           obc. <span className="text-jx-text">{root ? `${Math.round(root.load * 100)}%` : '—'}</span> · lat. <span className="text-jx-text">{root ? `${Math.round(root.latencyMs)} ms` : '—'}</span>
         </span>
       </Corner>
       <Corner pos="tr">
         <ScrambleLabel text={`TRYB ${modeMeta.code} · ${modeMeta.seg.toUpperCase()}`} reducedMotion={reducedMotion} className="jx-num text-[0.68rem] tracking-[0.18em]" style={{ color: MODE_COLOR[mode] }} />
-        <span className="jx-num text-[0.62rem] text-jx-dim">
+        <span className="jx-num text-[0.625rem] text-jx-dim">
           w trybie <span className="text-jx-text">{fmtElapsed(now - modeSince)}</span>
         </span>
-        <span className="jx-num text-[0.62rem] text-jx-dim">
+        <span className="jx-num text-[0.625rem] text-jx-dim">
           tokeny <span className="text-jx-text">{fmtCompact(agg.tokensPerMin)}</span>/min
         </span>
       </Corner>
       <Corner pos="bl" className="bottom-[4.9rem]!">
-        <span className="jx-label text-[0.54rem]">Przepływ zdarzeń · 30 s</span>
+        <span className="jx-label text-[0.625rem]">Przepływ zdarzeń · 30 s</span>
         <div className="w-28">
           <Sparkline data={flow} min={0} max={Math.max(3, ...flow)} capacity={30} height={20} ariaLabel="Liczba zdarzeń na sekundę w ostatnich 30 sekundach" />
         </div>
-        <span className="jx-num text-[0.62rem] text-jx-dim">
+        <span className="jx-num text-[0.625rem] text-jx-dim">
           <span className="text-jx-text">{agg.eventsPerMin}</span> zdarzeń/min
         </span>
       </Corner>
       <Corner pos="br" className="bottom-[4.9rem]!">
-        <span className="jx-label text-[0.54rem]">Takt źródła</span>
+        <span className="jx-label text-[0.625rem]">Takt źródła</span>
         <span className="jx-num text-[0.78rem] text-jx-accent jx-glow-text">{cadence.intervalMs === null ? '—' : `${(cadence.intervalMs / 1000).toFixed(2)} s`}</span>
-        <span className="jx-num text-[0.62rem] text-jx-dim">
+        <span className="jx-num text-[0.625rem] text-jx-dim">
           pakiety <span className="text-jx-text">{cadence.packets}</span>
           {!running && <span className="text-jx-warn"> · 3D wstrzymane</span>}
         </span>
@@ -233,7 +239,7 @@ export function CoreStage({
 
       {/* state label */}
       <div className="absolute inset-x-0 bottom-2 flex flex-col items-center gap-0.5 pointer-events-none px-4 text-center">
-        <div className="flex items-center gap-2 jx-label text-[0.56rem]">
+        <div className="flex items-center gap-2 jx-label text-[0.625rem]">
           <span className="h-px w-12 bg-gradient-to-l from-[var(--jx-line-strong)] to-transparent" />
           Stan rdzenia · {modeMeta.code}
           <span className="h-px w-12 bg-gradient-to-r from-[var(--jx-line-strong)] to-transparent" />
@@ -243,7 +249,7 @@ export function CoreStage({
             <Decipher text={modeMeta.label} duration={0.7} className="bx-core-label text-[1.45rem] leading-none" style={{ color: MODE_COLOR[mode] }} />
           </Glitch>
         </motion.div>
-        <Decipher text={subline} duration={0.5} className="font-term text-[0.72rem] text-jx-dim max-w-full truncate" />
+        <Decipher text={subline} duration={0.5} className="font-mono text-[0.72rem] text-jx-dim max-w-full truncate" />
       </div>
     </section>
   )

@@ -13,7 +13,22 @@ const ICON = {
   failed: <IconCircleX />,
 }
 
-export function TasksPanel({ tasks, agents, now, reducedMotion }: { tasks: AgentTask[]; agents: Agent[]; now: number; reducedMotion: boolean }) {
+export function TasksPanel({
+  tasks,
+  agents,
+  now,
+  reducedMotion,
+  noData = false,
+  status = 'live',
+}: {
+  tasks: AgentTask[]
+  agents: Agent[]
+  now: number
+  reducedMotion: boolean
+  /** no snapshot yet – say so instead of claiming an idle core */
+  noData?: boolean
+  status?: 'connecting' | 'live' | 'error'
+}) {
   const names = useMemo(() => new Map(agents.map((a) => [a.id, a.name])), [agents])
   const sorted = useMemo(
     () =>
@@ -35,14 +50,16 @@ export function TasksPanel({ tasks, agents, now, reducedMotion }: { tasks: Agent
       bodyClassName="flex flex-col px-2.5 pb-2 pt-1.5 gap-1.5"
     >
       <div className="flex items-center gap-2 shrink-0" aria-label={`Średni postęp zadań w toku: ${Math.round(overall * 100)}%`}>
-        <span className="jx-label text-[0.56rem]">Postęp łączny</span>
+        <span className="jx-label text-[0.625rem]">Postęp łączny</span>
         <div className="bx-bar-track relative h-1 flex-1">
           <motion.div className="bx-bar-fill absolute inset-0 bg-jx-accent" initial={false} animate={{ scaleX: overall }} transition={{ duration: reducedMotion ? 0 : 0.8 }} />
         </div>
         <span className="jx-num text-[0.66rem] text-jx-accent">{Math.round(overall * 100)}%</span>
       </div>
-      <ul className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-0 p-0 list-none flex flex-col gap-1" aria-label="Lista zadań">
-        {sorted.length === 0 && <li className="jx-label py-2 jx-caret">Brak zadań – rdzeń czuwa</li>}
+      <ul className="bx-fade-b relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-0 p-0 pb-2 list-none flex flex-col gap-1" aria-label="Lista zadań">
+        {sorted.length === 0 && (
+          <li className="jx-label py-2 jx-caret">{noData ? (status === 'error' ? 'Brak danych – błąd łącza ze źródłem' : 'Łączenie ze źródłem') : 'Brak zadań – rdzeń czuwa'}</li>
+        )}
         {sorted.map((t) => {
           const st = TASK_STATE[t.state]
           const pct = Math.round(t.progress * 100)
@@ -68,9 +85,9 @@ export function TasksPanel({ tasks, agents, now, reducedMotion }: { tasks: Agent
                   <span className="font-ui text-[0.74rem] text-jx-text truncate">{t.title}</span>
                 )}
                 <span className="flex-1" />
-                <span className="jx-label text-[0.54rem] text-jx-accent truncate max-w-20">{names.get(t.ownerId) ?? t.ownerId}</span>
+                <span className="jx-label text-[0.625rem] text-jx-accent truncate max-w-20">{names.get(t.ownerId) ?? t.ownerId}</span>
                 {(t.state === 'active' || t.state === 'queued') && (
-                  <span className="jx-num text-[0.6rem] text-jx-dim" title="Czas od zlecenia">
+                  <span className="jx-num text-[0.625rem] text-jx-dim" title="Czas od zlecenia">
                     {fmtElapsed(now - t.startedAt)}
                   </span>
                 )}
@@ -85,8 +102,8 @@ export function TasksPanel({ tasks, agents, now, reducedMotion }: { tasks: Agent
                     transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 22 }}
                   />
                 </div>
-                <span className={`jx-num text-[0.62rem] w-8 text-right ${TEXT_TONE[st.tone]}`}>{t.state === 'queued' ? '—' : `${pct}%`}</span>
-                <span className={`jx-label text-[0.52rem] w-14 text-right ${TEXT_TONE[st.tone]}`}>{st.label}</span>
+                <span className={`jx-num text-[0.625rem] w-8 text-right ${TEXT_TONE[st.tone]}`}>{t.state === 'queued' ? '—' : `${pct}%`}</span>
+                <span className={`jx-label text-[0.625rem] w-[4.4rem] text-right whitespace-nowrap ${TEXT_TONE[st.tone]}`}>{st.label}</span>
               </div>
             </motion.li>
           )

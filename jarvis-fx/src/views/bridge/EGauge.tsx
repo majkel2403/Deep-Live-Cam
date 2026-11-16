@@ -12,6 +12,13 @@ function rgba(hex: string, a: number): string {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`
 }
 
+/** near-white text tinted with the accent (follows the runtime hue instead of a fixed cyan white) */
+function tintWhite(hex: string, amount = 0.12): string {
+  const n = parseInt(hex.slice(1), 16)
+  const m = (x: number) => Math.round(255 - (255 - x) * amount)
+  return `rgb(${m((n >> 16) & 255)}, ${m((n >> 8) & 255)}, ${m(n & 255)})`
+}
+
 export interface EGaugeProps {
   /** null → API unavailable, rendered as "n/d" */
   value: number | null
@@ -99,8 +106,8 @@ export function EGauge({ value, max, display, unit, accent, color, reducedMotion
             offsetCenter: [0, '6%'],
             formatter: () => (available ? `{v|${display}}${unit ? `\n{u|${unit}}` : ''}` : '{nd|n/d}'),
             rich: {
-              v: { fontFamily: 'JetBrains Mono, monospace', fontSize: 15, fontWeight: 600, color: '#eaffff', textShadowBlur: 8, textShadowColor: c, lineHeight: 18 },
-              u: { fontFamily: 'Rajdhani, sans-serif', fontSize: 9, fontWeight: 600, color: rgba(accent, 0.75), lineHeight: 11 },
+              v: { fontFamily: 'JetBrains Mono, monospace', fontSize: 15, fontWeight: 600, color: tintWhite(accent), textShadowBlur: 8, textShadowColor: c, lineHeight: 18 },
+              u: { fontFamily: 'Rajdhani, sans-serif', fontSize: 10, fontWeight: 600, color: rgba(accent, 0.8), lineHeight: 12 },
               nd: { fontFamily: 'JetBrains Mono, monospace', fontSize: 13, color: rgba(accent, 0.5) },
             },
           },

@@ -3,9 +3,10 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { Environment, Lightformer, Sparkles } from '@react-three/drei'
 import { animated, useSpring, useSprings, type SpringConfig } from '@react-spring/three'
 import { Bloom, Noise, Vignette } from '@react-three/postprocessing'
-import { AdditiveBlending, Color, ExtrudeGeometry, MeshStandardMaterial, Shape, type Group, type Mesh, type MeshBasicMaterial } from 'three'
+import { AdditiveBlending, Color, ExtrudeGeometry, MeshBasicMaterial, MeshStandardMaterial, Shape, type Group, type Mesh } from 'three'
 import { HudComposer } from '@/fx/three/HudComposer'
 import { useFxControls } from '@/fx/controls'
+import { Redraw, uniformArgs } from '../r3f-kit/util'
 import type { FxProps } from '@/fx/types'
 
 type Phase = 'closed' | 'open' | 'pulse' | 'close'
@@ -47,6 +48,8 @@ function Reactor({ accent, accent2, n, phase, stiffness, glow, still }: ReactorP
     () => ({
       coil: sector(1.58, 2.06, step * 0.6, 0.26),
       coilStrip: sector(1.5, 1.56, step * 0.6, 0.08, 0),
+      // hairline on the front face of each coil: reads as a machined edge instead of a flat grey slab
+      coilEdge: sector(1.98, 2.0, step * 0.56, 0.01, 0),
       cell: sector(1.12, 1.44, step * 0.72, 0.08),
       petal: sector(0.56, 1.0, ((Math.PI * 2) / 6) * 0.82, 0.12),
       petalEdge: sector(0.52, 0.56, ((Math.PI * 2) / 6) * 0.82, 0.05, 0),
@@ -57,10 +60,11 @@ function Reactor({ accent, accent2, n, phase, stiffness, glow, still }: ReactorP
 
   const mats = useMemo(
     () => ({
-      metal: new MeshStandardMaterial({ color: '#10171c', metalness: 0.95, roughness: 0.32 }),
-      dark: new MeshStandardMaterial({ color: '#070b0e', metalness: 0.8, roughness: 0.5 }),
+      metal: new MeshStandardMaterial({ color: '#0c1115', metalness: 0.95, roughness: 0.28, envMapIntensity: 0.75 }),
+      dark: new MeshStandardMaterial({ color: '#05080a', metalness: 0.8, roughness: 0.5, envMapIntensity: 0.6 }),
       cell: new MeshStandardMaterial({ color: '#02080c', emissive: new Color(), emissiveIntensity: 2, toneMapped: false }),
       strip: new MeshStandardMaterial({ color: '#02080c', emissive: new Color(), emissiveIntensity: 2.5, toneMapped: false }),
+      edge: new MeshBasicMaterial({ color: new Color(), transparent: true, opacity: 0.55, toneMapped: false }),
     }),
     [],
   )
@@ -68,6 +72,7 @@ function Reactor({ accent, accent2, n, phase, stiffness, glow, still }: ReactorP
   useEffect(() => {
     mats.cell.emissive.set(accent)
     mats.strip.emissive.set(accent2)
+    mats.edge.color.set(accent)
   }, [accent, accent2, mats])
 
   const open = phase === 'open' || phase === 'pulse'
@@ -127,6 +132,7 @@ function Reactor({ accent, accent2, n, phase, stiffness, glow, still }: ReactorP
           <animated.group position-x={sp.r} position-z={sp.z} rotation-z={sp.tw}>
             <mesh geometry={geos.coil} material={mats.metal} />
             <mesh geometry={geos.coilStrip} material={mats.strip} position-z={0.02} />
+            <mesh geometry={geos.coilEdge} material={mats.edge} position-z={0.15} />
           </animated.group>
         </group>
       ))}
@@ -195,7 +201,7 @@ function CoreGlow({ accent }: { accent: string }) {
   return (
     <mesh position-z={0.16}>
       <planeGeometry args={[2.6, 2.6]} />
-      <shaderMaterial vertexShader={glowVert} fragmentShader={glowFrag} uniforms={u} transparent depthWrite={false} blending={AdditiveBlending} />
+      <shaderMaterial vertexShader={glowVert} fragmentShader={glowFrag} args={uniformArgs(u)} transparent depthWrite={false} blending={AdditiveBlending} />
     </mesh>
   )
 }
@@ -272,10 +278,11 @@ export default function SpringReactor({ accent, accent2, quality, stage, paused,
         aria-label={`Reaktor łukowy, faza: ${PHASE_LABEL[phase]}`}
       >
         <color attach="background" args={['#02060c']} />
+        <Redraw on={[c, accent, accent2]} />
         <ambientLight intensity={0.25} />
         <directionalLight position={[-3, 4, 5]} intensity={1.6} />
         <Environment key={accent} resolution={128} frames={1}>
-          <Lightformer form="rect" color="#ffffff" intensity={3} scale={[10, 2, 1]} position={[0, 4, 3]} rotation-x={Math.PI / 2.5} />
+          <Lightformer form="rect" color="#ffffff" intensity={1.8} scale={[10, 2, 1]} position={[0, 4, 3]} rotation-x={Math.PI / 2.5} />
           <Lightformer form="rect" color={accent} intensity={2.5} scale={[2, 8, 1]} position={[-5, 0, 2]} rotation-y={Math.PI / 2} />
           <Lightformer form="ring" color={accent2} intensity={2} scale={3} position={[4, -2, 4]} />
         </Environment>
@@ -286,11 +293,11 @@ export default function SpringReactor({ accent, accent2, quality, stage, paused,
         <HudComposer>
           {stage
             ? [
-                <Bloom key="b" intensity={c.bloom} luminanceThreshold={0.3} luminanceSmoothing={0.25} mipmapBlur />,
+                <Bloom key="b" intensity={c.bloom} luminanceThreshold={0.5} luminanceSmoothing={0.25} mipmapBlur radius={0.6} />,
                 <Noise key="n" opacity={0.035} />,
                 <Vignette key="v" eskil={false} offset={0.22} darkness={0.85} />,
               ]
-            : [<Bloom key="b" intensity={c.bloom * 0.85} luminanceThreshold={0.3} luminanceSmoothing={0.25} mipmapBlur />]}
+            : [<Bloom key="b" intensity={c.bloom * 0.85} luminanceThreshold={0.5} luminanceSmoothing={0.25} mipmapBlur radius={0.6} />]}
         </HudComposer>
       </Canvas>
       {stage && (
@@ -298,7 +305,7 @@ export default function SpringReactor({ accent, accent2, quality, stage, paused,
           <span className="jx-label text-jx-accent">Cykl reaktora · sprężyny fizyczne</span>
           <div className="flex gap-1">
             {PHASES.map((p) => (
-              <span key={p} className={`jx-num border px-1.5 py-px text-[0.62rem] uppercase ${p === phase ? 'border-jx-accent bg-jx-accent/20 text-jx-accent' : 'border-jx-line text-jx-dim'}`}>
+              <span key={p} className={`jx-num border px-1.5 py-px text-[0.65rem] uppercase ${p === phase ? 'border-jx-accent bg-jx-accent/20 text-jx-accent' : 'border-jx-line text-jx-dim'}`}>
                 {PHASE_LABEL[p]}
               </span>
             ))}

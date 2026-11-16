@@ -32,7 +32,7 @@ export const TASK_STATE: Record<AgentTask['state'], { label: string; tone: Tone 
   active: { label: 'W toku', tone: 'accent' },
   queued: { label: 'W kolejce', tone: 'warn' },
   done: { label: 'Gotowe', tone: 'ok' },
-  failed: { label: 'Porażka', tone: 'danger' },
+  failed: { label: 'Nieudane', tone: 'danger' },
 }
 
 export const TEXT_TONE: Record<Tone, string> = {

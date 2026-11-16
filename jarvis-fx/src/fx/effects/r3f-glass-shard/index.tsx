@@ -2,9 +2,10 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Environment, Lightformer, MeshTransmissionMaterial, Sparkles } from '@react-three/drei'
 import { Bloom, ChromaticAberration, Noise, Vignette } from '@react-three/postprocessing'
-import { AdditiveBlending, BufferAttribute, BufferGeometry, Color, LatheGeometry, Object3D, Vector2, type Group, type InstancedMesh, type Mesh } from 'three'
+import { AdditiveBlending, BufferAttribute, BufferGeometry, Color, EdgesGeometry, LatheGeometry, Object3D, Vector2, type Group, type InstancedMesh, type Mesh } from 'three'
 import { HudComposer } from '@/fx/three/HudComposer'
 import { useFxControls } from '@/fx/controls'
+import { Redraw, tint, uniformArgs } from '../r3f-kit/util'
 import type { FxProps } from '@/fx/types'
 
 const BG = new Color('#02060c')
@@ -37,7 +38,17 @@ interface CrystalProps {
 function Crystal({ accent, ior, thickness, chroma, distortion, speed, still, samples, resolution, backside }: CrystalProps) {
   const ref = useRef<Mesh>(null)
   const geo = useMemo(() => makeCrystal(3.1, 0.78), [])
-  useEffect(() => () => geo.dispose(), [geo])
+  // crisp facet edges: keep the silhouette readable even when transmission is low-sample (cards, software GL)
+  const edges = useMemo(() => new EdgesGeometry(geo, 20), [geo])
+  useEffect(
+    () => () => {
+      geo.dispose()
+      edges.dispose()
+    },
+    [geo, edges],
+  )
+  const glass = useMemo(() => tint(accent, 0.9), [accent])
+  const edge = useMemo(() => tint(accent, 0.45), [accent])
   useFrame((state, dt) => {
     const m = ref.current
     if (!m || still) return
@@ -64,18 +75,28 @@ function Crystal({ accent, ior, thickness, chroma, distortion, speed, still, sam
         clearcoat={1}
         attenuationColor={accent}
         attenuationDistance={2.4}
-        color="#f4feff"
+        color={glass}
         background={BG}
       />
+      <lineSegments geometry={edges} scale={1.002}>
+        <lineBasicMaterial color={edge} transparent opacity={0.55} blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
+      </lineSegments>
     </mesh>
   )
 }
 
 /* ---------- small iridescent satellites ---------- */
-function Satellites({ count, still }: { count: number; still: boolean }) {
+function Satellites({ accent, count, still }: { accent: string; count: number; still: boolean }) {
   const group = useRef<Group>(null)
   const geo = useMemo(() => makeCrystal(0.5, 0.13), [])
-  useEffect(() => () => geo.dispose(), [geo])
+  const edges = useMemo(() => new EdgesGeometry(geo, 20), [geo])
+  useEffect(
+    () => () => {
+      geo.dispose()
+      edges.dispose()
+    },
+    [geo, edges],
+  )
   const seeds = useMemo(() => Array.from({ length: count }, (_, i) => ({ a: (i / count) * Math.PI * 2, r: 2.1 + (i % 3) * 0.3, y: ((i * 37) % 11) / 11 - 0.5, s: 0.7 + ((i * 13) % 7) / 10 })), [count])
   useFrame((state, dt) => {
     if (still || !group.current) return
@@ -92,6 +113,9 @@ function Satellites({ count, still }: { count: number; still: boolean }) {
       {seeds.map((s, i) => (
         <mesh key={i} geometry={geo} position={[Math.cos(s.a) * s.r, s.y * 1.6, Math.sin(s.a) * s.r]} scale={s.s}>
           <meshPhysicalMaterial color="#0a1418" metalness={0.6} roughness={0.12} iridescence={1} iridescenceIOR={1.6} clearcoat={1} flatShading />
+          <lineSegments geometry={edges}>
+            <lineBasicMaterial color={accent} transparent opacity={0.7} toneMapped={false} />
+          </lineSegments>
         </mesh>
       ))}
     </group>
@@ -176,9 +200,9 @@ function Backdrop({ accent, count, still }: { accent: string; count: number; sti
     for (let i = 0; i < count; i++) {
       const a = (i / count) * Math.PI * 2
       const h = seeds[i] * (0.75 + 0.25 * Math.sin(t * 1.3 + i * 0.7))
-      dummy.position.set(Math.cos(a) * (3.4 + h * 0.6), Math.sin(a) * (3.4 + h * 0.6), 0)
+      dummy.position.set(Math.cos(a) * (3.4 + h * 0.4), Math.sin(a) * (3.4 + h * 0.4), 0)
       dummy.rotation.set(0, 0, a - Math.PI / 2)
-      dummy.scale.set(1, h * 1.2, 1)
+      dummy.scale.set(1, h * 0.8, 1)
       dummy.updateMatrix()
       m.setMatrixAt(i, dummy.matrix)
     }
@@ -189,7 +213,7 @@ function Backdrop({ accent, count, still }: { accent: string; count: number; sti
     if (!still) place(state.clock.elapsedTime)
   })
   return (
-    <group position-z={-3.2}>
+    <group position-z={-3.2} scale={0.76}>
       <instancedMesh ref={bars} args={[undefined, undefined, count]}>
         <boxGeometry args={[0.05, 1, 0.05]} />
         <meshBasicMaterial color={accent} transparent opacity={0.75} toneMapped={false} />
@@ -212,7 +236,7 @@ function Backdrop({ accent, count, still }: { accent: string; count: number; sti
       </mesh>
       <mesh position-z={1.2}>
         <planeGeometry args={[4.4, 4.4]} />
-        <shaderMaterial vertexShader={uvVert} fragmentShader={glowFrag} uniforms={glowUniforms} transparent depthWrite={false} blending={AdditiveBlending} />
+        <shaderMaterial vertexShader={uvVert} fragmentShader={glowFrag} args={uniformArgs(glowUniforms)} transparent depthWrite={false} blending={AdditiveBlending} />
       </mesh>
     </group>
   )
@@ -241,6 +265,7 @@ export default function GlassShard({ accent, accent2, quality, stage, paused, re
       aria-label="Obracający się szklany kryształ w pierścieniach światła"
     >
       <color attach="background" args={['#02060c']} />
+      <Redraw on={[c, accent, accent2]} />
       <ambientLight intensity={0.25} />
       <directionalLight position={[3, 4, 5]} intensity={1.5} />
       <Environment key={accent} resolution={hq ? 256 : 128} frames={1}>
@@ -253,7 +278,7 @@ export default function GlassShard({ accent, accent2, quality, stage, paused, re
       <Backdrop accent={accent} count={stage ? 96 : 56} still={still} />
       <LightRings accent={accent} accent2={accent2} speed={c.obrót} still={still} />
       <Crystal accent={accent} ior={c.ior} thickness={c.grubość} chroma={c.dyspersja} distortion={c.zniekształcenie} speed={c.obrót} still={still} samples={samples} resolution={resolution} backside={hq} />
-      <Satellites count={stage ? 7 : 4} still={still} />
+      <Satellites accent={accent} count={stage ? 7 : 4} still={still} />
       <Sparkles count={stage ? 60 : 20} scale={[6, 4, 4]} size={1.4} speed={still ? 0 : 0.25} color={accent} opacity={0.5} />
       <HudComposer>
         {stage

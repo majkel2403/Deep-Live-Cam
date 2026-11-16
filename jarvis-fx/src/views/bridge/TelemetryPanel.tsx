@@ -14,7 +14,7 @@ function Row({ k, v, tone, title }: { k: ReactNode; v: ReactNode; tone?: 'ok' | 
   const color = tone ? { ok: 'text-jx-ok', warn: 'text-jx-warn', danger: 'text-jx-danger', dim: 'text-jx-dim' }[tone] : 'text-jx-text'
   return (
     <div className="flex items-baseline justify-between gap-2 min-w-0 py-[1px]" title={title}>
-      <dt className="jx-label text-[0.6rem] tracking-[0.12em] truncate">{k}</dt>
+      <dt className="jx-label text-[0.625rem] tracking-[0.12em] truncate">{k}</dt>
       <dd className={`jx-num text-[0.72rem] ${color} truncate text-right`}>{v}</dd>
     </div>
   )
@@ -25,7 +25,7 @@ function Section({ title, icon, children, aside }: { title: string; icon: ReactN
     <section className="min-w-0">
       <h3 className="flex items-center gap-1.5 mb-0.5 text-jx-accent [&>svg]:size-3.5">
         {icon}
-        <span className="jx-label text-[0.62rem] text-jx-accent">{title}</span>
+        <span className="jx-label text-[0.625rem] text-jx-accent">{title}</span>
         <span className="flex-1 h-px bg-gradient-to-r from-[var(--jx-line)] to-transparent" />
         {aside}
       </h3>
@@ -68,7 +68,7 @@ export function TelemetryPanel({ reducedMotion }: { reducedMotion: boolean }) {
       bodyClassName="overflow-y-auto overflow-x-hidden px-3 pb-3 pt-2 flex flex-col gap-2.5"
     >
       <div className="flex items-center justify-between gap-2 shrink-0 -mb-1">
-        <span className="jx-label text-[0.56rem] truncate" title="Wszystkie wartości mierzone na żywo w tej przeglądarce, próbkowanie 1 Hz">Pomiar lokalny · 1 Hz</span>
+        <span className="jx-label text-[0.625rem] truncate" title="Wszystkie wartości mierzone na żywo w tej przeglądarce, próbkowanie 1 Hz">Pomiar lokalny · 1 Hz</span>
         <LiveBadge />
       </div>
       {/* gauges */}
@@ -125,7 +125,7 @@ export function TelemetryPanel({ reducedMotion }: { reducedMotion: boolean }) {
         ].map((g) => (
           <figure key={g.key} className="flex flex-col items-center min-w-0 m-0">
             <div className="w-full aspect-square max-h-[104px]">{g.node}</div>
-            <figcaption className="jx-label text-[0.56rem] -mt-1 truncate max-w-full text-center">{g.label}</figcaption>
+            <figcaption className="jx-label text-[0.625rem] -mt-1 truncate max-w-full text-center">{g.label}</figcaption>
           </figure>
         ))}
       </div>
@@ -133,8 +133,8 @@ export function TelemetryPanel({ reducedMotion }: { reducedMotion: boolean }) {
       {/* FPS history */}
       <div className="shrink-0">
         <div className="flex items-baseline justify-between">
-          <span className="jx-label text-[0.6rem]">Klatki · 60 s</span>
-          <span className="jx-num text-[0.62rem] text-jx-dim">
+          <span className="jx-label text-[0.625rem]">Klatki · 60 s</span>
+          <span className="jx-num text-[0.625rem] text-jx-dim">
             {fpsStats ? (
               <>
                 min <span className="text-jx-text">{Math.round(fpsStats.min)}</span> · śr <span className="text-jx-text">{Math.round(fpsStats.avg)}</span> · maks{' '}
@@ -146,7 +146,7 @@ export function TelemetryPanel({ reducedMotion }: { reducedMotion: boolean }) {
           </span>
         </div>
         <Sparkline data={t.history.fps} min={0} max={fpsMax} threshold={30} height={26} ariaLabel="Historia FPS z ostatniej minuty" />
-        <div className="flex justify-between jx-num text-[0.6rem] text-jx-dim">
+        <div className="flex justify-between jx-num text-[0.625rem] text-jx-dim">
           <span>
             klatka <span className="text-jx-text">{t.frameMs === null ? ND : `${t.frameMs.toFixed(1)} ms`}</span>
           </span>
@@ -159,8 +159,8 @@ export function TelemetryPanel({ reducedMotion }: { reducedMotion: boolean }) {
       {/* heap history */}
       <div className="shrink-0">
         <div className="flex items-baseline justify-between">
-          <span className="jx-label text-[0.6rem]">Sterta JS · 60 s</span>
-          <span className="jx-num text-[0.62rem] text-jx-dim">
+          <span className="jx-label text-[0.625rem]">Sterta JS · 60 s</span>
+          <span className="jx-num text-[0.625rem] text-jx-dim">
             {t.heap ? (
               <>
                 <span className="text-jx-text">{t.heap.usedMB.toFixed(1)}</span> / {Math.round(t.heap.totalMB)} MB · limit {Math.round(t.heap.limitMB)}
@@ -173,8 +173,25 @@ export function TelemetryPanel({ reducedMotion }: { reducedMotion: boolean }) {
         {t.heap ? (
           <Sparkline data={t.history.heapMB} height={22} color="var(--jx-accent-2)" ariaLabel="Historia zajętości sterty JS" />
         ) : (
-          <p className="jx-label text-[0.58rem] normal-case tracking-normal">API dostępne tylko w przeglądarkach opartych na Chromium.</p>
+          <p className="jx-label text-[0.625rem] normal-case tracking-normal">API dostępne tylko w przeglądarkach opartych na Chromium.</p>
         )}
+      </div>
+
+      {/* main-thread blocking history (long tasks) */}
+      <div className="shrink-0">
+        <div className="flex items-baseline justify-between">
+          <span className="jx-label text-[0.625rem]">Blokada wątku · 60 s</span>
+          <span className="jx-num text-[0.625rem] text-jx-dim">
+            {busy === null ? (
+              'longtask: n/d'
+            ) : (
+              <>
+                maks <span className="text-jx-text">{(Math.max(0, ...t.history.busy) * 100).toFixed(1)}%</span>
+              </>
+            )}
+          </span>
+        </div>
+        {busy !== null && <Sparkline data={t.history.busy} min={0} max={Math.max(0.1, ...t.history.busy)} height={20} ariaLabel="Historia udziału długich zadań w czasie wątku głównego" />}
       </div>
 
       <NetworkSection t={t} />
@@ -193,7 +210,7 @@ function NetworkSection({ t }: { t: TelemetrySnapshot }) {
       title="Sieć"
       icon={t.online ? <IconWifi /> : <IconWifiOff />}
       aside={
-        <span className="inline-flex items-center gap-1 jx-label text-[0.58rem]">
+        <span className="inline-flex items-center gap-1 jx-label text-[0.625rem]">
           <StatusDot tone={t.online ? 'ok' : 'danger'} pulse={!t.online} />
           {t.online ? 'online' : 'offline'}
         </span>
@@ -268,6 +285,7 @@ function SessionSection({ t }: { t: TelemetrySnapshot }) {
 
 /** Honest support matrix: which Web APIs actually answered in this browser. */
 function ApiSection({ t }: { t: TelemetrySnapshot }) {
+  // pinned to the panel's bottom edge when there is spare height (tall screens)
   const apis: { k: string; ok: boolean | null; title: string }[] = [
     { k: 'Sterta', ok: t.heap !== null, title: 'performance.memory (niestandardowe, Chromium)' },
     { k: 'Sieć', ok: t.connection !== null, title: 'Network Information API – navigator.connection' },
@@ -277,10 +295,10 @@ function ApiSection({ t }: { t: TelemetrySnapshot }) {
     { k: 'Pamięć urz.', ok: t.deviceMemoryGB !== null, title: 'navigator.deviceMemory' },
   ]
   return (
-    <section className="min-w-0">
+    <section className="min-w-0 mt-auto">
       <h3 className="flex items-center gap-1.5 mb-1 text-jx-accent [&>svg]:size-3.5">
         <IconPlugConnected />
-        <span className="jx-label text-[0.62rem] text-jx-accent">Interfejsy przeglądarki</span>
+        <span className="jx-label text-[0.625rem] text-jx-accent">Interfejsy przeglądarki</span>
         <span className="flex-1 h-px bg-gradient-to-r from-[var(--jx-line)] to-transparent" />
       </h3>
       <ul className="grid grid-cols-3 gap-1 m-0 p-0 list-none">
@@ -288,7 +306,7 @@ function ApiSection({ t }: { t: TelemetrySnapshot }) {
           <li
             key={a.k}
             title={a.title}
-            className={`flex items-center gap-1 px-1.5 py-[2px] border text-[0.56rem] jx-label tracking-[0.08em] truncate ${a.ok ? 'border-[color-mix(in_srgb,var(--jx-ok)_45%,transparent)] text-jx-ok' : 'border-jx-line/40 text-jx-dim'}`}
+            className={`flex items-center gap-1 px-1.5 py-[2px] border text-[0.625rem] jx-label tracking-[0.08em] truncate ${a.ok ? 'border-[color-mix(in_srgb,var(--jx-ok)_45%,transparent)] text-jx-ok' : 'border-jx-line/40 text-jx-dim'}`}
           >
             <span aria-hidden="true">{a.ok === null ? '…' : a.ok ? '✓' : '×'}</span>
             <span className="truncate">{a.k}</span>

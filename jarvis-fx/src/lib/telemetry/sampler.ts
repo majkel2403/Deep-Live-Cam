@@ -6,7 +6,7 @@
  * (rendered as "n/d") when the corresponding Web API is unavailable in the current browser.
  *
  * Sources:
- *  - FPS / frame time        requestAnimationFrame frame counting (paused while the tab is hidden)
+ *  - FPS / frame time        requestAnimationFrame frame counting (rAF loop and 1 Hz sampling stop while the tab is hidden)
  *  - JS heap                 performance.memory (Chromium-only, non-standard, quantised)
  *  - network                 navigator.connection (Network Information API, Chromium)
  *  - battery                 navigator.getBattery() (Battery Status API, Chromium)
@@ -191,6 +191,11 @@ function start(): () => void {
   let windowStart = lastFrame
   let raf = 0
   const loop = (t: number) => {
+    // hidden tab: stop counting (browsers throttle rAF there anyway); restarted on visibilitychange
+    if (document.hidden) {
+      raf = 0
+      return
+    }
     frames++
     const d = t - lastFrame
     if (d > worst) worst = d
@@ -233,6 +238,7 @@ function start(): () => void {
     frames = 0
     worst = 0
     lastFrame = windowStart = performance.now()
+    if (!document.hidden && !raf) raf = requestAnimationFrame(loop)
     emit({ visibility: document.visibilityState, fps: document.hidden ? null : snapshot.fps })
   })
   on(window, 'resize', () => emit({ viewport: { w: window.innerWidth, h: window.innerHeight }, dpr: window.devicePixelRatio || 1 }))
@@ -271,6 +277,8 @@ function start(): () => void {
 
   // --- 1 Hz sampler --------------------------------------------------------------------------
   const sample = () => {
+    // nothing to measure while the tab is hidden: skip the sample (no re-render of consumers)
+    if (document.hidden) return
     const now = performance.now()
     const elapsed = now - windowStart
     const visible = !document.hidden

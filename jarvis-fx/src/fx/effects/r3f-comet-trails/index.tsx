@@ -5,6 +5,7 @@ import { Bloom, ChromaticAberration, Noise, Vignette } from '@react-three/postpr
 import { AdditiveBlending, BackSide, CanvasTexture, Color, Euler, Vector2, Vector3, type Mesh, type Texture } from 'three'
 import { HudComposer } from '@/fx/three/HudComposer'
 import { useFxControls } from '@/fx/controls'
+import { Redraw, uniformArgs } from '../r3f-kit/util'
 import type { FxProps } from '@/fx/types'
 
 interface Orbit {
@@ -74,7 +75,7 @@ function Core({ accent, still }: { accent: string; still: boolean }) {
       </mesh>
       <mesh>
         <sphereGeometry args={[0.95, 48, 48]} />
-        <shaderMaterial vertexShader={coronaVert} fragmentShader={coronaFrag} uniforms={uniforms} transparent depthWrite={false} blending={AdditiveBlending} side={BackSide} />
+        <shaderMaterial vertexShader={coronaVert} fragmentShader={coronaFrag} args={uniformArgs(uniforms)} transparent depthWrite={false} blending={AdditiveBlending} side={BackSide} />
       </mesh>
       <mesh ref={ring} rotation-x={Math.PI / 2 - 0.3}>
         <torusGeometry args={[0.55, 0.006, 6, 160, Math.PI * 1.6]} />
@@ -110,7 +111,7 @@ function Comet({ o, speed, length, width, still, halo }: { o: Orbit; speed: numb
         <sphereGeometry args={[0.05, 16, 16]} />
         <meshBasicMaterial color="#ffffff" toneMapped={false} />
         {/* coma: soft additive halo (billboard sprite) around the nucleus */}
-        <sprite scale={0.62}>
+        <sprite scale={0.44}>
           <spriteMaterial map={halo} color={o.color} transparent blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
         </sprite>
       </mesh>
@@ -132,15 +133,17 @@ function Guide({ o }: { o: Orbit }) {
   return <Line points={pts} color={o.color} lineWidth={0.6} transparent opacity={0.14} depthWrite={false} />
 }
 
-function Scene({ accent, accent2, count, speed, length, still, stage }: { accent: string; accent2: string; count: number; speed: number; length: number; still: boolean; stage: boolean }) {
+function Scene({ accent, accent2, count, speed, length, still, stage, guides }: { accent: string; accent2: string; count: number; speed: number; length: number; still: boolean; stage: boolean; guides: boolean }) {
   const orbits = useMemo(() => makeOrbits(count, accent, accent2), [count, accent, accent2])
   const halo = useMemo(() => {
     const cv = document.createElement('canvas')
     cv.width = cv.height = 64
     const ctx = cv.getContext('2d')!
     const g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32)
-    g.addColorStop(0, 'rgba(255,255,255,0.9)')
-    g.addColorStop(0.25, 'rgba(255,255,255,0.35)')
+    // steep falloff: a tight coma instead of a flat grey disc
+    g.addColorStop(0, 'rgba(255,255,255,0.95)')
+    g.addColorStop(0.18, 'rgba(255,255,255,0.4)')
+    g.addColorStop(0.5, 'rgba(255,255,255,0.08)')
     g.addColorStop(1, 'rgba(255,255,255,0)')
     ctx.fillStyle = g
     ctx.fillRect(0, 0, 64, 64)
@@ -160,7 +163,7 @@ function Scene({ accent, accent2, count, speed, length, still, stage }: { accent
       <Core accent={accent} still={still} />
       {orbits.map((o, i) => (
         <group key={`${i}-${o.color}-${count}`}>
-          {stage && <Guide o={o} />}
+          {guides && <Guide o={o} />}
           <Comet o={o} speed={speed} length={length} width={stage ? 2 : 1.6} still={still} halo={halo} />
         </group>
       ))}
@@ -187,7 +190,8 @@ export default function CometTrails({ accent, accent2, quality, stage, paused, r
       aria-label="Komety z ogonami krążące po orbitach eliptycznych"
     >
       <color attach="background" args={['#02060c']} />
-      <Scene accent={accent} accent2={accent2} count={stage ? c.komety : 6} speed={c.prędkość} length={c.ogon} still={still} stage={stage} />
+      <Redraw on={[c, accent, accent2]} />
+      <Scene accent={accent} accent2={accent2} count={stage ? c.komety : 6} speed={c.prędkość} length={c.ogon} still={still} stage={stage} guides={stage || reducedMotion} />
       <Sparkles count={stage ? 160 : 50} scale={[11, 6, 11]} size={1.8} speed={still ? 0 : 0.35} color={accent} opacity={0.7} />
       <Stars radius={60} depth={30} count={stage ? 2200 : 400} factor={stage ? 3 : 2} fade speed={still ? 0 : 0.5} />
       <HudComposer>

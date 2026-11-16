@@ -65,13 +65,13 @@ export function AgentDetail({ agent, snapshot, team, accent, accent2, reduced, c
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 min-w-0">
-            <Decipher as="h3" text={agent.name.toUpperCase()} replayKey={agent.id} className="jx-display text-lg leading-none text-jx-text jx-glow-text truncate" />
+            <Decipher as="h3" text={agent.name.toUpperCase()} replayKey={agent.id} className="jx-display font-cmd tracking-[0.16em] text-base leading-none text-jx-text jx-glow-text truncate" />
             <span className="ag-chip" style={{ color: st.css }}>
               <StatusDot tone={dotTone} pulse={st.pulse && !reduced} />
               {st.label}
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 jx-label text-[0.62rem] normal-case tracking-wider">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 jx-label text-[0.625rem] normal-case tracking-wider">
             <span className="text-jx-text">{agent.role || '—'}</span>
             <span className="inline-flex items-center gap-1">
               <IconCpu className="size-3 text-jx-accent" aria-hidden="true" />
@@ -90,7 +90,7 @@ export function AgentDetail({ agent, snapshot, team, accent, accent2, reduced, c
         <IconStack2 className="size-3.5 text-jx-accent shrink-0" aria-hidden="true" />
         {task ? (
           <>
-            <span className="jx-label text-[0.6rem] shrink-0" style={{ color: TASK_STATE[task.state].css }}>
+            <span className="jx-label text-[0.625rem] shrink-0" style={{ color: TASK_STATE[task.state].css }}>
               {TASK_STATE[task.state].label}
             </span>
             <span className="text-[0.78rem] truncate flex-1">{task.title}</span>
@@ -100,14 +100,15 @@ export function AgentDetail({ agent, snapshot, team, accent, accent2, reduced, c
             <span className="jx-num text-[0.7rem] w-9 text-right">{fmtPct(task.progress)}</span>
           </>
         ) : (
-          <span className="jx-label text-[0.62rem]">Brak przypisanych zadań</span>
+          <span className="jx-label text-[0.625rem]">Brak przypisanych zadań</span>
         )}
       </div>
 
       {/* radar + gauges + KPIs */}
-      <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-2">
-        <div className="ag-subframe relative min-h-0 flex flex-col">
-          <span className="jx-label text-[0.6rem] px-2 pt-1.5 flex items-center gap-2">
+      {/* below xl the panel sizes to its content, so the chart row gets explicit heights */}
+      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-2 sm:h-[310px] xl:h-auto xl:flex-1 xl:min-h-0">
+        <div className="ag-subframe relative h-[260px] sm:h-auto min-h-0 flex flex-col">
+          <span className="jx-label text-[0.625rem] px-2 pt-1.5 flex items-center gap-2 whitespace-nowrap">
             Umiejętności
             <span className="flex-1" />
             <span className="inline-flex items-center gap-1 normal-case tracking-wider">
@@ -121,7 +122,7 @@ export function AgentDetail({ agent, snapshot, team, accent, accent2, reduced, c
             <SkillRadar skills={agent.skills} team={team} name={agent.name} accent={accent} accent2={accent2} reduced={reduced} />
           </div>
         </div>
-        <div className="min-h-0 grid grid-rows-[minmax(0,1fr)_auto] gap-2">
+        <div className="min-h-0 grid grid-rows-[150px_auto] sm:grid-rows-[minmax(0,1fr)_auto] gap-2">
           <div className="grid grid-cols-2 gap-2 min-h-0">
             <div className="ag-subframe min-h-0 p-1">
               <ArcGauge
@@ -150,12 +151,12 @@ export function AgentDetail({ agent, snapshot, team, accent, accent2, reduced, c
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div className="ag-subframe px-2 py-1.5 flex flex-col gap-1 min-w-0">
-              <span className="jx-label text-[0.58rem] truncate">Skuteczność</span>
+              <span className="jx-label text-[0.625rem] truncate">Skuteczność</span>
               <span className={`jx-num text-base leading-none jx-glow-text ${TONE_TEXT[succTone]}`}>{fmtPct1(agent.successRate)}</span>
               <SegBar value={agent.successRate} segments={16} tone={succTone} />
             </div>
             <div className="ag-subframe px-2 py-1.5 flex flex-col gap-1 min-w-0">
-              <span className="jx-label text-[0.58rem] truncate">Kolejka zadań</span>
+              <span className="jx-label text-[0.625rem] truncate">Kolejka zadań</span>
               <span className={`jx-num text-base leading-none jx-glow-text ${agent.queue >= 3 ? 'text-jx-warn' : 'text-jx-accent'}`}>{fmtInt(agent.queue)}</span>
               <div className="flex gap-[3px] h-2" role="meter" aria-label="Zadania w kolejce" aria-valuemin={0} aria-valuemax={8} aria-valuenow={agent.queue}>
                 {Array.from({ length: 8 }, (_, i) => (
@@ -168,7 +169,7 @@ export function AgentDetail({ agent, snapshot, team, accent, accent2, reduced, c
       </div>
 
       {/* history + uptime */}
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3 shrink-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 shrink-0">
         <div className="h-[58px]">
           <LoadSparkline history={agent.history} color={col} accent={accent} />
         </div>

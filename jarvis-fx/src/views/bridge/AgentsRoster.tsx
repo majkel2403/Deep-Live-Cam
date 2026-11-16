@@ -30,7 +30,7 @@ const AgentRow = memo(function AgentRow({ agent: a, depth, last, reducedMotion }
   const loadTone = a.status === 'error' ? 'danger' : a.load > 0.85 ? 'warn' : st.tone === 'violet' ? 'violet' : 'accent'
   return (
     <li
-      className={`group flex items-stretch gap-1.5 px-2 py-[3px] border-b border-jx-line/25 last:border-b-0 ${a.status === 'error' ? 'bg-[color-mix(in_srgb,var(--jx-danger)_10%,transparent)]' : ''}`}
+      className={`group flex flex-[1_0_auto] max-h-16 items-stretch gap-1.5 px-2 py-[3px] border-b border-jx-line/25 last:border-b-0 ${a.status === 'error' ? 'bg-[color-mix(in_srgb,var(--jx-danger)_10%,transparent)]' : ''}`}
       aria-label={`${a.name}, ${a.role}: ${st.label}, obciążenie ${Math.round(a.load * 100)}%, latencja ${Math.round(a.latencyMs)} ms`}
     >
       {Array.from({ length: Math.max(0, depth - 1) }, (_, i) => (
@@ -48,15 +48,15 @@ const AgentRow = memo(function AgentRow({ agent: a, depth, last, reducedMotion }
         <div className="flex items-center gap-1.5 min-w-0">
           <span className="font-head font-semibold text-[0.8rem] tracking-wider uppercase text-jx-text truncate">{a.name}</span>
           <StatusDot tone={DOT_TONE[st.tone]} pulse={st.pulse} />
-          <span className={`jx-label text-[0.56rem] ${TEXT_TONE[st.tone]} truncate`}>{st.label}</span>
+          <span className={`jx-label text-[0.625rem] ${TEXT_TONE[st.tone]} truncate`}>{st.label}</span>
           <span className="flex-1" />
           <span className={`jx-num text-[0.68rem] ${a.latencyMs > 600 ? 'text-jx-warn' : 'text-jx-text'} whitespace-nowrap`} title="Latencja">
             {Math.round(a.latencyMs)}
-            <span className="text-jx-dim text-[0.85em]"> ms</span>
+            <span className="text-jx-dim text-[0.92em]"> ms</span>
           </span>
         </div>
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className="jx-label text-[0.54rem] normal-case tracking-wide truncate w-[38%] shrink-0" title={`${a.role} · ${a.model}`}>
+          <span className="jx-label text-[0.625rem] normal-case tracking-wide truncate w-[38%] shrink-0" title={`${a.role} · ${a.model}`}>
             {a.role}
           </span>
           <div className="bx-bar-track relative h-[7px] flex-1 min-w-6" role="meter" aria-label={`Obciążenie ${a.name}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(a.load * 100)}>
@@ -68,7 +68,7 @@ const AgentRow = memo(function AgentRow({ agent: a, depth, last, reducedMotion }
               transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 160, damping: 24 }}
             />
           </div>
-          <span className="jx-num text-[0.62rem] text-jx-dim w-7 text-right">{Math.round(a.load * 100)}%</span>
+          <span className="jx-num text-[0.625rem] text-jx-dim w-7 text-right">{Math.round(a.load * 100)}%</span>
           <span className="w-12 shrink-0 hidden xl:block" aria-hidden="true">
             <Sparkline data={a.history.slice(-24)} min={0} max={1} height={14} capacity={24} color={CSS_TONE[loadTone]} ariaLabel={`Historia obciążenia ${a.name}`} />
           </span>
@@ -102,7 +102,7 @@ export function AgentsRoster({
       className="bx-agents h-full"
       bodyClassName="flex flex-col"
       actions={
-        <HudButton size="sm" icon={<IconArrowUpRight />} onClick={() => navigate('agents')} className="px-1.5! py-0.5! text-[0.6rem]!" title="Otwórz widok agentów (Alt+3)">
+        <HudButton size="sm" icon={<IconArrowUpRight />} onClick={() => navigate('agents')} className="px-1.5! py-0.5! text-[0.625rem]!" title="Otwórz widok agentów (Alt+3)">
           Graf
         </HudButton>
       }
@@ -112,14 +112,14 @@ export function AgentsRoster({
           <p className="jx-label jx-caret">{status === 'error' ? `Błąd źródła${detail ? `: ${detail}` : ''}` : 'Oczekiwanie na dane agentów'}</p>
         </div>
       ) : (
-        <ul className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-0 p-0 list-none" aria-label="Lista agentów">
+        <ul className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-0 p-0 list-none flex flex-col" aria-label="Lista agentów">
           {rows.map((r) => (
             <AgentRow key={r.agent.id} agent={r.agent} depth={r.depth} last={r.last} reducedMotion={reducedMotion} />
           ))}
         </ul>
       )}
       <footer className="shrink-0 flex items-center gap-2 px-2.5 py-1.5 border-t border-jx-line/50 min-w-0">
-        <DemoBadge synthetic={source.synthetic} label={source.label} status={status} />
+        <DemoBadge synthetic={source.synthetic} label={source.label} status={status} focusable={false} />
       </footer>
     </Panel>
   )

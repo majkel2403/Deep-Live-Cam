@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { motion, useAnimationFrame } from 'motion/react'
 import gsap from 'gsap'
 import { DrawSVGPlugin } from 'gsap/DrawSVGPlugin'
@@ -90,6 +90,22 @@ export function RadialHud({
   const loadArc = useRef<SVGPathElement>(null)
   const successArc = useRef<SVGPathElement>(null)
   const spin = useRef({ a: 0, speed: SPEED[mode] })
+
+  // rendered px per viewBox unit: text sizes are raised so no label renders below ~10.5 px
+  const [unitPx, setUnitPx] = useState(0.45)
+  useEffect(() => {
+    const el = root.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(([e]) => {
+      const { width, height } = e.contentRect
+      const v = Math.round((Math.min(width, height) / 1000) * 100) / 100
+      if (v > 0) setUnitPx(v)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  const fs = (n: number) => Math.max(n, Math.ceil(10.5 / unitPx))
+  const nameFs = fs(19)
   const firstValue = useRef(true)
   // StrictMode remounts revert the GSAP context – start the brackets empty again
   useEffect(
@@ -154,6 +170,8 @@ export function RadialHud({
   )
 
   const segs = useMemo(() => {
+    // upright top labels grow outwards from their baseline: keep the cap height clear of the load arc
+    const topR = R.agentLoad - 8 - nameFs * 0.74
     const n = Math.max(1, agents.length)
     const seg = 360 / n
     const gap = Math.min(4, seg * 0.12)
@@ -167,11 +185,11 @@ export function RadialHud({
         a,
         ring: arc(R.agents, a0, a1),
         loadPath: arc(R.agentLoad, a0, a1),
-        label: bottom ? arc(R.agentLoad - 13, a1, a0, false) : arc(R.agentLoad - 24, a0, a1),
+        label: bottom ? arc(R.agentLoad - 13, a1, a0, false) : arc(topR, a0, a1),
         id: `${uid}-ag-${i}`,
       }
     })
-  }, [agents, uid])
+  }, [agents, uid, nameFs])
 
   const sweepPath = useMemo(() => {
     const [x0, y0] = polar(R.agents - 8, -28)
@@ -225,7 +243,7 @@ export function RadialHud({
             dominantBaseline="middle"
             fill={accent}
             fillOpacity="0.8"
-            style={{ fontFamily: 'var(--jx-font-mono)', fontSize: 18, letterSpacing: 2 }}
+            style={{ fontFamily: 'var(--jx-font-mono)', fontSize: fs(18), letterSpacing: 2 }}
           >
             {String(b).padStart(3, '0')}
           </text>
@@ -288,7 +306,7 @@ export function RadialHud({
               <text
                 className="rh-fade"
                 fill={lit ? tone : 'var(--jx-text-dim)'}
-                style={{ fontFamily: 'var(--jx-font-label)', fontSize: 19, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase', transition: 'fill 0.4s' }}
+                style={{ fontFamily: 'var(--jx-font-label)', fontSize: nameFs, fontWeight: 600, letterSpacing: 3, textTransform: 'uppercase', transition: 'fill 0.4s' }}
               >
                 <textPath href={`#${id}`} startOffset="50%" textAnchor="middle">
                   {a.name}
@@ -314,16 +332,16 @@ export function RadialHud({
       </g>
       {/* bracket readouts sit at the lower bracket ends, clear of the orbit band */}
       <g className="rh-fade" style={{ fontFamily: 'var(--jx-font-label)', fontWeight: 600, letterSpacing: 3 }}>
-        <text x={LBL.x0} y={LBL.y} textAnchor="start" fill="var(--jx-text-dim)" style={{ fontSize: 17 }}>
+        <text x={LBL.x0} y={LBL.y} textAnchor="start" fill="var(--jx-text-dim)" style={{ fontSize: fs(17) }}>
           OBCIĄŻENIE
         </text>
-        <text x={LBL.x0} y={LBL.y + 8} textAnchor="start" dominantBaseline="hanging" fill={load > 0.85 ? 'var(--jx-warn)' : accent} style={{ fontFamily: 'var(--jx-font-mono)', fontSize: 30, letterSpacing: 0 }}>
+        <text x={LBL.x0} y={LBL.y + 8} textAnchor="start" dominantBaseline="hanging" fill={load > 0.85 ? 'var(--jx-warn)' : accent} style={{ fontFamily: 'var(--jx-font-mono)', fontSize: fs(30), letterSpacing: 0 }}>
           {Math.round(load * 100)}%
         </text>
-        <text x={-LBL.x0} y={LBL.y} textAnchor="end" fill="var(--jx-text-dim)" style={{ fontSize: 17 }}>
+        <text x={-LBL.x0} y={LBL.y} textAnchor="end" fill="var(--jx-text-dim)" style={{ fontSize: fs(17) }}>
           SKUTECZNOŚĆ
         </text>
-        <text x={-LBL.x0} y={LBL.y + 8} textAnchor="end" dominantBaseline="hanging" fill={success !== null && success < 0.85 ? 'var(--jx-warn)' : 'var(--jx-ok)'} style={{ fontFamily: 'var(--jx-font-mono)', fontSize: 30, letterSpacing: 0 }}>
+        <text x={-LBL.x0} y={LBL.y + 8} textAnchor="end" dominantBaseline="hanging" fill={success !== null && success < 0.85 ? 'var(--jx-warn)' : 'var(--jx-ok)'} style={{ fontFamily: 'var(--jx-font-mono)', fontSize: fs(30), letterSpacing: 0 }}>
           {success === null ? 'n/d' : `${(success * 100).toFixed(1)}%`}
         </text>
       </g>

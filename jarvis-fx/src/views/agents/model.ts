@@ -26,7 +26,7 @@ export const SEMANTIC = {
 } as const
 
 export const STATUS_META: Record<AgentStatus, { label: string; short: string; css: string; pulse: boolean }> = {
-  running: { label: 'Pracuje', short: 'PRACA', css: 'var(--jx-ok)', pulse: true },
+  running: { label: 'Działa', short: 'DZIAŁA', css: 'var(--jx-ok)', pulse: true },
   thinking: { label: 'Myśli', short: 'MYŚLI', css: 'var(--jx-violet)', pulse: true },
   waiting: { label: 'Czeka', short: 'CZEKA', css: 'var(--jx-warn)', pulse: false },
   idle: { label: 'Bezczynny', short: 'GOTOWY', css: 'var(--jx-accent)', pulse: false },
@@ -67,9 +67,9 @@ export const LINK_META: Record<AgentLink['kind'], { label: string; hint: string 
 
 export const TASK_STATE: Record<AgentTask['state'], { label: string; css: string }> = {
   queued: { label: 'W kolejce', css: 'var(--jx-warn)' },
-  active: { label: 'Aktywne', css: 'var(--jx-accent)' },
+  active: { label: 'W toku', css: 'var(--jx-accent)' },
   done: { label: 'Gotowe', css: 'var(--jx-ok)' },
-  failed: { label: 'Błąd', css: 'var(--jx-danger)' },
+  failed: { label: 'Nieudane', css: 'var(--jx-danger)' },
 }
 
 const LEVELS: EventLevel[] = ['info', 'ok', 'warn', 'error']

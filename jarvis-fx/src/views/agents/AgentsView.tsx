@@ -55,12 +55,14 @@ export default function AgentsView() {
 
   return (
     <Tooltip.Provider delayDuration={150} skipDelayDuration={300}>
-      <div className="ag-view h-full min-h-0 flex flex-col gap-3">
+      <div className="ag-view h-full min-h-0 flex flex-col gap-3 overflow-y-auto overflow-x-hidden xl:overflow-visible">
         <StatusStrip snapshot={snapshot} source={sourceInfo} />
-        <div className="flex-1 min-h-0 grid gap-3 grid-cols-1 xl:grid-cols-[minmax(0,1.32fr)_minmax(0,1fr)] overflow-y-auto xl:overflow-visible">
-          <div className="min-h-0 flex flex-col gap-3">
+        {/* ≥ 1280 px: two columns filling the viewport; below: the whole view scrolls as one column with fixed panel heights
+            (min-h-0 only at xl – in the scrolling column it would let auto rows collapse and panels overlap) */}
+        <div className="grid gap-3 grid-cols-1 content-start xl:flex-1 xl:min-h-0 xl:content-stretch xl:grid-cols-[minmax(0,1.32fr)_minmax(0,1fr)]">
+          <div className="flex flex-col gap-3 xl:min-h-0">
             <TopologyPanel
-              className="flex-1 min-h-[300px]"
+              className="h-[clamp(320px,56vh,460px)] shrink-0 xl:h-auto xl:shrink xl:flex-1 xl:min-h-[300px]"
               snapshot={snapshot}
               selectedId={selectedId}
               onSelect={select}
@@ -71,11 +73,11 @@ export default function AgentsView() {
               waitHint={waitHint}
               synthetic={source.synthetic}
             />
-            <RosterTable className="shrink-0 max-h-[46%] min-h-[180px]" agents={agents ?? []} selectedId={selectedId} onSelect={select} accent={accent.hex} reduced={reduced} />
+            <RosterTable className="shrink-0 xl:max-h-[46%] xl:min-h-[180px]" emptyHint={snapshot ? undefined : waitHint} agents={agents ?? []} selectedId={selectedId} onSelect={select} accent={accent.hex} reduced={reduced} />
           </div>
-          <div className="min-h-0 flex flex-col gap-3">
-            <AgentDetail className="flex-[1.5] min-h-[400px]" agent={selected} snapshot={snapshot} team={team} accent={accent.hex} accent2={accent.hex2} reduced={reduced} />
-            <EventTimeline className="flex-1 min-h-[200px]" events={snapshot?.events ?? []} agents={agents ?? []} selected={selected} reduced={reduced} />
+          <div className="flex flex-col gap-3 xl:min-h-0">
+            <AgentDetail className="shrink-0 xl:shrink xl:flex-[1.5] xl:min-h-[400px]" agent={selected} snapshot={snapshot} team={team} accent={accent.hex} accent2={accent.hex2} reduced={reduced} />
+            <EventTimeline className="h-[340px] shrink-0 xl:h-auto xl:shrink xl:flex-1 xl:min-h-[200px]" events={snapshot?.events ?? []} agents={agents ?? []} selected={selected} reduced={reduced} />
           </div>
         </div>
       </div>

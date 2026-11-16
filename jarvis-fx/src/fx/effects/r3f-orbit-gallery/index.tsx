@@ -6,6 +6,7 @@ import { Bloom, Noise, Vignette } from '@react-three/postprocessing'
 import { AdditiveBlending, BackSide, Color, DoubleSide, FrontSide, type CanvasTexture, type Group, type Mesh, type MeshBasicMaterial, type ShaderMaterial } from 'three'
 import { HudComposer } from '@/fx/three/HudComposer'
 import { useFxControls } from '@/fx/controls'
+import { Redraw, tint, uniformArgs, useFitAspect } from '../r3f-kit/util'
 import type { FxProps } from '@/fx/types'
 import { collectFacts, drawBack, drawCard, loadCardFonts } from './cards'
 
@@ -54,7 +55,7 @@ function PolarFloor({ accent, still }: { accent: string; still: boolean }) {
   return (
     <mesh rotation-x={-Math.PI / 2} position-y={-1.35}>
       <planeGeometry args={[12, 12]} />
-      <shaderMaterial ref={mat} vertexShader={floorVert} fragmentShader={floorFrag} uniforms={uniforms} transparent depthWrite={false} blending={AdditiveBlending} side={DoubleSide} />
+      <shaderMaterial ref={mat} vertexShader={floorVert} fragmentShader={floorFrag} args={uniformArgs(uniforms)} transparent depthWrite={false} blending={AdditiveBlending} side={DoubleSide} />
     </mesh>
   )
 }
@@ -72,6 +73,7 @@ const beamFrag = /* glsl */ `
 function Core({ accent, accent2, still }: { accent: string; accent2: string; still: boolean }) {
   const beamUniforms = useMemo(() => ({ uColor: { value: new Color() } }), [])
   beamUniforms.uColor.value.set(accent)
+  const hot = useMemo(() => tint(accent, 0.85), [accent])
   const ico = useRef<Mesh>(null)
   const rings = useRef<Group>(null)
   const glow = useRef<Mesh>(null)
@@ -91,7 +93,7 @@ function Core({ accent, accent2, still }: { accent: string; accent2: string; sti
     <group>
       <mesh ref={glow}>
         <sphereGeometry args={[0.26, 32, 32]} />
-        <meshBasicMaterial color="#f2feff" toneMapped={false} />
+        <meshBasicMaterial color={hot} toneMapped={false} />
       </mesh>
       <mesh>
         <sphereGeometry args={[0.42, 32, 32]} />
@@ -112,7 +114,7 @@ function Core({ accent, accent2, still }: { accent: string; accent2: string; sti
       {/* light column, fading towards both ends */}
       <mesh position-y={0.4}>
         <cylinderGeometry args={[0.035, 0.035, 4.6, 16, 1, true]} />
-        <shaderMaterial vertexShader={floorVert} fragmentShader={beamFrag} uniforms={beamUniforms} transparent blending={AdditiveBlending} depthWrite={false} />
+        <shaderMaterial vertexShader={floorVert} fragmentShader={beamFrag} args={uniformArgs(beamUniforms)} transparent blending={AdditiveBlending} depthWrite={false} />
       </mesh>
     </group>
   )
@@ -204,6 +206,8 @@ function Scene({ accent, accent2, hue, count, radius, speed, tilt, parallax, sti
   const orbit = useRef<Group>(null)
   const slow = useRef(1)
   const [hovered, setHovered] = useState<number | null>(null)
+  // the carousel is wide: keep the side cards in frame on narrower canvases (stage next to the panel)
+  useFitAspect(stage ? 7.4 : 7.0, 1.7)
   const [tex, setTex] = useState<{ front: CanvasTexture[]; back: CanvasTexture } | null>(null)
 
   useEffect(() => {
@@ -304,12 +308,13 @@ export default function OrbitGallery({ accent, accent2, hue, quality, stage, pau
   return (
     <Canvas
       dpr={dpr}
-      camera={{ position: [0, 1.35, stage ? 7.4 : 8.2], fov: 42 }}
+      camera={{ position: [0, 1.35, stage ? 7.4 : 7.0], fov: 42 }}
       frameloop={still ? 'demand' : 'always'}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
       aria-label="Galeria orbitalna: karty z parametrami przeglądarki krążące wokół rdzenia"
     >
       <color attach="background" args={['#02060c']} />
+      <Redraw on={[c, accent, accent2]} />
       <Scene
         accent={accent}
         accent2={accent2}

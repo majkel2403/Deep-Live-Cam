@@ -15,6 +15,13 @@ export function createRemoteSource(url: string): AgentSource {
     subscribe(cb, onStatus) {
       let closed = false
       let retry = 0
+      // last status reported – a 1 Hz stream should not re-announce 'live' on every message
+      let reported: 'connecting' | 'live' | 'error' | null = null
+      const status = (s: 'connecting' | 'live' | 'error', detail?: string) => {
+        if (s === reported && s === 'live') return
+        reported = s
+        onStatus?.(s, detail)
+      }
       let ws: WebSocket | null = null
       let es: EventSource | null = null
       let timer: ReturnType<typeof setTimeout> | undefined
@@ -24,22 +31,22 @@ export function createRemoteSource(url: string): AgentSource {
           const snap = JSON.parse(raw) as OrchestrationSnapshot
           if (Array.isArray(snap.agents)) {
             retry = 0
-            onStatus?.('live')
+            status('live')
             cb(snap)
           }
         } catch (e) {
-          onStatus?.('error', `Niepoprawny JSON: ${(e as Error).message}`)
+          status('error', `Niepoprawny JSON: ${(e as Error).message}`)
         }
       }
       const schedule = () => {
         if (closed) return
         const delay = Math.min(15000, 500 * 2 ** retry++)
-        onStatus?.('error', `Brak połączenia – ponowienie za ${Math.round(delay / 1000)} s`)
+        status('error', `Brak połączenia – ponowienie za ${Math.max(1, Math.round(delay / 1000))} s`)
         timer = setTimeout(open, delay)
       }
       const open = () => {
         if (closed) return
-        onStatus?.('connecting')
+        status('connecting')
         try {
           if (isWs) {
             ws = new WebSocket(url)
@@ -55,7 +62,7 @@ export function createRemoteSource(url: string): AgentSource {
             }
           }
         } catch (e) {
-          onStatus?.('error', (e as Error).message)
+          status('error', (e as Error).message)
           schedule()
         }
       }
@@ -63,7 +70,13 @@ export function createRemoteSource(url: string): AgentSource {
       return () => {
         closed = true
         clearTimeout(timer)
-        ws?.close()
+        if (ws) {
+          const sock = ws
+          sock.onmessage = sock.onerror = sock.onclose = null
+          // closing during the handshake makes the browser log a warning: close right after it opens instead
+          if (sock.readyState === WebSocket.CONNECTING) sock.onopen = () => sock.close()
+          else sock.close()
+        }
         es?.close()
       }
     },

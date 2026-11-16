@@ -47,9 +47,9 @@ export function SourceControl({ info }: { info: SourceInfo }) {
     <div className="flex items-center gap-2 min-w-0">
       <div className="flex flex-col items-end min-w-0 leading-tight">
         <span className="flex items-center gap-1.5 whitespace-nowrap">
-          <span className="jx-label text-[0.56rem]">Źródło · {KIND_TEXT[info.kind]}</span>
+          <span className="jx-label text-[0.625rem]">Źródło · {KIND_TEXT[info.kind]}</span>
           <StatusDot tone={STATUS_TONE[info.status]} pulse={info.status !== 'live'} />
-          <span className="jx-label text-[0.56rem] text-jx-text" aria-live="polite">
+          <span className="jx-label text-[0.625rem] text-jx-text" aria-live="polite">
             {STATUS_TEXT[info.status]}
           </span>
         </span>
@@ -151,13 +151,13 @@ function SourceForm({ info, onDone }: { info: SourceInfo; onDone: () => void }) 
       </div>
 
       <div className="ag-subframe px-3 py-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.75rem]">
-        <span className="jx-label text-[0.6rem]">Teraz</span>
+        <span className="jx-label text-[0.625rem]">Teraz</span>
         <span className="font-mono text-jx-text break-all">{info.label}</span>
         <span className="inline-flex items-center gap-1.5">
           <StatusDot tone={STATUS_TONE[info.status]} pulse={info.status !== 'live'} />
-          <span className="jx-label text-[0.6rem]">{STATUS_TEXT[info.status]}</span>
+          <span className="jx-label text-[0.625rem]">{STATUS_TEXT[info.status]}</span>
         </span>
-        {info.synthetic && <span className="jx-label text-[0.6rem] text-jx-warn">dane syntetyczne</span>}
+        {info.synthetic && <span className="jx-label text-[0.625rem] text-jx-warn">dane syntetyczne</span>}
         {info.detail && <span className="w-full text-jx-warn text-[0.72rem]">{info.detail}</span>}
       </div>
 

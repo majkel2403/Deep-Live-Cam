@@ -85,6 +85,7 @@ export function EventTimeline({ events, agents, selected, reduced, className = '
               type="button"
               className="ag-level-chip"
               aria-pressed={on}
+              aria-label={`${LEVEL_META[l].label}: ${counts[l]}`}
               style={{ color: LEVEL_META[l].css }}
               onClick={() => toggleLevel(l)}
               title={on ? `Ukryj poziom ${LEVEL_META[l].label}` : `Pokaż poziom ${LEVEL_META[l].label}`}
@@ -98,7 +99,7 @@ export function EventTimeline({ events, agents, selected, reduced, className = '
 
       <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1" role="log" aria-live="polite" aria-relevant="additions" aria-label="Zdarzenia agentów">
         {rows.length === 0 ? (
-          <p className="jx-label text-[0.62rem] py-4 text-center">
+          <p className="jx-label text-[0.625rem] py-4 text-center">
             {events.length ? 'Brak zdarzeń dla bieżącego filtru' : 'Strumień zdarzeń pusty'}
           </p>
         ) : (
@@ -120,7 +121,7 @@ export function EventTimeline({ events, agents, selected, reduced, className = '
                   <time className="jx-num text-[0.66rem] text-jx-dim shrink-0" dateTime={new Date(e.ts).toISOString()}>
                     {fmtTime(e.ts)}
                   </time>
-                  <span className="ag-tl-level jx-label text-[0.56rem] shrink-0">{LEVEL_META[e.level].label}</span>
+                  <span className="ag-tl-level jx-label text-[0.625rem] shrink-0">{LEVEL_META[e.level].label}</span>
                   {scope === 'all' && <span className="font-head text-[0.7rem] text-jx-accent tracking-wider shrink-0">{names.get(e.agentId) ?? e.agentId}</span>}
                   <span className="text-[0.76rem] text-jx-text truncate">{textOf(e)}</span>
                 </motion.li>

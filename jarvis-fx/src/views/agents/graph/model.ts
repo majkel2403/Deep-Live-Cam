@@ -16,6 +16,8 @@ export interface GNode {
   x?: number
   y?: number
   z?: number
+  /** fixed y (3D view stacks delegation tiers); d3-force keeps the node on this plane */
+  fy?: number
 }
 
 export interface GLink {

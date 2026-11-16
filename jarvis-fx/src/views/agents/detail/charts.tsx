@@ -5,7 +5,7 @@ import { RadarComponent } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
 import ReactEChartsCore from 'echarts-for-react/esm/core'
 import { SKILL_AXES, type SkillAxis } from '@/lib/agents'
-import { hexA } from '../hooks'
+import { hexA, tintWhite } from '../hooks'
 
 /**
  * Tree-shaken ECharts 6 (Apache-2.0) via echarts-for-react (MIT): radar + gauge series and the
@@ -154,7 +154,7 @@ export function ArcGauge({ value, max, display, unit, label, color, accent, redu
             fontFamily: FONT_MONO,
             fontSize: 17,
             fontWeight: 500,
-            color: '#e9fbff',
+            color: tintWhite(accent),
             formatter: () => display,
             rich: {},
           },
@@ -167,8 +167,8 @@ export function ArcGauge({ value, max, display, unit, label, color, accent, redu
   return (
     <div className="relative size-full" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={Math.round(value)} aria-valuetext={`${display} ${unit}`}>
       <ReactEChartsCore echarts={echarts} option={option} lazyUpdate style={{ width: '100%', height: '100%' }} opts={{ renderer: 'canvas' }} />
-      <span className="absolute inset-x-0 bottom-[14%] text-center jx-label text-[0.56rem] pointer-events-none">{unit}</span>
-      <span className="absolute inset-x-0 bottom-0 text-center jx-label text-[0.6rem] text-jx-text pointer-events-none truncate">{label}</span>
+      <span className="absolute inset-x-0 bottom-[14%] text-center jx-label text-[0.625rem] pointer-events-none">{unit}</span>
+      <span className="absolute inset-x-0 bottom-0 text-center jx-label text-[0.625rem] text-jx-text pointer-events-none truncate">{label}</span>
     </div>
   )
 }

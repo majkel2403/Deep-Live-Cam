@@ -32,7 +32,7 @@ const LogLine = memo(function LogLine({ e, agentName, fresh }: { e: AgentEvent; 
   const text = splitText(e, agentName)
   const body = animate ? <Decipher text={text} duration={0.55} /> : <span>{text}</span>
   return (
-    <li className="bx-log-line font-term text-[0.78rem] leading-[1.35rem]" data-level={e.level}>
+    <li className="bx-log-line font-mono text-[0.74rem] leading-[1.35rem]" data-level={e.level}>
       <time className="jx-num text-[0.66rem] text-jx-dim whitespace-nowrap" dateTime={new Date(e.ts).toISOString()}>
         {fmtClock(e.ts)}
         <span className="bx-ms">{fmtClock(e.ts, true).slice(8)}</span>
@@ -69,11 +69,12 @@ export function EventLog({
   status: 'connecting' | 'live' | 'error'
 }) {
   const [filter, setFilter] = useState<Filter>('all')
-  const [follow, setFollow] = useState(true)
-  const [unread, setUnread] = useState(0)
+  /** id of the newest visible line when auto-follow was paused (null = following the tail) */
+  const [pausedAt, setPausedAt] = useState<string | null>(null)
+  /** data-clock timestamp: lines at or before it never play the entrance (set on filter switches) */
+  const [animFrom, setAnimFrom] = useState(0)
   const scroller = useRef<HTMLDivElement>(null)
-  const seen = useRef(new Set<string>())
-  const lastCount = useRef(0)
+  const follow = pausedAt === null
 
   const names = useMemo(() => new Map(agents.map((a) => [a.id, a.name])), [agents])
   const counts = useMemo(() => {
@@ -83,31 +84,33 @@ export function EventLog({
   }, [events])
   const lines = useMemo(() => (filter === 'all' ? events : events.filter((e) => e.level === filter)).slice(-MAX_LINES), [events, filter])
   const lastError = useMemo(() => [...events].reverse().find((e) => e.level === 'error'), [events])
+  // lines that arrived after the user paused auto-follow (works with a full, rolling buffer too)
+  const unread = useMemo(() => {
+    if (pausedAt === null) return 0
+    const i = lines.findIndex((e) => e.id === pausedAt)
+    return i < 0 ? lines.length : lines.length - 1 - i
+  }, [lines, pausedAt])
 
   // auto-scroll: stick to the bottom unless the user scrolled up to read
   useLayoutEffect(() => {
     const el = scroller.current
-    if (!el) return
-    const added = Math.max(0, lines.length - lastCount.current)
-    lastCount.current = lines.length
-    if (follow) {
-      el.scrollTop = el.scrollHeight
-      setUnread(0)
-    } else if (added) setUnread((u) => u + added)
-    for (const e of lines) seen.current.add(e.id)
+    if (el && follow) el.scrollTop = el.scrollHeight
   }, [lines, follow])
 
+  const pause = () => setPausedAt(lines.at(-1)?.id ?? '')
   const onScroll = () => {
     const el = scroller.current
     if (!el) return
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 28
-    if (atBottom !== follow) setFollow(atBottom)
+    if (atBottom && !follow) setPausedAt(null)
+    else if (!atBottom && follow) pause()
   }
-
-  const jump = () => {
-    setFollow(true)
-    const el = scroller.current
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+  const jump = () => setPausedAt(null)
+  const chooseFilter = (f: Filter) => {
+    setFilter(f)
+    setPausedAt(null)
+    // lines revealed by the new filter are history: no decipher replay
+    setAnimFrom(events.at(-1)?.ts ?? 0)
   }
 
   return (
@@ -127,11 +130,11 @@ export function EventLog({
         <div className="flex items-center gap-1 flex-wrap justify-end" role="group" aria-label="Filtr poziomu zdarzeń">
           {source.synthetic && (
             <span className="hidden xl:contents">
-              <DemoBadge synthetic label={source.label} status={status} compact />
+              <DemoBadge synthetic label={source.label} status={status} compact focusable={false} />
             </span>
           )}
           {FILTERS.map((f) => (
-            <HudButton key={f.id} size="sm" active={filter === f.id} onClick={() => setFilter(f.id)} className="px-1.5! py-0.5! text-[0.6rem]!" aria-label={`${f.label} (${counts[f.id]})`}>
+            <HudButton key={f.id} size="sm" active={filter === f.id} onClick={() => chooseFilter(f.id)} className="px-1.5! py-0.5! text-[0.625rem]!" aria-label={`${f.label} (${counts[f.id]})`}>
               <span className={f.id === 'error' && counts.error ? 'text-jx-danger' : undefined}>
                 <span className="xl:hidden">{f.short}</span>
                 <span className="hidden xl:inline">{f.label}</span>
@@ -139,17 +142,19 @@ export function EventLog({
               <span className="jx-num text-jx-dim hidden xl:inline">{counts[f.id]}</span>
             </HudButton>
           ))}
-          <HudButton size="sm" active={follow} onClick={() => (follow ? setFollow(false) : jump())} icon={<IconArrowBarToDown />} className="px-1.5! py-0.5!" aria-label="Automatyczne przewijanie" title="Automatyczne przewijanie" />
+          <HudButton size="sm" active={follow} onClick={() => (follow ? pause() : jump())} icon={<IconArrowBarToDown />} className="px-1.5! py-0.5!" aria-label="Automatyczne przewijanie" title="Automatyczne przewijanie" />
         </div>
       }
     >
-      <div ref={scroller} onScroll={onScroll} className="bx-log-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-1" tabIndex={0} role="log" aria-live="off" aria-label="Strumień zdarzeń orkiestracji">
+      <div ref={scroller} onScroll={onScroll} className="bx-log-scroll bx-fade-t flex-1 min-h-0 overflow-y-auto overflow-x-hidden py-1" tabIndex={0} role="log" aria-live="off" aria-label="Strumień zdarzeń orkiestracji">
         {lines.length === 0 ? (
-          <p className="jx-label px-3 py-2 jx-caret">{status === 'connecting' ? 'Łączenie ze źródłem' : 'Brak zdarzeń dla wybranego filtra'}</p>
+          <p className="jx-label px-3 py-2 jx-caret">
+            {status === 'connecting' ? 'Łączenie ze źródłem' : status === 'error' && !events.length ? 'Brak danych – błąd łącza ze źródłem' : 'Brak zdarzeń dla wybranego filtra'}
+          </p>
         ) : (
           <ol className="m-0 p-0 list-none">
             {lines.map((e) => (
-              <LogLine key={e.id} e={e} agentName={names.get(e.agentId) ?? e.agentId} fresh={e.ts >= liveSince && !seen.current.has(e.id)} />
+              <LogLine key={e.id} e={e} agentName={names.get(e.agentId) ?? e.agentId} fresh={e.ts >= liveSince && e.ts > animFrom} />
             ))}
           </ol>
         )}

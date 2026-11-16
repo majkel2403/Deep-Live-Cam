@@ -4,6 +4,7 @@ import { Bloom, ChromaticAberration, Noise, Vignette } from '@react-three/postpr
 import { AdditiveBlending, BoxGeometry, Color, InstancedBufferAttribute, PlaneGeometry, RingGeometry, Vector2, type BufferGeometry, type PerspectiveCamera } from 'three'
 import { HudComposer } from '@/fx/three/HudComposer'
 import { useFxControls } from '@/fx/controls'
+import { Redraw, uniformArgs } from '../r3f-kit/util'
 import type { FxProps } from '@/fx/types'
 
 const LEN = 64 // tunnel depth (world units)
@@ -155,7 +156,7 @@ function RingLayer({ shared, count, inner, outer, mode, seed }: { shared: Shared
   const uniforms = useMemo(() => ({ ...shared, uMode: { value: mode } }), [shared, mode])
   return (
     <instancedMesh args={[geo, undefined, count]} frustumCulled={false}>
-      <shaderMaterial vertexShader={ringVert} fragmentShader={ringFrag} uniforms={uniforms} transparent depthWrite={false} blending={AdditiveBlending} />
+      <shaderMaterial vertexShader={ringVert} fragmentShader={ringFrag} args={uniformArgs(uniforms)} transparent depthWrite={false} blending={AdditiveBlending} />
     </instancedMesh>
   )
 }
@@ -171,7 +172,7 @@ function Streaks({ shared, count }: { shared: Shared; count: number }) {
   const geo = useInstanced(base, data)
   return (
     <instancedMesh args={[geo, undefined, count]} frustumCulled={false}>
-      <shaderMaterial vertexShader={streakVert} fragmentShader={streakFrag} uniforms={shared} transparent depthWrite={false} blending={AdditiveBlending} />
+      <shaderMaterial vertexShader={streakVert} fragmentShader={streakFrag} args={uniformArgs(shared)} transparent depthWrite={false} blending={AdditiveBlending} />
     </instancedMesh>
   )
 }
@@ -191,7 +192,7 @@ function Packets({ shared, count }: { shared: Shared; count: number }) {
   const geo = useInstanced(base, data)
   return (
     <instancedMesh args={[geo, undefined, count]} frustumCulled={false}>
-      <shaderMaterial vertexShader={packetVert} fragmentShader={packetFrag} uniforms={shared} transparent depthWrite={false} blending={AdditiveBlending} />
+      <shaderMaterial vertexShader={packetVert} fragmentShader={packetFrag} args={uniformArgs(shared)} transparent depthWrite={false} blending={AdditiveBlending} />
     </instancedMesh>
   )
 }
@@ -218,7 +219,7 @@ function Core({ shared }: { shared: Shared }) {
   return (
     <mesh position-z={-LEN * 0.92}>
       <planeGeometry args={[30, 30]} />
-      <shaderMaterial vertexShader={glowVert} fragmentShader={glowFrag} uniforms={shared} transparent depthWrite={false} blending={AdditiveBlending} />
+      <shaderMaterial vertexShader={glowVert} fragmentShader={glowFrag} args={uniformArgs(shared)} transparent depthWrite={false} blending={AdditiveBlending} />
     </mesh>
   )
 }
@@ -281,6 +282,7 @@ export default function DataTunnel({ accent, accent2, quality, stage, paused, re
       aria-label="Tunel danych z pierścieniami i smugami lecącymi ku kamerze"
     >
       <color attach="background" args={['#010409']} />
+      <Redraw on={[c, accent, accent2]} />
       <Driver shared={shared} speed={reducedMotion ? 0 : c.prędkość} twist={c.skręt} still={still} />
       <Core shared={shared} />
       <RingLayer shared={shared} count={n(26)} inner={R * 0.985} outer={R} mode={0} seed={1} />
@@ -291,7 +293,7 @@ export default function DataTunnel({ accent, accent2, quality, stage, paused, re
       <HudComposer>
         {stage
           ? [
-              <Bloom key="b" intensity={c.bloom} luminanceThreshold={0.12} luminanceSmoothing={0.3} mipmapBlur />,
+              <Bloom key="b" intensity={c.bloom} luminanceThreshold={0.12} luminanceSmoothing={0.3} mipmapBlur radius={0.7} />,
               <ChromaticAberration key="c" offset={new Vector2(c.aberracja, c.aberracja)} radialModulation modulationOffset={0.1} />,
               <Noise key="n" opacity={0.04} />,
               <Vignette key="v" eskil={false} offset={0.18} darkness={0.9} />,

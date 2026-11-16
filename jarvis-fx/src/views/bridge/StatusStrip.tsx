@@ -33,7 +33,7 @@ function ModeSegments({ mode, reducedMotion }: { mode: CoreMode; reducedMotion: 
         return (
           <div
             key={m.id}
-            className={`bx-seg flex items-center gap-1.5 pl-3.5 pr-3 py-1 jx-label text-[0.62rem] transition-colors ${on ? 'text-white' : 'text-jx-dim'}`}
+            className={`bx-seg flex items-center gap-1.5 pl-3.5 pr-3 py-1 jx-label text-[0.625rem] transition-colors ${on ? 'text-white' : 'text-jx-dim'}`}
             style={{ background: on ? undefined : 'hsl(var(--jx-hue) 80% 40% / 0.1)' }}
             aria-hidden="true"
           >
@@ -60,8 +60,8 @@ function ModeSegments({ mode, reducedMotion }: { mode: CoreMode; reducedMotion: 
 
 function Stat({ label, children, unit, tone = 'accent', hint }: { label: string; children: ReactNode; unit?: string; tone?: Tone; hint?: string }) {
   return (
-    <div className="flex flex-col shrink-0 px-2.5 2xl:px-3.5 border-l border-jx-line/50 first:border-l-0" title={hint}>
-      <span className="jx-label text-[0.56rem] whitespace-nowrap">{label}</span>
+    <div className="flex flex-col shrink-0 min-w-0 px-2.5 2xl:px-3.5 border-l border-jx-line/50 first:border-l-0 max-sm:[&:nth-child(3n+1)]:border-l-0" title={hint}>
+      <span className="jx-label text-[0.625rem] whitespace-nowrap">{label}</span>
       <span className={`jx-num text-[1.02rem] leading-tight jx-glow-text ${TEXT_TONE[tone]} whitespace-nowrap`}>
         {children}
         {unit && <span className="text-[0.62em] text-jx-dim ml-1">{unit}</span>}
@@ -116,19 +116,23 @@ export function StatusStrip({
         <Glitch mode="once" trigger={errorSeq || undefined}>
           <h1 className="jx-display text-[0.92rem] font-bold text-jx-accent jx-glow-text leading-none whitespace-nowrap">Mostek</h1>
         </Glitch>
-        <span className="hidden min-[1800px]:inline jx-label text-[0.6rem] whitespace-nowrap">Centrum dowodzenia</span>
+        <span className="hidden min-[1800px]:inline jx-label text-[0.625rem] whitespace-nowrap">Centrum dowodzenia</span>
       </div>
 
       <ModeSegments mode={mode} reducedMotion={reducedMotion} />
 
       <div className="hidden min-[1360px]:flex flex-[1_1_0%] min-w-0 flex-col justify-center gap-0.5 overflow-hidden" aria-hidden={swarm.length === 0}>
-        <span className="jx-label text-[0.54rem] whitespace-nowrap">
+        <span className="jx-label text-[0.625rem] whitespace-nowrap">
           Obciąż. roju
         </span>
         <Sparkline data={swarm} min={0} max={1} capacity={40} height={18} ariaLabel="Średnie obciążenie agentów w ostatnich próbkach" />
       </div>
 
-      <div className="flex items-center min-w-0 basis-full lg:basis-auto lg:flex-[1_1_auto] min-[1360px]:flex-[0_1_auto] justify-start lg:justify-center-safe overflow-x-auto lg:overflow-hidden order-last lg:order-none" role="group" aria-label="Kluczowe odczyty orkiestracji">
+      <div
+        className="grid grid-cols-3 sm:grid-cols-5 gap-y-1.5 min-w-0 basis-full order-last lg:flex lg:items-center lg:basis-auto lg:flex-[1_1_auto] min-[1360px]:flex-[0_1_auto] lg:justify-center-safe lg:overflow-hidden lg:order-none"
+        role="group"
+        aria-label="Kluczowe odczyty orkiestracji"
+      >
         <Stat label="Agenci aktywni" hint="Agenci w stanie „myśli” lub „działa” / wszyscy">
           <AnimatedNumber value={agg.active} />
           <span className="text-jx-dim">/{agg.total}</span>
@@ -151,8 +155,9 @@ export function StatusStrip({
             <AnimatedNumber value={agg.eventsPerMin} />
           </Stat>
         </span>
-        <Stat label="Błędy" tone={agg.errored ? 'danger' : 'dim'} hint="Agenci w stanie błędu">
-          <AnimatedNumber value={agg.errored} />
+        <Stat label="Błędy · 5 min" tone={agg.errored || agg.errors5m ? 'danger' : 'dim'} hint={`Zdarzenia błędu w ostatnich 5 minutach · agenci w stanie błędu teraz: ${agg.errored}`}>
+          <AnimatedNumber value={agg.errors5m} />
+          {agg.errored > 0 && <span className="text-[0.62em] ml-1">({agg.errored} akt.)</span>}
         </Stat>
       </div>
 

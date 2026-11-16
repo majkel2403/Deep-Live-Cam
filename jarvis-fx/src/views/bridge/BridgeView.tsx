@@ -40,7 +40,7 @@ export default function BridgeView() {
           <div className="bx-strip">
             <StatusStrip agents={agents} agg={bridge.agg} mode={bridge.mode} source={source} status={status} errorSeq={bridge.errorSeq} reducedMotion={reducedMotion} />
           </div>
-          <CoreStage snapshot={snapshot} bridge={bridge} accent={hex} accent2={hex2} quality={quality} reducedMotion={reducedMotion} />
+          <CoreStage snapshot={snapshot} status={status} bridge={bridge} accent={hex} accent2={hex2} quality={quality} reducedMotion={reducedMotion} />
           <div className="bx-agents min-h-0">
             <AgentsRoster agents={agents} source={source} status={status} detail={detail} reducedMotion={reducedMotion} />
           </div>
@@ -51,7 +51,7 @@ export default function BridgeView() {
             <EventLog events={snapshot?.events ?? []} agents={agents} liveSince={bridge.liveSince} source={source} status={status} />
           </div>
           <div className="bx-tasks min-h-0">
-            <TasksPanel tasks={snapshot?.tasks ?? []} agents={agents} now={snapshot?.ts ?? 0} reducedMotion={reducedMotion} />
+            <TasksPanel tasks={snapshot?.tasks ?? []} agents={agents} now={snapshot?.ts ?? 0} reducedMotion={reducedMotion} noData={!snapshot} status={status} />
           </div>
         </div>
       </div>

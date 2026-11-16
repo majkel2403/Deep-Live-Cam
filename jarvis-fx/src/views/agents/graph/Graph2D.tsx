@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import ForceGraph2D, { type ForceGraphMethods } from 'react-force-graph-2d'
-import { hexA } from '../hooks'
+import { useDocumentVisible } from '@/lib/telemetry'
+import { hexA, tintWhite } from '../hooks'
 import { SEMANTIC, STATUS_META, statusHex } from '../model'
 import { endpointId, particleCount, particleSpeed, useGraphModel, type GLink, type GNode } from './model'
 import { linkTooltip, nodeTooltip, type GraphViewProps } from './shared'
@@ -15,8 +16,39 @@ type FG = ForceGraphMethods<GNode, GLink>
 
 const radius2d = (load: number) => 5 + load * 9
 
+/**
+ * Asymmetric fit: the built-in zoomToFit pads all sides equally, so bottom nodes end up under
+ * the legend overlay. Reserve the top readout line and the bottom legend, plus label room
+ * (labels are drawn below each node at a constant 12 + 10.5 px).
+ */
+function fit2D(fg: FG, nodes: GNode[], w: number, h: number, ms: number) {
+  const pts = nodes.filter((n) => Number.isFinite(n.x) && Number.isFinite(n.y))
+  if (!pts.length || w <= 0 || h <= 0) return
+  let minX = Infinity
+  let maxX = -Infinity
+  let minY = Infinity
+  let maxY = -Infinity
+  for (const n of pts) {
+    const r = radius2d(n.agent.load) + 4
+    minX = Math.min(minX, n.x! - r)
+    maxX = Math.max(maxX, n.x! + r)
+    minY = Math.min(minY, n.y! - r)
+    maxY = Math.max(maxY, n.y! + r)
+  }
+  const pad = { top: 46, bottom: 66, x: 24 }
+  const label = { below: 34, half: 56 }
+  const bw = Math.max(1, maxX - minX)
+  const bh = Math.max(1, maxY - minY)
+  const k = Math.max(0.4, Math.min(4, (w - 2 * pad.x - 2 * label.half) / bw, (h - pad.top - pad.bottom - label.below) / bh))
+  const avail = h - pad.top - pad.bottom
+  const top = pad.top + Math.max(0, (avail - (bh * k + label.below)) / 2)
+  fg.centerAt((minX + maxX) / 2, minY - (top - h / 2) / k, ms)
+  fg.zoom(k, ms)
+}
+
 export default function Graph2D({ snapshot, selectedId, onSelect, width, height, accent, accent2, reduced, quality, fitSignal }: GraphViewProps) {
   const fgRef = useRef<FG | undefined>(undefined)
+  const visible = useDocumentVisible()
   const model = useGraphModel(snapshot, quality)
   const fitted = useRef(false)
   // the draw callbacks read the latest values through a ref so they keep a stable identity
@@ -37,20 +69,39 @@ export default function Graph2D({ snapshot, selectedId, onSelect, width, height,
     }
   }, [])
 
+  const dataRef = useRef(model.data)
+  const sizeRef = useRef({ width, height })
   useEffect(() => {
-    if (fitSignal > 0) fgRef.current?.zoomToFit(600, 64)
-  }, [fitSignal])
+    dataRef.current = model.data
+    sizeRef.current = { width, height }
+  }, [model.data, width, height])
+  const fit = useCallback((ms: number) => {
+    const fg = fgRef.current
+    if (fg) fit2D(fg, dataRef.current.nodes, sizeRef.current.width, sizeRef.current.height, ms)
+  }, [])
+
+  useEffect(() => {
+    if (fitSignal > 0) fit(600)
+  }, [fitSignal, fit])
+
+  // a hidden tab renders nothing: stop the canvas loop and resume when visible again
+  useEffect(() => {
+    const fg = fgRef.current
+    if (!fg) return
+    if (visible) fg.resumeAnimation()
+    else fg.pauseAnimation()
+  }, [visible])
 
   // auto-framing while the layout settles; stops once the user pans / zooms
   const userMoved = useRef(false)
   useEffect(() => {
     const timers = [1000, 2800, 6000].map((ms) =>
       setTimeout(() => {
-        if (!userMoved.current) fgRef.current?.zoomToFit(600, 64)
+        if (!userMoved.current) fit(600)
       }, ms),
     )
     return () => timers.forEach(clearTimeout)
-  }, [])
+  }, [fit])
 
   const drawNode = useCallback((n: GNode, ctx: CanvasRenderingContext2D, scale: number) => {
     const { selectedId: sel, accent: acc, accent2: acc2, reduced: red } = live.current
@@ -118,19 +169,19 @@ export default function Graph2D({ snapshot, selectedId, onSelect, width, height,
       ctx.restore()
     }
 
-    // labels (scale-compensated so they stay legible when zoomed out)
-    const fs = Math.max(3.5, 11 / scale)
+    // labels: constant on-screen size (12 px name, 10.5 px status) at any zoom level
+    const fs = 12 / scale
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
     ctx.font = `600 ${fs}px Oxanium, "Chakra Petch", sans-serif`
-    ctx.fillStyle = selected ? '#ffffff' : 'rgba(223,248,255,0.92)'
+    ctx.fillStyle = selected ? '#ffffff' : tintWhite(acc, 0.14, 0.92)
     ctx.shadowColor = selected ? acc2 : acc
     ctx.shadowBlur = 6
     ctx.fillText(a.name.toUpperCase(), x, y + r + 6)
     ctx.shadowBlur = 0
-    ctx.font = `700 ${fs * 0.78}px Rajdhani, "Chakra Petch", sans-serif`
+    ctx.font = `700 ${10.5 / scale}px Rajdhani, "Chakra Petch", sans-serif`
     ctx.fillStyle = col
-    ctx.fillText(`${STATUS_META[a.status].short} · ${Math.round(a.load * 100)}%`, x, y + r + 6 + fs * 1.15)
+    ctx.fillText(`${STATUS_META[a.status].short} · ${Math.round(a.load * 100)}%`, x, y + r + 6 + fs * 1.2)
   }, [])
 
   const paintArea = useCallback((n: GNode, color: string, ctx: CanvasRenderingContext2D) => {
@@ -185,8 +236,8 @@ export default function Graph2D({ snapshot, selectedId, onSelect, width, height,
   const handleStop = useCallback(() => {
     if (fitted.current || userMoved.current) return
     fitted.current = true
-    fgRef.current?.zoomToFit(700, 64)
-  }, [])
+    fit(700)
+  }, [fit])
 
   return (
     <div onPointerDownCapture={markMoved} onWheelCapture={markMoved}>

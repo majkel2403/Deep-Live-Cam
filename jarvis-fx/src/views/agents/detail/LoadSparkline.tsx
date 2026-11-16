@@ -30,10 +30,10 @@ export function LoadSparkline({ history, color, accent, threshold = 0.8 }: LoadS
       <div className="flex items-baseline gap-3 whitespace-nowrap overflow-hidden">
         <span className="jx-label">Obciążenie</span>
         <span className="flex-1" />
-        <span className="jx-label text-[0.6rem]">
+        <span className="jx-label text-[0.625rem]">
           śr. <span className="jx-num text-jx-text">{fmtPct(mean)}</span>
         </span>
-        <span className="jx-label text-[0.6rem] hidden min-[1400px]:inline max-xl:inline">
+        <span className="jx-label text-[0.625rem] hidden min-[1400px]:inline max-xl:inline">
           szczyt <span className="jx-num text-jx-text">{fmtPct(peak)}</span>
         </span>
         <span className="jx-num text-sm jx-glow-text" style={{ color }}>

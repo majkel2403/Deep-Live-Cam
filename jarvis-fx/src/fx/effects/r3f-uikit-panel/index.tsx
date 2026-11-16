@@ -3,9 +3,10 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Grid, Sparkles } from '@react-three/drei'
 import { Container, Text, withOpacity, type FontFamilies } from '@react-three/uikit'
 import { Bloom, Noise, Vignette } from '@react-three/postprocessing'
-import { AdditiveBlending, Color, Vector2, type Group } from 'three'
+import { AdditiveBlending, Color, SRGBColorSpace, Vector2, type Group } from 'three'
 import { HudComposer } from '@/fx/three/HudComposer'
 import { useFxControls } from '@/fx/controls'
+import { Redraw, uniformArgs, useFitAspect } from '../r3f-kit/util'
 import type { FxProps } from '@/fx/types'
 /*
  * MSDF font with Polish glyphs. Pre-generated once from Chakra Petch SemiBold (SIL OFL 1.1, see
@@ -66,15 +67,41 @@ function useMetrics(still: boolean): Metrics {
 }
 
 /* ---------- the uikit panel ---------- */
+/** Text / surface colours derived from the accent, so every --jx-hue gets matching neutrals. */
+interface Ink {
+  label: string
+  text: string
+  bright: string
+  bg: string
+}
+
+function useInk(accent: string): Ink {
+  return useMemo(() => {
+    const white = new Color('#ffffff')
+    const hsl = { h: 0, s: 0, l: 0 }
+    new Color(accent).getHSL(hsl, SRGBColorSpace)
+    const hex = (c: Color) => '#' + c.getHexString()
+    return {
+      label: hex(new Color(accent).lerp(white, 0.72)),
+      text: hex(new Color(accent).lerp(white, 0.88)),
+      bright: hex(new Color(accent).lerp(white, 0.94)),
+      // HSL in sRGB (not three's linear working space), so l = 5.5 % really is near-black: ≈ #03121a at hue 190
+      bg: hex(new Color().setHSL(hsl.h, 0.7, 0.055, SRGBColorSpace)),
+    }
+  }, [accent])
+}
+
 interface PanelProps {
   accent: string
   accent2: string
   alpha: number
   still: boolean
   compact: boolean
+  /** reduced motion: no frames are rendered, so nothing is measured (vs. a paused, hidden scene) */
+  reduced: boolean
 }
 
-function Tile({ label, value, unit, accent }: { label: string; value: string; unit: string; accent: string }) {
+function Tile({ label, value, unit, accent, ink, big }: { label: string; value: string; unit: string; accent: string; ink: Ink; big: boolean }) {
   return (
     <Container
       flexGrow={1}
@@ -87,15 +114,17 @@ function Tile({ label, value, unit, accent }: { label: string; value: string; un
       borderColor={withOpacity(accent, 0.35)}
       hover={{ backgroundColor: withOpacity(accent, 0.2), borderColor: accent }}
     >
-      <Text fontSize={11} color={withOpacity('#bfeff7', 0.75)} letterSpacing={1.5}>
+      <Text fontSize={big ? 16 : 11} color={withOpacity(ink.label, 0.8)} letterSpacing={1.5}>
         {label}
       </Text>
-      <Text fontSize={30} color="#f2feff">
+      <Text fontSize={big ? 52 : 30} color={ink.bright}>
         {value}
       </Text>
-      <Text fontSize={11} color={accent}>
-        {unit}
-      </Text>
+      {!big && (
+        <Text fontSize={11} color={accent}>
+          {unit}
+        </Text>
+      )}
     </Container>
   )
 }
@@ -115,8 +144,9 @@ function Corner({ top, left, color }: { top: boolean; left: boolean; color: stri
   )
 }
 
-function HudPanel({ accent, accent2, alpha, still, compact }: PanelProps) {
+function HudPanel({ accent, accent2, alpha, still, compact, reduced }: PanelProps) {
   const m = useMetrics(still)
+  const ink = useInk(accent)
   const nav = navigator as Navigator & { deviceMemory?: number }
   const budget = (m.ms / (1000 / 60)) * 100
   const up = `${String(Math.floor(m.uptime / 60)).padStart(2, '0')}:${String(Math.floor(m.uptime % 60)).padStart(2, '0')}`
@@ -129,10 +159,10 @@ function HudPanel({ accent, accent2, alpha, still, compact }: PanelProps) {
       flexDirection="column"
       padding={20}
       gap={12}
-      backgroundColor={withOpacity('#03121a', alpha)}
+      backgroundColor={withOpacity(ink.bg, alpha)}
       borderWidth={1}
       borderColor={withOpacity(accent, 0.8)}
-      color="#e6fbff"
+      color={ink.text}
       fontFamilies={FONTS}
       fontFamily="chakra"
       fontWeight="semi-bold"
@@ -145,42 +175,47 @@ function HudPanel({ accent, accent2, alpha, still, compact }: PanelProps) {
       {/* header */}
       <Container flexDirection="row" justifyContent="space-between" alignItems="center" paddingBottom={8} borderBottomWidth={1} borderColor={withOpacity(accent, 0.4)}>
         <Container flexDirection="column" gap={2}>
-          <Text fontSize={20} color={accent} letterSpacing={2}>
+          <Text fontSize={compact ? 28 : 20} color={accent} letterSpacing={2}>
             JARVIS · DIAGNOSTYKA
           </Text>
-          <Text fontSize={11} color={withOpacity('#bfeff7', 0.6)}>
-            panel WebGL · @react-three/uikit · flexbox Yoga · tekst MSDF
-          </Text>
+          {/* gallery cards (~260 px wide) only keep the large, legible parts */}
+          {!compact && (
+            <Text fontSize={11} color={withOpacity(ink.label, 0.65)}>
+              panel WebGL · @react-three/uikit · flexbox Yoga · tekst MSDF
+            </Text>
+          )}
         </Container>
         <Container flexDirection="row" alignItems="center" gap={6} paddingX={8} paddingY={4} borderWidth={1} borderColor={withOpacity(still ? '#ffb000' : '#3dffa8', 0.6)}>
           <Container width={8} height={8} borderRadius={4} backgroundColor={still ? '#ffb000' : '#3dffa8'} />
-          <Text fontSize={12} color={still ? '#ffb000' : '#3dffa8'}>
-            {still ? 'PAUZA' : 'NA ŻYWO'}
+          <Text fontSize={compact ? 18 : 12} color={still ? '#ffb000' : '#3dffa8'}>
+            {still ? (reduced ? 'BEZ ANIMACJI' : 'PAUZA') : 'NA ŻYWO'}
           </Text>
         </Container>
       </Container>
 
       {/* tiles */}
       <Container flexDirection="row" gap={10}>
-        <Tile label="KLATKI / S" value={m.fps ? m.fps.toFixed(0) : '—'} unit="pomiar tej sceny" accent={accent} />
-        <Tile label="CZAS KLATKI" value={m.ms ? m.ms.toFixed(1) : '—'} unit="ms · średnia z 60" accent={accent} />
-        {!compact && <Tile label="BUFOR RYSOWANIA" value={m.w ? `${m.w}×${m.h}` : '—'} unit="piksele płótna" accent={accent} />}
+        <Tile label="KLATKI / S" value={m.fps ? m.fps.toFixed(0) : '—'} unit="pomiar tej sceny" accent={accent} ink={ink} big={compact} />
+        <Tile label="CZAS KLATKI" value={m.ms ? m.ms.toFixed(1) : '—'} unit="ms · średnia z 60" accent={accent} ink={ink} big={compact} />
+        {!compact && <Tile label="BUFOR RYSOWANIA" value={m.w ? `${m.w}×${m.h}` : '—'} unit="piksele płótna" accent={accent} ink={ink} big={compact} />}
       </Container>
 
       {/* fps history (real samples, 2 per second) */}
       <Container flexDirection="column" gap={6}>
-        <Container flexDirection="row" justifyContent="space-between">
-          <Text fontSize={11} color={withOpacity('#bfeff7', 0.75)} letterSpacing={1.5}>
-            HISTORIA FPS · OSTATNIE 15 S
-          </Text>
-          <Text fontSize={11} color={accent}>
-            {`maks. skali ${maxFps.toFixed(0)}`}
-          </Text>
-        </Container>
-        <Container flexDirection="row" alignItems="flex-end" gap={3} height={compact ? 30 : 42} borderBottomWidth={1} borderColor={withOpacity(accent, 0.35)}>
+        {!compact && (
+          <Container flexDirection="row" justifyContent="space-between">
+            <Text fontSize={11} color={withOpacity(ink.label, 0.8)} letterSpacing={1.5}>
+              HISTORIA FPS · OSTATNIE 15 S
+            </Text>
+            <Text fontSize={11} color={accent}>
+              {`maks. skali ${maxFps.toFixed(0)}`}
+            </Text>
+          </Container>
+        )}
+        <Container flexDirection="row" alignItems="flex-end" gap={3} height={compact ? 64 : 42} borderBottomWidth={1} borderColor={withOpacity(accent, 0.35)}>
           {Array.from({ length: 30 }, (_, i) => {
             const v = m.history[i - (30 - m.history.length)]
-            const h = v === undefined ? 2 : Math.max(2, (v / maxFps) * (compact ? 28 : 40))
+            const h = v === undefined ? 2 : Math.max(2, (v / maxFps) * (compact ? 62 : 40))
             return <Container key={i} flexGrow={1} height={h} backgroundColor={i === 29 ? '#ffffff' : withOpacity(accent, v === undefined ? 0.15 : 0.85)} />
           })}
         </Container>
@@ -188,21 +223,23 @@ function HudPanel({ accent, accent2, alpha, still, compact }: PanelProps) {
 
       {/* frame budget */}
       <Container flexDirection="column" gap={5}>
-        <Container flexDirection="row" justifyContent="space-between">
-          <Text fontSize={11} color={withOpacity('#bfeff7', 0.75)} letterSpacing={1.5}>
-            BUDŻET KLATKI 60 HZ
-          </Text>
-          <Text fontSize={11} color={budget > 100 ? '#ffb000' : accent2}>
-            {`${budget.toFixed(0)}%`}
-          </Text>
-        </Container>
-        <Container height={6} backgroundColor={withOpacity(accent, 0.14)}>
-          <Container width={`${Math.min(100, budget)}%`} height={6} backgroundColor={budget > 100 ? '#ffb000' : accent} />
+        {!compact && (
+          <Container flexDirection="row" justifyContent="space-between">
+            <Text fontSize={11} color={withOpacity(ink.label, 0.8)} letterSpacing={1.5}>
+              BUDŻET KLATKI 60 HZ
+            </Text>
+            <Text fontSize={11} color={budget > 100 ? '#ffb000' : accent2}>
+              {m.ms ? `${budget.toFixed(0)}%` : '—'}
+            </Text>
+          </Container>
+        )}
+        <Container height={compact ? 10 : 6} backgroundColor={withOpacity(accent, 0.14)}>
+          <Container width={`${Math.min(100, budget)}%`} height={compact ? 10 : 6} backgroundColor={budget > 100 ? '#ffb000' : accent} />
         </Container>
       </Container>
 
       {/* environment */}
-      <Container flexDirection="row" justifyContent="space-between" marginTop={2}>
+      <Container flexDirection="row" justifyContent="space-between" marginTop={2} display={compact ? 'none' : 'flex'}>
         {[
           ['RDZENIE', String(navigator.hardwareConcurrency || '—')],
           ['PAMIĘĆ', nav.deviceMemory ? `${nav.deviceMemory} GB` : '—'],
@@ -210,13 +247,12 @@ function HudPanel({ accent, accent2, alpha, still, compact }: PanelProps) {
           ['STERTA JS', m.heapMb !== null ? `${m.heapMb.toFixed(0)} MB` : '—'],
           ['CZAS PRACY', up],
         ]
-          .slice(0, compact ? 3 : 5)
           .map(([k, v]) => (
             <Container key={k} flexDirection="column" gap={1}>
-              <Text fontSize={10} color={withOpacity('#bfeff7', 0.6)} letterSpacing={1}>
+              <Text fontSize={10} color={withOpacity(ink.label, 0.65)} letterSpacing={1}>
                 {k}
               </Text>
-              <Text fontSize={15} color="#f2feff">
+              <Text fontSize={15} color={ink.bright}>
                 {v}
               </Text>
             </Container>
@@ -272,12 +308,12 @@ function ProjectionRig({ accent, children, tilt, still }: { accent: string; chil
     <group ref={ref}>
       <mesh position-z={-0.25}>
         <planeGeometry args={[9, 6]} />
-        <shaderMaterial vertexShader={glowVert} fragmentShader={glowFrag} uniforms={uniforms} transparent depthWrite={false} blending={AdditiveBlending} />
+        <shaderMaterial vertexShader={glowVert} fragmentShader={glowFrag} args={uniformArgs(uniforms)} transparent depthWrite={false} blending={AdditiveBlending} />
       </mesh>
       {/* projector slit + light curtain feeding the panel from the floor */}
       <mesh position={[0, -2.1, 0]}>
         <planeGeometry args={[5.6, 0.6]} />
-        <shaderMaterial vertexShader={glowVert} fragmentShader={curtainFrag} uniforms={uniforms} transparent depthWrite={false} blending={AdditiveBlending} />
+        <shaderMaterial vertexShader={glowVert} fragmentShader={curtainFrag} args={uniformArgs(uniforms)} transparent depthWrite={false} blending={AdditiveBlending} />
       </mesh>
       <mesh position={[0, -2.4, 0]}>
         <boxGeometry args={[5.4, 0.015, 0.015]} />
@@ -288,11 +324,13 @@ function ProjectionRig({ accent, children, tilt, still }: { accent: string; chil
   )
 }
 
-function Scene({ accent, accent2, alpha, tilt, grid, still, stage }: { accent: string; accent2: string; alpha: number; tilt: number; grid: boolean; still: boolean; stage: boolean }) {
+function Scene({ accent, accent2, alpha, tilt, grid, still, stage, reduced }: { accent: string; accent2: string; alpha: number; tilt: number; grid: boolean; still: boolean; stage: boolean; reduced: boolean }) {
+  // the panel is wide (5.6 × 3.6): keep it whole on narrow canvases
+  useFitAspect(stage ? 6.9 : 6.4, 1.5)
   return (
     <>
       <ProjectionRig accent={accent} tilt={tilt} still={still}>
-        <HudPanel accent={accent} accent2={accent2} alpha={alpha} still={still} compact={!stage} />
+        <HudPanel accent={accent} accent2={accent2} alpha={alpha} still={still} compact={!stage} reduced={reduced} />
       </ProjectionRig>
       {grid && (
         <Grid
@@ -317,7 +355,7 @@ function Scene({ accent, accent2, alpha, tilt, grid, still, stage }: { accent: s
 export default function UikitPanel({ accent, accent2, quality, stage, paused, reducedMotion }: FxProps) {
   const c = useFxControls({
     pochylenie: { value: 1, min: 0, max: 2, step: 0.05 },
-    tło: { value: 0.72, min: 0.2, max: 1, step: 0.01 },
+    tło: { value: 0.72, min: 0.2, max: 1, step: 0.01, label: 'krycie tła' },
     siatka: { value: true },
     bloom: { value: 0.9, min: 0, max: 3, step: 0.05 },
   })
@@ -326,14 +364,15 @@ export default function UikitPanel({ accent, accent2, quality, stage, paused, re
   return (
     <Canvas
       dpr={dpr}
-      camera={{ position: [0, 0.35, stage ? 6.9 : 7.4], fov: 42 }}
+      camera={{ position: [0, 0.35, stage ? 6.9 : 6.4], fov: 42 }}
       frameloop={still ? 'demand' : 'always'}
       gl={{ antialias: true, powerPreference: 'high-performance' }}
       aria-label="Trójwymiarowy panel diagnostyczny z pomiarami klatek"
     >
       <color attach="background" args={['#02060c']} />
+      <Redraw on={[c, accent, accent2]} />
       <fog attach="fog" args={['#02060c', 8, 22]} />
-      <Scene accent={accent} accent2={accent2} alpha={c.tło} tilt={c.pochylenie} grid={c.siatka} still={still} stage={stage} />
+      <Scene accent={accent} accent2={accent2} alpha={c.tło} tilt={c.pochylenie} grid={c.siatka} still={still} stage={stage} reduced={reducedMotion} />
       <HudComposer>
         {stage
           ? [

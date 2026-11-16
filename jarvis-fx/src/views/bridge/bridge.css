@@ -96,9 +96,10 @@
   mask-image: radial-gradient(ellipse 62% 64% at 50% 50%, #000 58%, transparent 100%);
 }
 
+/* Michroma: the mode labels carry Polish letters (DZIAŁAM, ANALIZUJĘ) that Orbitron lacks */
 .bx-core-label {
-  font-family: var(--jx-font-display);
-  font-weight: 700;
+  font-family: var(--jx-font-cmd);
+  font-weight: 400;
   letter-spacing: 0.32em;
   text-shadow: 0 0 18px currentColor, 0 0 3px currentColor;
 }
@@ -150,7 +151,7 @@
   display: inline-block;
   text-align: center;
   font-family: var(--jx-font-mono);
-  font-size: 0.6rem;
+  font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 0 0.25rem;
@@ -167,6 +168,16 @@
 @container (max-width: 340px) {
   .bx-log-line { grid-template-columns: 3.7rem 2.6rem minmax(0, 1fr); }
   .bx-log-line > .bx-log-agent { display: none; }
+}
+
+/* soft edges on scrolling lists (the clipped row dissolves instead of being cut) */
+.bx-fade-t {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 18px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 18px);
+}
+.bx-fade-b {
+  -webkit-mask-image: linear-gradient(to top, transparent 0, #000 22px);
+  mask-image: linear-gradient(to top, transparent 0, #000 22px);
 }
 
 /* ---------------------------------------------------------------- agents / tasks */

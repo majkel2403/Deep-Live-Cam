@@ -48,7 +48,7 @@ export function UptimeTracker({ uptime, label = 'Dostępność' }: { uptime: boo
       <div className="flex items-baseline gap-3">
         <span className="jx-label">{label}</span>
         <span className="flex-1" />
-        <span className="jx-label text-[0.6rem]">
+        <span className="jx-label text-[0.625rem]">
           incydenty <span className={`jx-num ${incidents ? 'text-jx-danger' : 'text-jx-text'}`}>{incidents}</span>
         </span>
         <span className={`jx-num text-sm jx-glow-text ${ratio >= 0.97 ? 'text-jx-ok' : ratio >= 0.9 ? 'text-jx-warn' : 'text-jx-danger'}`}>{fmtPct1(ratio)}</span>
@@ -60,9 +60,9 @@ export function UptimeTracker({ uptime, label = 'Dostępność' }: { uptime: boo
           ))}
         </div>
       ) : (
-        <div className="ag-track grid place-items-center jx-label text-[0.6rem]">brak próbek</div>
+        <div className="ag-track grid place-items-center jx-label text-[0.625rem]">brak próbek</div>
       )}
-      <div className="flex justify-between jx-label text-[0.55rem] text-jx-dim" aria-hidden="true">
+      <div className="flex justify-between jx-label text-[0.625rem] text-jx-dim" aria-hidden="true">
         <span>starsze</span>
         <span>teraz</span>
       </div>

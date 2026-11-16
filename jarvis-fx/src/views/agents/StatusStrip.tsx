@@ -9,17 +9,17 @@ export function StatusStrip({ snapshot, source }: { snapshot: OrchestrationSnaps
   const k = snapshot ? summarize(snapshot) : null
   const dash = '—'
   return (
-    <section data-augmented-ui="tl-clip br-clip tr-rect-x border" className="ag-strip jx-aug flex items-center gap-5 px-4 py-2 shrink-0 min-w-0" aria-label="Stan floty agentów">
-      <div className="flex items-center gap-2.5 shrink-0">
+    <section data-augmented-ui="tl-clip br-clip tr-rect-x border" className="ag-strip jx-aug flex flex-wrap md:flex-nowrap items-center gap-x-5 gap-y-2 px-4 py-2 shrink-0 min-w-0" aria-label="Stan floty agentów">
+      <div className="flex items-center gap-2.5 min-w-0 max-md:basis-full">
         <span className="ag-strip-icon" aria-hidden="true">
           <IconTopologyStar3 className="size-5" />
         </span>
-        <div className="flex flex-col leading-tight">
-          <Decipher as="h1" text="Orkiestracja agentów" className="jx-display text-[0.92rem] text-jx-accent jx-glow-text" />
-          <span className="jx-label text-[0.56rem]">Agenci · topologia · telemetria</span>
+        <div className="flex flex-col leading-tight min-w-0">
+          <Decipher as="h1" text="Orkiestracja agentów" className="jx-display font-cmd tracking-[0.1em] sm:tracking-[0.16em] text-[0.78rem] sm:text-[0.86rem] text-jx-accent jx-glow-text whitespace-nowrap" />
+          <span className="jx-label text-[0.625rem]">Agenci · topologia · telemetria</span>
         </div>
       </div>
-      <span className="w-px self-stretch bg-jx-line" aria-hidden="true" />
+      <span className="w-px self-stretch bg-jx-line max-md:hidden" aria-hidden="true" />
       {/* lower-priority KPIs drop out on narrower screens instead of being clipped */}
       <div className="flex gap-x-5 min-w-0 overflow-hidden">
         <div className="shrink-0">
@@ -40,12 +40,12 @@ export function StatusStrip({ snapshot, source }: { snapshot: OrchestrationSnaps
         <div className="hidden xl:block shrink-0">
           <Readout label="Tokeny" value={k ? fmtInt(k.tokens) : dash} unit="/min" />
         </div>
-        <div className="hidden min-[1400px]:block shrink-0">
+        <div className="hidden min-[1520px]:block shrink-0">
           <Readout label="Zadania" value={k ? `${k.tasksActive}/${k.tasksQueued}` : dash} unit="akt./kol." />
         </div>
       </div>
       <span className="flex-1" />
-      <div className="shrink-0">
+      <div className="shrink-0 max-md:basis-full max-md:flex max-md:justify-end">
         <SourceControl info={source} />
       </div>
     </section>

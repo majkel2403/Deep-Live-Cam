@@ -51,7 +51,8 @@ export function collectFacts(gl: WebGLRenderer, hue: number): CardFact[] {
   ]
 }
 
-const FONTS = ['600 30px "Chakra Petch"', '700 60px "Orbitron"', '500 22px "Rajdhani"', '400 18px "JetBrains Mono"']
+// Orbitron has no Polish glyphs (Fontsource latin subset): values fall back to Oxanium per glyph.
+const FONTS = ['600 30px "Chakra Petch"', '700 60px "Orbitron"', '700 60px "Oxanium"', '500 22px "Rajdhani"', '400 18px "JetBrains Mono"']
 
 /** Resolves once the HUD fonts are usable in canvas (falls back silently after 2 s). */
 export function loadCardFonts(): Promise<void> {
@@ -63,6 +64,12 @@ export function loadCardFonts(): Promise<void> {
 function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.replace('#', ''), 16)
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+}
+
+/** Near-white "ink" tinted by the accent (keeps text neutral but on-hue for any --jx-hue). */
+function inkOf(accent: string) {
+  const [r, g, b] = hexToRgb(accent)
+  return (mix: number, al: number) => `rgba(${Math.round(r + (255 - r) * mix)},${Math.round(g + (255 - g) * mix)},${Math.round(b + (255 - b) * mix)},${al})`
 }
 
 function chamfer(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, c: number) {
@@ -96,6 +103,7 @@ export function drawCard(fact: CardFact, index: number, total: number, accent: s
   const ctx = cv.getContext('2d')!
   const [r, g, b] = hexToRgb(accent)
   const a = (al: number) => `rgba(${r},${g},${b},${al})`
+  const ink = inkOf(accent)
   const P = 10
 
   // glass body
@@ -154,7 +162,7 @@ export function drawCard(fact: CardFact, index: number, total: number, accent: s
   ctx.textBaseline = 'alphabetic'
   ctx.fillText(fact.code, P + 30, P + 40)
   ctx.textAlign = 'right'
-  ctx.fillStyle = 'rgba(220,255,255,0.75)'
+  ctx.fillStyle = ink(0.82, 0.75)
   ctx.fillText(`${String(index + 1).padStart(2, '0')}/${String(total).padStart(2, '0')}`, CARD_W - P - 24, P + 50)
   ctx.textAlign = 'left'
   // live dot
@@ -166,7 +174,7 @@ export function drawCard(fact: CardFact, index: number, total: number, accent: s
   ctx.fillText('NA ŻYWO', P + 152, P + 40)
 
   // title
-  ctx.fillStyle = 'rgba(232,252,255,0.95)'
+  ctx.fillStyle = ink(0.9, 0.95)
   ctx.font = '600 30px "Chakra Petch", sans-serif'
   ctx.fillText(fact.title.toUpperCase(), P + 30, P + 92)
   ctx.fillStyle = a(0.8)
@@ -175,10 +183,10 @@ export function drawCard(fact: CardFact, index: number, total: number, accent: s
   ctx.fillRect(P + 94, P + 104, 200, 1)
 
   // value
-  const vf = (px: number) => `700 ${px}px "Orbitron", sans-serif`
+  const vf = (px: number) => `700 ${px}px "Orbitron", "Oxanium", sans-serif`
   fitText(ctx, fact.value, vf, 58, CARD_W - P * 2 - 70)
   const vg = ctx.createLinearGradient(0, P + 140, 0, P + 196)
-  vg.addColorStop(0, '#f4feff')
+  vg.addColorStop(0, ink(0.94, 1))
   vg.addColorStop(1, accent2)
   ctx.fillStyle = vg
   ctx.shadowColor = accent
@@ -189,7 +197,7 @@ export function drawCard(fact: CardFact, index: number, total: number, accent: s
   // sub
   const sf = (px: number) => `500 ${px}px "Rajdhani", sans-serif`
   fitText(ctx, fact.sub, sf, 22, CARD_W - P * 2 - 70)
-  ctx.fillStyle = 'rgba(190,230,240,0.8)'
+  ctx.fillStyle = ink(0.7, 0.8)
   ctx.fillText(fact.sub, P + 30, P + 228)
 
   // decorative ruler (no data)
