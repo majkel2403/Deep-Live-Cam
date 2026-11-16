@@ -49,6 +49,8 @@ export function FxLevaPanel({ store }: { store: LevaStore }) {
         },
         fonts: { mono: 'JetBrains Mono, monospace', sans: 'Chakra Petch, sans-serif' },
         radii: { xs: '0px', sm: '0px', lg: '0px' },
+        // wider label column so Polish labels are not cut after ~9 characters
+        sizes: { controlWidth: '54%' },
       }}
     />
   )

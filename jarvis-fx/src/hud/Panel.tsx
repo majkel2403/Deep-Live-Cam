@@ -26,7 +26,7 @@ export function Panel({ title, code, icon, actions, children, className = '', bo
   const header = (title || code || actions) && (
     <header className="flex items-center gap-2 px-3 pt-2 pb-1.5 border-b border-jx-line/60">
       {icon && <span className="text-jx-accent shrink-0 [&>svg]:size-4">{icon}</span>}
-      {title && <h2 className="jx-title text-[0.8rem] leading-none truncate">{title}</h2>}
+      {title && <h2 className="jx-title text-[0.8rem] leading-[1.3] truncate">{title}</h2>}
       <span className="flex-1" />
       {actions}
       {code && <span className="jx-num text-[0.65rem] text-jx-dim tracking-widest">{code}</span>}
