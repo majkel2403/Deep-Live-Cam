@@ -1,0 +1,5 @@
+/* Shared helpers for text-* / motion-* effects.
+   .fxk-noblur: augmented-ui panels inside full-bleed effects sit on an opaque backdrop, so the
+   inherited `backdrop-filter: blur()` of .jx-aug is invisible but costly. Each panel keeps its own
+   compositing layer (will-change) so a ticking number only re-rasters its own panel. */
+.fxk-noblur .jx-aug { backdrop-filter: none; -webkit-backdrop-filter: none; will-change: transform; }

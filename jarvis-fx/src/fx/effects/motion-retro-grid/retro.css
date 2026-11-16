@@ -1,0 +1,95 @@
+/*
+ * motion-retro-grid – floor grid adapted from Magic UI "Retro Grid" (MIT, CSS variant):
+ *   https://github.com/magicuidesign/magicui/blob/main/apps/www/registry/magicui/retro-grid.tsx
+ * Changes: hue-token colours, glow line pass, play-state pause, sun/mountain/star layers (original).
+ */
+/* The original rotates a 600vw × 300vh sheet in a 200px perspective. Here the sheet hinges on the
+   floor's bottom edge and the perspective origin is lifted by 200px / tan(angle), which puts the
+   plane's vanishing line exactly on the horizon (top edge of the floor box). */
+.rg-floor {
+  perspective: 200px;
+  perspective-origin: 50% var(--rg-po, 93px);
+}
+.rg-plane {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  transform: rotateX(var(--rg-angle, 65deg));
+}
+.rg-lines {
+  position: absolute;
+  /* one extra cell below so the one-cell scroll never uncovers the near edge */
+  bottom: calc(-1 * var(--rg-cell));
+  left: -250%;
+  width: 600%;
+  height: 3200px;
+  background-image:
+    linear-gradient(to right, var(--rg-line) 1px, transparent 0),
+    linear-gradient(to bottom, var(--rg-line) 1px, transparent 0);
+  background-repeat: repeat;
+  background-size: var(--rg-cell) var(--rg-cell);
+  animation: rg-scroll var(--rg-dur, 15s) linear infinite;
+  will-change: transform;
+}
+.rg-lines--glow {
+  filter: blur(3px);
+  opacity: 0.8;
+}
+/* scroll exactly one cell → seamless loop */
+@keyframes rg-scroll {
+  from { transform: translateY(calc(-1 * var(--rg-cell))); }
+  to { transform: translateY(0); }
+}
+
+/* banded sun: hard stripes widen toward the horizon */
+.rg-sun {
+  border-radius: 50%;
+  background: linear-gradient(to bottom, var(--rg-sun-a) 8%, var(--rg-sun-b) 78%);
+  -webkit-mask-image: linear-gradient(to bottom,
+    #000 0 48%, transparent 48% 51%, #000 51% 58%, transparent 58% 62%, #000 62% 68%,
+    transparent 68% 73.5%, #000 73.5% 78%, transparent 78% 85%, #000 85% 88%, transparent 88% 100%);
+  mask-image: linear-gradient(to bottom,
+    #000 0 48%, transparent 48% 51%, #000 51% 58%, transparent 58% 62%, #000 62% 68%,
+    transparent 68% 73.5%, #000 73.5% 78%, transparent 78% 85%, #000 85% 88%, transparent 88% 100%);
+}
+.rg-sun-glow {
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--rg-sun-b) 0%, transparent 65%);
+  filter: blur(18px);
+  opacity: 0.55;
+  animation: rg-breathe 4.5s ease-in-out infinite;
+}
+@keyframes rg-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.08); opacity: 0.7; }
+}
+
+.rg-star { position: absolute; border-radius: 50%; background: #fff; animation: rg-twinkle 3.2s ease-in-out infinite; }
+@keyframes rg-twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.95; } }
+
+.rg-scan {
+  background: repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.28) 0 1px, transparent 1px 3px);
+}
+.rg-scan::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: -20%;
+  height: 20%;
+  background: linear-gradient(to bottom, transparent, hsl(var(--jx-hue) 100% 70% / 0.06), transparent);
+  animation: rg-roll 7s linear infinite;
+}
+@keyframes rg-roll { to { top: 100%; } }
+
+.rg-chrome {
+  background: linear-gradient(to bottom, #fff 0%, hsl(var(--jx-hue) 100% 85%) 42%, hsl(var(--jx-hue) 100% 38%) 50%, hsl(var(--jx-hue) 100% 70%) 62%, #fff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 10px hsl(var(--jx-hue) 100% 55% / 0.7));
+}
+
+.rg-root[data-paused="true"] .rg-lines,
+.rg-root[data-paused="true"] .rg-sun-glow,
+.rg-root[data-paused="true"] .rg-star,
+.rg-root[data-paused="true"] .rg-scan::after { animation-play-state: paused; }

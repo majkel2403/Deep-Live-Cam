@@ -5,7 +5,8 @@ import { MorphSVGPlugin } from 'gsap/MorphSVGPlugin'
 import { useGSAP } from '@gsap/react'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
-import { DemoBadge, useElementSize } from '../motion-kit/kit'
+import { DemoBadge } from '../motion-kit/kit'
+import { useElementSize } from '../motion-kit/useElementSize'
 
 gsap.registerPlugin(useGSAP, DrawSVGPlugin, MorphSVGPlugin)
 
@@ -171,7 +172,7 @@ export default function ReticleLock({ stage, reducedMotion, paused }: FxProps) {
         .call(go('lock'), [], 4.15)
         .to(core, { morphSVG: c.morph ? S.diamond : S.square, duration: 0.35, ease: 'back.out(2)' }, 4.15)
         .to(brackets, { opacity: 1, scale: 1, duration: 0.3, ease: 'expo.out' }, 4.15)
-        .fromTo(reticle, { opacity: 0.35 }, { opacity: 1, duration: 0.08, repeat: 3, yoyo: true, ease: 'none' }, 4.15)
+        .fromTo(reticle, { opacity: 0.35 }, { opacity: 1, duration: 0.07, repeat: 4, yoyo: true, ease: 'none', immediateRender: false }, 4.15)
         // release
         .call(go('release'), [], 7.2)
         .call(scanTo(cx, cy), [], 7.2)
@@ -204,7 +205,7 @@ export default function ReticleLock({ stage, reducedMotion, paused }: FxProps) {
   const L = R * 0.32
 
   return (
-    <div ref={rootRef} className="absolute inset-0 overflow-hidden bg-jx-bg" style={{ ['--rc' as string]: rc }}>
+    <div ref={rootRef} className="fxk-noblur absolute inset-0 overflow-hidden bg-jx-bg" style={{ ['--rc' as string]: rc }}>
       <div className="absolute inset-0 jx-grid-bg opacity-45" aria-hidden="true" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgb(0_0_0/0.65))]" aria-hidden="true" />
 
@@ -228,7 +229,7 @@ export default function ReticleLock({ stage, reducedMotion, paused }: FxProps) {
 
           {/* moving target (simulated object) */}
           <g data-target transform={`translate(${w / 2} ${h / 2})`}>
-            <circle r={R * 0.16} fill="none" stroke="var(--jx-warn)" strokeWidth={1} className="rl-ping" />
+            <circle r={R * 0.16} fill="none" stroke="var(--jx-warn)" strokeWidth={1} className="rl-ping" style={{ animationPlayState: paused || reducedMotion ? 'paused' : undefined }} />
             <path d={`M0,${-R * 0.11} L${R * 0.1},${R * 0.08} L${-R * 0.1},${R * 0.08} Z`} fill="var(--jx-warn)" style={{ filter: 'drop-shadow(0 0 4px var(--jx-warn))' }} />
             {big && (
               <text x={R * 0.22} y={-R * 0.18} className="jx-num" fontSize={11} fill="var(--jx-warn)">
@@ -257,9 +258,11 @@ export default function ReticleLock({ stage, reducedMotion, paused }: FxProps) {
               <path d={`M${-b + L},${b} L${-b},${b} L${-b},${b - L}`} />
             </g>
             <circle r={2} fill="currentColor" stroke="none" />
-            <text y={R * 1.78} textAnchor="middle" className="font-head uppercase" fontSize={big ? 13 : 8} letterSpacing="0.18em" fill="currentColor" stroke="none" style={{ textShadow: '0 0 6px currentColor' }}>
-              {PHASE_PL[phase]}
-            </text>
+            {big && (
+              <text y={R * 1.78} textAnchor="middle" className="font-head uppercase" fontSize={13} letterSpacing="0.18em" fill="currentColor" stroke="none" style={{ textShadow: '0 0 6px currentColor' }}>
+                {PHASE_PL[phase]}
+              </text>
+            )}
           </g>
         </svg>
       )}
@@ -280,9 +283,11 @@ export default function ReticleLock({ stage, reducedMotion, paused }: FxProps) {
       )}
 
       {/* telemetry corner */}
-      <div className={`absolute ${stage ? 'left-6 bottom-6 gap-2 p-4 min-w-60' : 'left-1.5 bottom-1.5 gap-0.5 p-1.5'} flex flex-col jx-aug`} data-augmented-ui="tl-clip br-clip border">
+      {/* augmented-ui forces position:relative on its host, so the panel sits inside a positioned wrapper */}
+      <div className={`absolute ${stage ? 'left-6 bottom-6' : 'left-1.5 bottom-1.5'}`}>
+      <div className={`${stage ? 'gap-2 p-4 min-w-60' : 'gap-0.5 p-1.5'} flex flex-col jx-aug`} data-augmented-ui="tl-clip br-clip border">
         <div className="flex items-center gap-2">
-          <span className={`jx-label ${stage ? '' : 'text-[0.42rem]'}`}>Celownik</span>
+          <span className={`jx-label ${stage ? '' : 'text-[0.42rem]! tracking-[0.08em]!'}`}>Celownik</span>
           <span className="flex-1" />
           {stage && <DemoBadge label="SYMULACJA" title="Obiekt i odległość są symulowane na potrzeby efektu" />}
         </div>
@@ -301,6 +306,7 @@ export default function ReticleLock({ stage, reducedMotion, paused }: FxProps) {
             <dd className="m-0 jx-num text-jx-accent text-right">{locks}</dd>
           </dl>
         )}
+      </div>
       </div>
 
       <style>{`

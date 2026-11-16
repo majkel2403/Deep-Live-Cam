@@ -5,6 +5,7 @@ import { playBleep } from '@/lib/sound'
 import { DemoBadge, HudChrome } from '../hud-kit/HudChrome'
 import { hexA, rng, SEM } from '../hud-kit/color'
 import { useCanvas2D, type Frame2D } from '../hud-kit/useCanvas2D'
+import { LBL } from '../hud-kit/ui'
 
 /**
  * Original PPI (plan position indicator) radar drawn with Canvas 2D.
@@ -39,6 +40,25 @@ function spawn(r: () => number, i: number): Contact {
   const x = Math.cos(a) * d
   const y = Math.sin(a) * d
   return { id: `K-${String(i + 1).padStart(2, '0')}`, kind, x, y, vx: Math.cos(h) * sp, vy: Math.sin(h) * sp, hx: x, hy: y, hit: -99 }
+}
+
+/** move a contact (mutates the simulation object); returns its bearing from north in radians */
+function advance(k: Contact, dt: number): number {
+  k.x += k.vx * dt
+  k.y += k.vy * dt
+  if (k.x * k.x + k.y * k.y > 1) {
+    // left the scope → re-enter on the opposite side heading inwards
+    k.x = -k.x * 0.98
+    k.y = -k.y * 0.98
+  }
+  return (Math.atan2(k.y, k.x) + Math.PI / 2 + TAU) % TAU
+}
+
+/** the beam paints the echo at the contact's current position */
+function paint(k: Contact, t: number) {
+  k.hx = k.x
+  k.hy = k.y
+  k.hit = t
 }
 
 /** compass bearing (0° = north, clockwise) of a canvas-space vector */
@@ -192,18 +212,9 @@ export default function RadarSweep({ accent, accent2, quality, reducedMotion, st
     }
     const fade = rev * c.persistence
     for (const k of contactsRef.current) {
-      k.x += k.vx * dt
-      k.y += k.vy * dt
-      if (k.x * k.x + k.y * k.y > 1) {
-        // leave the scope → re-enter on the opposite side heading inwards
-        k.x = -k.x * 0.98
-        k.y = -k.y * 0.98
-      }
-      const b = ((Math.atan2(k.y, k.x) + Math.PI / 2 + TAU) % TAU)
+      const b = advance(k, dt)
       if (dt > 0 && swept(b)) {
-        k.hx = k.x
-        k.hy = k.y
-        k.hit = t
+        paint(k, t)
         if (c.ping && stage && k.kind === 'hostile') playBleep('scan')
       }
       const age = t - k.hit
@@ -308,12 +319,12 @@ export default function RadarSweep({ accent, accent2, quality, reducedMotion, st
         footer={
           stage ? (
             <>
-              <span className="jx-label text-[0.6rem]">Zasięg {maxKm} km</span>
-              <span className="jx-label text-[0.6rem]">Obrót {c.rpm} obr/min</span>
+              <span className={`${LBL} text-[0.6rem]`}>Zasięg {maxKm} km</span>
+              <span className={`${LBL} text-[0.6rem]`}>Obrót {c.rpm} obr/min</span>
               <span className="flex-1" />
-              <span className="jx-label text-[0.6rem] text-jx-ok">● swój</span>
-              <span className="jx-label text-[0.6rem] text-jx-warn">◆ nieznany</span>
-              <span className="jx-label text-[0.6rem] text-jx-danger">■ wrogi</span>
+              <span className={`${LBL} text-[0.6rem] text-jx-ok`}>● swój</span>
+              <span className={`${LBL} text-[0.6rem] text-jx-warn`}>◆ nieznany</span>
+              <span className={`${LBL} text-[0.6rem] text-jx-danger`}>■ wrogi</span>
             </>
           ) : undefined
         }
@@ -321,7 +332,7 @@ export default function RadarSweep({ accent, accent2, quality, reducedMotion, st
       {stage && (
         <aside className="pointer-events-none absolute right-5 top-14 z-10 hidden w-[min(18rem,30%)] lg:block" aria-label="Lista kontaktów">
           <div data-augmented-ui="tl-clip br-clip border" className="jx-aug px-3 py-2">
-            <div className="jx-label mb-1.5 flex justify-between text-[0.62rem]">
+            <div className={`${LBL} mb-1.5 flex justify-between text-[0.62rem]`}>
               <span className="text-jx-accent">Kontakty</span>
               <span>{list.length} / {c.contacts}</span>
             </div>

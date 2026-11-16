@@ -7,6 +7,7 @@ import { DemoBadge, HudChrome } from '../hud-kit/HudChrome'
 import { hexA, SEM } from '../hud-kit/color'
 import { useCanvas2D, type Frame2D } from '../hud-kit/useCanvas2D'
 import { spectrumDb, synthBlock, SYNTH_RATE } from './dsp'
+import { LBL } from '../hud-kit/ui'
 
 /**
  * Oscilloscope + spectrum analyser (original Canvas 2D code).
@@ -16,8 +17,8 @@ import { spectrumDb, synthBlock, SYNTH_RATE } from './dsp'
  */
 
 const N = 2048
-const DB_MIN = -96
-const DB_MAX = -12
+const DB_MIN = -100
+const DB_MAX = -10
 
 interface Mic {
   ctx: AudioContext
@@ -32,6 +33,7 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
     smoothing: { value: 0.82, min: 0, max: 0.97, step: 0.01, label: 'wygładzanie' },
     timebase: { value: 20, min: 5, max: 40, step: 1, label: 'podstawa czasu (ms)' },
     mirror: { value: false, label: 'widmo lustrzane' },
+    segments: { value: true, label: 'segmenty LED' },
   })
 
   const [mic, setMic] = useState<Mic | null>(null)
@@ -60,8 +62,15 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
     m.stream.getTracks().forEach((tr) => tr.stop())
     void m.ctx.close().catch(() => {})
   }
-  // always release the microphone on unmount
-  useEffect(() => () => stopMic(micRef.current), [])
+  // always release the microphone on unmount (also if permission resolves after unmount)
+  const alive = useRef(true)
+  useEffect(() => {
+    alive.current = true
+    return () => {
+      alive.current = false
+      stopMic(micRef.current)
+    }
+  }, [])
 
   const toggleMic = async () => {
     if (mic) {
@@ -70,17 +79,26 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
       return
     }
     setMicError(null)
+    // create (and resume) the AudioContext inside the click gesture, before awaiting permission
+    const ctx = new AudioContext()
+    void ctx.resume().catch(() => {})
     try {
       if (!navigator.mediaDevices?.getUserMedia) throw new Error('Przeglądarka nie udostępnia mikrofonu (wymagany HTTPS lub localhost).')
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
-      const ctx = new AudioContext()
       const src = ctx.createMediaStreamSource(stream)
       const analyser = ctx.createAnalyser()
       analyser.fftSize = N
       analyser.smoothingTimeConstant = 0
       src.connect(analyser) // analyser only – never routed to the speakers
-      setMic({ ctx, analyser, stream })
+      const m = { ctx, analyser, stream }
+      if (!alive.current) {
+        stopMic(m)
+        return
+      }
+      micRef.current = m
+      setMic(m)
     } catch (e) {
+      void ctx.close().catch(() => {})
       setMicError(e instanceof Error && e.name === 'NotAllowedError' ? 'Odmówiono dostępu do mikrofonu.' : e instanceof Error ? e.message : 'Nie udało się uruchomić mikrofonu.')
     }
   }
@@ -105,7 +123,7 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
     const top = stage ? 52 : 26
     const split = Math.round(h * (stage ? 0.52 : 0.5))
     const scope = { x: pad, y: top, w: w - pad * 2, h: split - top - (stage ? 18 : 8) }
-    const spec = { x: pad, y: split + (stage ? 14 : 6), w: w - pad * 2, h: h - split - (stage ? 54 : 20) }
+    const spec = { x: pad, y: split + (stage ? 14 : 6), w: w - pad * 2, h: h - split - (stage ? 74 : 20) }
 
     // ---------- oscilloscope ----------
     ctx.strokeStyle = hexA(accent, 0.1)
@@ -178,7 +196,7 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
       ctx.textAlign = 'left'
       ctx.fillText(`${(c.timebase / divX).toFixed(1)} ms/dz`, scope.x + 4, scope.y + 11)
       ctx.textAlign = 'right'
-      ctx.fillText('TRIG ↑ 0.0', scope.x + scope.w - 4, scope.y + 11)
+      ctx.fillText('TRIG ↑ 0.0', scope.x + scope.w - 4, scope.y + scope.h - 5)
     }
 
     // ---------- spectrum ----------
@@ -196,7 +214,8 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
         b.peakHz = i * binHz
       }
 
-    const gap = B > 80 ? 1 : 2
+    const gap = B > 80 ? 1 : B > 40 ? 3 : 4
+    const seg = c.segments ? (stage ? 6 : 4) : 0
     const bw = (spec.w - gap * (B - 1)) / B
     const grad = ctx.createLinearGradient(0, spec.y + spec.h, 0, spec.y)
     grad.addColorStop(0, hexA(accent, 0.85))
@@ -218,14 +237,34 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
       } else if (t === 0) b.bars[k] = norm
       const x = spec.x + k * (bw + gap)
       const bh = b.bars[k] * fullH
-      ctx.fillStyle = grad
-      ctx.fillRect(x, base - bh, bw, bh)
-      if (c.mirror) {
-        ctx.fillStyle = hexA(accent, 0.35)
-        ctx.fillRect(x, base, bw, bh)
+      if (seg > 0) {
+        // LED segments: lit up to the level, faint "off" segments above
+        const total = Math.floor(fullH / seg)
+        const lit = Math.round((bh / fullH) * total)
+        for (let q = 0; q < total; q++) {
+          const y = base - (q + 1) * seg
+          if (q < lit) {
+            ctx.fillStyle = q / total > 0.82 ? hexA(SEM.text, 0.95) : q / total > 0.55 ? hexA(accent2, 0.9) : hexA(accent, 0.55 + 0.4 * (q / total))
+          } else {
+            if (!stage) break
+            ctx.fillStyle = hexA(accent, 0.06)
+          }
+          ctx.fillRect(x, y + 1, bw, seg - 1.5)
+          if (c.mirror && q < lit) {
+            ctx.fillStyle = hexA(accent, 0.18)
+            ctx.fillRect(x, base + q * seg + 1, bw, seg - 1.5)
+          }
+        }
+      } else {
+        ctx.fillStyle = grad
+        ctx.fillRect(x, base - bh, bw, bh)
+        if (c.mirror) {
+          ctx.fillStyle = hexA(accent, 0.25)
+          ctx.fillRect(x, base, bw, bh)
+        }
       }
       // peak-hold cap
-      ctx.fillStyle = hexA(accent2, 0.9)
+      ctx.fillStyle = hexA(accent2, 0.95)
       ctx.fillRect(x, base - b.peaks[k] * fullH - 2, bw, 1.5)
     }
     // frequency axis
@@ -266,7 +305,7 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
         stage={stage}
         badges={
           live ? (
-            <span className="jx-label inline-flex items-center gap-1.5 text-[0.62rem] text-jx-ok">
+            <span className={`${LBL} inline-flex items-center gap-1.5 text-[0.62rem] text-jx-ok`}>
               <span className="jx-dot" data-pulse="true" /> Na żywo · mikrofon
             </span>
           ) : (
@@ -276,23 +315,24 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
         footer={
           stage ? (
             <>
-              <span className="jx-label text-[0.62rem]">
+              <span className={`${LBL} text-[0.62rem]`}>
                 RMS <span className="jx-num text-jx-accent">{Number.isFinite(stats.rms) ? `${stats.rms.toFixed(1)} dBFS` : '—'}</span>
               </span>
-              <span className="jx-label text-[0.62rem]">
+              <span className={`${LBL} text-[0.62rem]`}>
                 Szczyt <span className="jx-num text-jx-accent">{stats.peakHz ? `${Math.round(stats.peakHz)} Hz` : '—'}</span>
               </span>
-              <span className="jx-label text-[0.62rem]">
+              <span className={`${LBL} text-[0.62rem]`}>
                 FFT <span className="jx-num text-jx-accent">{N}</span>
               </span>
               <span className="flex-1" />
-              {micError && <span className="jx-label text-[0.62rem] text-jx-danger" role="alert">{micError}</span>}
+              {micError && <span className={`${LBL} text-[0.62rem] text-jx-danger`} role="alert">{micError}</span>}
+              <span className="w-44 shrink-0" />
             </>
           ) : undefined
         }
       />
       {stage && (
-        <div className="absolute right-5 top-11 z-20">
+        <div className="absolute right-5 bottom-2.5 z-20">
           <HudButton size="sm" active={live} onClick={() => void toggleMic()} icon={live ? <IconMicrophoneOff /> : <IconMicrophone />} aria-label={live ? 'Wyłącz mikrofon' : 'Włącz mikrofon (prośba o zgodę)'}>
             {live ? 'Wyłącz mikrofon' : 'Mikrofon'}
           </HudButton>

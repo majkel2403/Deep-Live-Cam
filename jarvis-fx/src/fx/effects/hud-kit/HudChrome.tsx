@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { LBL } from './ui'
 
 /** Visible marker for synthetic data (honesty rule): never shown for real browser metrics. */
 export function DemoBadge({ label = 'DEMO', title = 'Dane syntetyczne – generowane lokalnie, nie pochodzą z realnych czujników' }: { label?: string; title?: string }) {
@@ -56,8 +57,8 @@ export function HudChrome({
         </>
       )}
       <div className={`absolute flex items-center gap-2 ${stage ? 'left-5 top-4' : 'left-3 top-2.5'}`}>
-        <span className={`jx-label text-jx-accent jx-glow-text ${stage ? 'text-[0.7rem]' : 'text-[0.55rem]'}`}>{code}</span>
-        {stage && title && <span className="jx-label text-[0.62rem] text-jx-dim">{title}</span>}
+        <span className={`${LBL} text-jx-accent jx-glow-text ${stage ? 'text-[0.7rem]' : 'text-[0.55rem]'}`}>{code}</span>
+        {stage && title && <span className={`${LBL} text-[0.62rem] text-jx-dim`}>{title}</span>}
       </div>
       {badges && <div className={`absolute flex items-center gap-1.5 ${stage ? 'right-5 top-3.5' : 'right-3 top-2'}`}>{badges}</div>}
       {footer && <div className={`absolute ${stage ? 'left-5 bottom-3.5 right-5' : 'left-3 bottom-2 right-3'} flex items-center gap-3`}>{footer}</div>}

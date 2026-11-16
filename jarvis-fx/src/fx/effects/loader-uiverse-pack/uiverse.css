@@ -1,0 +1,199 @@
+/*
+ * Six CSS loaders ported/adapted from Uiverse.io – https://github.com/uiverse-io/galaxy (MIT License,
+ * Copyright (c) 2023 Uiverse.io). Each block names its author and original file. Adaptations: class
+ * names prefixed with `uvp-`, colours mapped to the JARVIS accent tokens, durations scaled by
+ * --uvp-speed, glow switchable with [data-glow="false"], and pausable via [data-paused="true"].
+ */
+.uvp-root {
+  --uvp-speed: 1;
+  --uvp-accent: hsl(var(--jx-hue) 100% 55%);
+  --uvp-accent2: hsl(calc(var(--jx-hue) + 24) 100% 64%);
+  --uvp-accent3: hsl(calc(var(--jx-hue) - 40) 100% 62%);
+  --uvp-line: hsl(var(--jx-hue) 100% 60% / 0.45);
+  --uvp-hi: hsl(var(--jx-hue) 60% 92%);
+}
+.uvp-root[data-paused="true"] *,
+.uvp-root[data-paused="true"] *::before,
+.uvp-root[data-paused="true"] *::after { animation-play-state: paused !important; }
+.uvp-root[data-glow="false"] * { filter: none !important; box-shadow: none !important; }
+
+/* 1 ─ Radar · ported from Uiverse.io by mrhyddenn (loaders/mrhyddenn_giant-lion-34.html), MIT */
+.uvp-radar {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 1px solid var(--uvp-line);
+  box-shadow: 25px 25px 75px rgba(0, 0, 0, 0.55), inset 0 0 24px hsl(var(--jx-hue) 100% 50% / 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: radial-gradient(circle, hsl(var(--jx-hue) 90% 30% / 0.14), transparent 70%);
+}
+.uvp-radar::before {
+  content: "";
+  position: absolute;
+  inset: 20px;
+  border: 1px dashed var(--uvp-line);
+  border-radius: 50%;
+  box-shadow: inset -5px -5px 25px rgba(0, 0, 0, 0.25), inset 5px 5px 35px rgba(0, 0, 0, 0.25);
+}
+.uvp-radar::after {
+  content: "";
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 1px dashed var(--uvp-line);
+  box-shadow: inset -5px -5px 25px rgba(0, 0, 0, 0.25), inset 5px 5px 35px rgba(0, 0, 0, 0.25);
+}
+.uvp-radar span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  background: transparent;
+  transform-origin: top left;
+  animation: uvp-radar calc(2s / var(--uvp-speed)) linear infinite;
+  border-top: 1px dashed var(--uvp-hi);
+}
+.uvp-radar span::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--uvp-accent);
+  transform-origin: top left;
+  transform: rotate(-55deg);
+  filter: blur(30px) drop-shadow(20px 20px 20px var(--uvp-accent));
+}
+@keyframes uvp-radar {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 2 ─ Neon ring · ported from Uiverse.io by aadium (loaders/aadium_bright-lion-66.html), MIT */
+.uvp-ring {
+  width: 100px;
+  height: 100px;
+  border-radius: 7em;
+  position: relative;
+  animation: uvp-rotate calc(1s / var(--uvp-speed)) linear infinite;
+  box-shadow:
+    0px 5px 10px var(--uvp-accent), 0px -5px 10px var(--uvp-accent2), 5px 0px 10px var(--uvp-accent3), -5px 0px 10px var(--uvp-accent3),
+    inset 0px 5px 10px var(--uvp-accent2), inset 0px -5px 10px var(--uvp-accent), inset 5px 0px 10px var(--uvp-accent3), inset -5px 0px 10px var(--uvp-accent3);
+}
+@keyframes uvp-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 3 ─ Light streak · ported from Uiverse.io by Smit-Prajapati (loaders/Smit-Prajapati_soft-donkey-32.html), MIT
+ *     adapted: three staggered rails instead of one */
+.uvp-streak {
+  height: 2px;
+  width: 300px;
+  background: hsl(var(--jx-hue) 30% 16%);
+  position: relative;
+  overflow: hidden;
+}
+.uvp-streak + .uvp-streak { margin-top: 14px; }
+.uvp-streak .uvp-overlay {
+  background: linear-gradient(87deg, rgb(0, 0, 0) 0%, rgba(0, 0, 0, 0.14) 30%, rgba(0, 0, 0, 0.14) 70%, rgb(0, 0, 0) 100%);
+  position: absolute;
+  inset: 0px;
+}
+.uvp-streak .uvp-light {
+  width: 70px;
+  height: 100%;
+  position: absolute;
+  left: -20%;
+  top: 0px;
+  background: linear-gradient(87deg, rgba(0, 0, 0, 0) 0%, var(--uvp-accent) 40%, var(--uvp-accent) 60%, rgba(0, 0, 0, 0) 100%);
+  animation: uvp-light calc(2s / var(--uvp-speed)) infinite ease-in-out;
+}
+.uvp-streak:nth-child(2) .uvp-light { animation-delay: calc(-0.66s / var(--uvp-speed)); background: linear-gradient(87deg, transparent 0%, var(--uvp-accent2) 40%, var(--uvp-accent2) 60%, transparent 100%); }
+.uvp-streak:nth-child(3) .uvp-light { animation-delay: calc(-1.33s / var(--uvp-speed)); }
+@keyframes uvp-light {
+  from { left: -30%; }
+  to { left: 100%; }
+}
+
+/* 4 ─ Letter wave · ported from Uiverse.io by gagan-gv (loaders/gagan-gv_nervous-wasp-20.html), MIT
+ *     adapted: Polish word, per-letter delay via --i */
+.uvp-letters {
+  height: 50px;
+  width: max-content;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: var(--jx-font-mono);
+  letter-spacing: 0.6em;
+  color: var(--uvp-hi);
+  filter: drop-shadow(0 0 10px var(--uvp-accent));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.uvp-letters span {
+  animation: uvp-letter calc(1.75s / var(--uvp-speed)) ease infinite;
+  animation-delay: calc(var(--i) * 0.2s / var(--uvp-speed));
+}
+@keyframes uvp-letter {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); color: var(--uvp-accent); }
+}
+
+/* 5 ─ Elastic bars · ported from Uiverse.io by TemRevil (loaders/TemRevil_rude-moth-53.html), MIT */
+.uvp-bars {
+  width: 150px;
+  height: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+.uvp-bars > div {
+  width: 20px;
+  height: 70px;
+  background-color: var(--uvp-accent);
+  box-shadow: 0 0 14px var(--uvp-accent);
+  animation: uvp-bars calc(1s / var(--uvp-speed)) infinite cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+.uvp-bars > div:nth-child(2) { background-color: var(--uvp-accent2); box-shadow: 0 0 14px var(--uvp-accent2); }
+@keyframes uvp-bars {
+  0% { height: 0; }
+  25% { height: 70px; }
+  50% { height: 70px; transform: rotate(10deg); }
+  75% { height: 70px; transform: rotate(0deg); }
+  100% { height: 0; }
+}
+
+/* 6 ─ Stacked layers · ported from Uiverse.io by mobinkakei (loaders/mobinkakei_dry-insect-94.html), MIT */
+.uvp-layers {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  background: hsl(var(--jx-hue) 45% 45%);
+  transform: rotateX(65deg) rotate(45deg);
+  color: var(--uvp-accent);
+  animation: uvp-layers1 calc(1s / var(--uvp-speed)) linear infinite alternate;
+}
+.uvp-layers::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: hsl(var(--jx-hue) 100% 88% / 0.7);
+  animation: uvp-layerTr calc(1s / var(--uvp-speed)) linear infinite alternate;
+}
+@keyframes uvp-layers1 {
+  0% { box-shadow: 0px 0px 0 0px; }
+  90%, 100% { box-shadow: 20px 20px 0 -4px; }
+}
+@keyframes uvp-layerTr {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-25px, -25px) scale(1); }
+}

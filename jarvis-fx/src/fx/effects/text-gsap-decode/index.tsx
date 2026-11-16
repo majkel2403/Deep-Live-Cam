@@ -153,7 +153,7 @@ export default function GsapDecode({ stage, reducedMotion, paused }: FxProps) {
     { scope: root, dependencies: [c.charset, c.hold, reducedMotion], revertOnUpdate: true },
   )
 
-  const big = stage ? 'text-[clamp(2.4rem,7.2vw,6.4rem)]' : 'text-[1.45rem]'
+  const big = stage ? 'text-[clamp(2.4rem,7.2vw,6.4rem)]' : 'text-[1.22rem]'
   const glowShadow = c.glow ? '0 0 18px hsl(var(--jx-hue) 100% 55% / 0.85), 0 0 2px hsl(var(--jx-hue) 100% 85%)' : 'none'
 
   return (
@@ -163,7 +163,7 @@ export default function GsapDecode({ stage, reducedMotion, paused }: FxProps) {
       <CornerBrackets size={stage ? 22 : 10} inset={stage ? 18 : 6} />
 
       <div className={`absolute inset-0 flex flex-col items-center justify-center ${stage ? 'gap-5 px-10' : 'gap-1.5 px-3'}`}>
-        <span data-kicker className={`jx-label text-jx-accent ${stage ? 'text-sm tracking-[0.4em]' : 'text-[0.5rem] tracking-[0.3em]'}`} aria-hidden="true">
+        <span data-kicker className={`jx-label text-jx-accent! ${stage ? 'text-sm! tracking-[0.4em]!' : 'text-[0.5rem]! tracking-[0.3em]!'}`} aria-hidden="true">
           Sekwencja 01/03 · BOOT
         </span>
 
@@ -205,7 +205,7 @@ export default function GsapDecode({ stage, reducedMotion, paused }: FxProps) {
         </div>
 
         <div className={`flex items-center gap-3 ${stage ? 'w-[min(40rem,70%)] mt-2' : 'w-[88%]'}`} aria-hidden="true">
-          <span className={`jx-label ${stage ? '' : 'text-[0.45rem]'}`}>Synchronizacja</span>
+          <span className={`jx-label ${stage ? '' : 'text-[0.45rem]!'}`}>Synchronizacja</span>
           <div className="relative flex-1 h-1 bg-jx-accent-dim/30 overflow-hidden">
             <div data-bar className="absolute inset-0 origin-left bg-jx-accent shadow-[0_0_8px_var(--jx-accent)]" />
           </div>

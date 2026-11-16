@@ -1,7 +1,7 @@
 /**
  * Small shared helpers for the text-* / motion-* effects (not an effect itself: no meta.ts).
  */
-import { useEffect, useRef, useState, type RefObject } from 'react'
+import './kit.css'
 
 /** Honest marker for synthetic / scripted content. Never a button (cards are <button>s). */
 export function DemoBadge({ label = 'DEMO', title = 'Dane syntetyczne – pokaz efektu, nie odczyt z systemu', className = '' }: { label?: string; title?: string; className?: string }) {
@@ -31,24 +31,6 @@ export function LiveBadge({ label = 'NA ŻYWO', title = 'Prawdziwy odczyt z prze
   )
 }
 
-/** Element size via ResizeObserver (rounded px). */
-export function useElementSize<T extends HTMLElement>(): [RefObject<T | null>, { w: number; h: number }] {
-  const ref = useRef<T>(null)
-  const [size, setSize] = useState({ w: 0, h: 0 })
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const ro = new ResizeObserver(([e]) => {
-      const w = Math.round(e.contentRect.width)
-      const h = Math.round(e.contentRect.height)
-      setSize((s) => (s.w === w && s.h === h ? s : { w, h }))
-    })
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-  return [ref, size]
-}
-
 /** Four HUD corner brackets (decorative, pointer-transparent). */
 export function CornerBrackets({ size = 14, inset = 8, className = '' }: { size?: number; inset?: number; className?: string }) {
   const common = 'absolute border-jx-accent/70 pointer-events-none'
@@ -61,11 +43,4 @@ export function CornerBrackets({ size = 14, inset = 8, className = '' }: { size?
       <span className={`${common} border-b border-r`} style={{ ...s, bottom: inset, right: inset }} />
     </div>
   )
-}
-
-/** Live-updating ref to the latest value (for loops that must not restart on prop change). */
-export function useLatest<T>(value: T) {
-  const ref = useRef(value)
-  ref.current = value
-  return ref
 }

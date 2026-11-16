@@ -13,7 +13,8 @@ import { AtomIcon, BroadcastIcon, EyeIcon, LightningIcon, PlanetIcon } from '@ph
 import { Cloud, Crosshair, Database, FingerprintPattern, Globe, Rocket, Satellite } from 'lucide-react'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
-import { useElementSize } from '../motion-kit/kit'
+import { useElementSize } from '../motion-kit/useElementSize'
+import '../motion-kit/kit.css'
 
 interface Mod {
   label: string
@@ -127,7 +128,7 @@ function OrbitItem({
         {children}
       </div>
       {hover && focusable && (
-        <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap jx-label text-jx-text bg-jx-panel-solid/90 border border-jx-line px-1.5 py-0.5 pointer-events-none">{label}</span>
+        <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 whitespace-nowrap jx-label text-jx-text! bg-jx-panel-solid/90 border border-jx-line px-1.5 py-0.5 pointer-events-none">{label}</span>
       )}
     </motion.div>
   )
@@ -211,7 +212,7 @@ function Core({ size, time, active, stage }: { size: number; time: MotionValue<n
         <span className={`jx-display text-white jx-glow-text ${stage ? 'text-[0.95rem]' : 'text-[0.42rem]'}`} style={{ letterSpacing: '0.18em' }}>
           J.A.R.V.I.S.
         </span>
-        {stage && <span className="jx-label text-[0.6rem] mt-1.5 text-jx-accent">{active ?? `${TOTAL} modułów`}</span>}
+        {stage && <span className="jx-label text-[0.6rem]! mt-1.5 text-jx-accent!">{active ?? `${TOTAL} modułów`}</span>}
       </div>
     </div>
   )
@@ -242,7 +243,7 @@ export default function OrbitingCirclesFx({ stage, reducedMotion, paused }: FxPr
   const common = { cx: w / 2, cy: h / 2, time, iconSize: icon, path: c.path, reduced: reducedMotion, focusable: stage, onActive: setActive }
 
   return (
-    <div ref={ref} className="absolute inset-0 overflow-hidden bg-jx-bg">
+    <div ref={ref} className="fxk-noblur absolute inset-0 overflow-hidden bg-jx-bg">
       <div className="absolute inset-0 jx-grid-bg opacity-35" aria-hidden="true" />
       {w > 0 && (
         <>
@@ -273,8 +274,9 @@ export default function OrbitingCirclesFx({ stage, reducedMotion, paused }: FxPr
         </>
       )}
       {stage && (
-        <div className="absolute left-6 bottom-6 flex flex-col gap-1.5 jx-aug p-4" data-augmented-ui="tl-clip br-clip border">
-          <span className="jx-label text-jx-accent">Orbity</span>
+        <div className="absolute left-6 bottom-6">
+        <div className="flex flex-col gap-1.5 jx-aug p-4" data-augmented-ui="tl-clip br-clip border">
+          <span className="jx-label text-jx-accent!">Orbity</span>
           {[
             ['Wewnętrzna', 'Tabler Icons', INNER.length],
             ['Środkowa', 'Phosphor', MIDDLE.length],
@@ -287,6 +289,7 @@ export default function OrbitingCirclesFx({ stage, reducedMotion, paused }: FxPr
             </div>
           ))}
           <span className="text-[0.68rem] text-jx-dim mt-1">Najedź lub użyj Tab, aby odczytać moduł.</span>
+        </div>
         </div>
       )}
     </div>

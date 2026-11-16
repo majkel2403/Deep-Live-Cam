@@ -59,6 +59,16 @@ const SCRIPT_TAIL: Step[] = [
   { text: 'Wszystkie krytyczne systemy sprawne', status: 'ok' },
 ]
 const FINAL = 'J.A.R.V.I.S. gotowy. Witaj z powrotem.'
+/* block-letter banner (original, drawn with box-drawing characters) */
+const BANNER = [
+  '     ██╗ █████╗ ██████╗ ██╗   ██╗██╗███████╗',
+  '     ██║██╔══██╗██╔══██╗██║   ██║██║██╔════╝',
+  '     ██║███████║██████╔╝██║   ██║██║███████╗',
+  '██   ██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║',
+  '╚█████╔╝██║  ██║██║  ██║ ╚████╔╝ ██║███████║',
+  ' ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝',
+  '  Wirtualny asystent pokładowy · terminal tty0',
+]
 const PROMPT = 'jarvis@stark-core:~$ '
 
 const STATUS_LABEL: Record<Status, string> = { ok: ' OK ', warn: 'WARN', fail: 'FAIL', info: 'INFO' }
@@ -70,7 +80,7 @@ type Phase = 'type' | 'spin' | 'progress' | 'status' | 'final' | 'prompt' | 'hol
 
 export default function TerminalBoot({ stage, reducedMotion, paused }: FxProps) {
   const c = useFxControls({
-    speed: { value: 90, min: 20, max: 400, step: 10, label: 'znaki / s' },
+    speed: { value: 140, min: 20, max: 400, step: 10, label: 'znaki / s' },
     timestamps: { value: true, label: 'znaczniki czasu' },
     cursor: { value: CURSORS.blok as string, options: CURSORS, label: 'kursor' },
     crt: { value: true, label: 'efekt CRT' },
@@ -81,6 +91,7 @@ export default function TerminalBoot({ stage, reducedMotion, paused }: FxProps) 
   const [rows, setRows] = useState<Row[]>([])
   const [phase, setPhase] = useState<Phase>('type')
   const [prompt, setPrompt] = useState(false)
+  const [boot, setBoot] = useState(0)
   const scroller = useRef<HTMLDivElement>(null)
   const speedRef = useRef(c.speed)
   const holdRef = useRef(c.hold)
@@ -92,23 +103,24 @@ export default function TerminalBoot({ stage, reducedMotion, paused }: FxProps) 
   // machine state lives in a ref so pausing resumes exactly where it stopped
   const m = useRef({ line: 0, char: 0, phase: 'type' as Phase, t: 0, acc: 0, bootT: 0, rows: [] as Row[] })
 
+  // reduced motion: the finished log, rendered statically
+  const staticRows = useMemo(() => {
+    if (!reducedMotion) return null
+    const all: Row[] = steps.map((s, i) => ({ text: s.text, status: s.status, pct: s.progress ? 100 : undefined, ts: 0.137 * (i + 1), real: s.real, note: s.note }))
+    all.push({ text: FINAL, ts: 0.137 * (steps.length + 1), final: true })
+    return all
+  }, [reducedMotion, steps])
+
   useEffect(() => {
-    if (reducedMotion) {
-      const all: Row[] = steps.map((s, i) => ({ text: s.text, status: s.status, pct: s.progress ? 100 : undefined, ts: 0.137 * (i + 1), real: s.real, note: s.note }))
-      all.push({ text: FINAL, ts: 0.137 * (steps.length + 1), final: true })
-      setRows(all)
-      setPrompt(true)
-      setPhase('prompt')
-      return
-    }
-    if (paused) return
+    if (reducedMotion || paused) return
     let raf = 0
     let last = performance.now()
     const st = m.current
     const push = () => setRows(st.rows.slice())
 
     const frame = (now: number) => {
-      const dt = Math.min(0.1, (now - last) / 1000)
+      // rAF timestamps can precede the performance.now() taken at effect start → clamp at 0
+      const dt = Math.max(0, Math.min(0.1, (now - last) / 1000))
       last = now
       st.t += dt
       st.bootT += dt
@@ -204,6 +216,7 @@ export default function TerminalBoot({ stage, reducedMotion, paused }: FxProps) 
           st.bootT = 0
           st.phase = 'type'
           setPrompt(false)
+          setBoot((b) => b + 1)
           push()
           break
         }
@@ -215,18 +228,21 @@ export default function TerminalBoot({ stage, reducedMotion, paused }: FxProps) 
     return () => cancelAnimationFrame(raf)
   }, [paused, reducedMotion, steps])
 
+  const shownRows = staticRows ?? rows
+  const showPrompt = !!staticRows || prompt
+
   // auto-scroll to the newest line
   useLayoutEffect(() => {
     const el = scroller.current
     if (el) el.scrollTop = el.scrollHeight
-  }, [rows, prompt])
+  }, [shownRows, showPrompt])
 
-  const fs = stage ? 'text-[clamp(0.85rem,1.05vw,1.05rem)]' : 'text-[0.5rem]'
-  const typingIdx = phase === 'type' || phase === 'final' ? rows.length - 1 : -1
+  const fs = stage ? 'text-[clamp(0.9rem,1.25vw,1.2rem)]' : 'text-[0.5rem]'
+  const typingIdx = !staticRows && (phase === 'type' || phase === 'final') ? rows.length - 1 : -1
   const caretCls = `tb-caret tb-caret--${c.cursor}`
 
   return (
-    <div data-paused={paused || undefined} className={`absolute inset-0 bg-[#010509] overflow-hidden ${c.crt ? 'tb-crt' : ''}`}>
+    <div data-paused={paused || undefined} className={`fxk-noblur absolute inset-0 bg-[#010509] overflow-hidden ${c.crt ? 'tb-crt' : ''}`}>
       <div className={`absolute ${stage ? 'inset-6' : 'inset-1.5'} flex flex-col`}>
         <header
           data-augmented-ui="tl-clip tr-clip-x border"
@@ -236,7 +252,7 @@ export default function TerminalBoot({ stage, reducedMotion, paused }: FxProps) 
           <IconTerminal2 size={stage ? 16 : 9} className="text-jx-accent shrink-0" />
           <span className={`font-term text-jx-accent ${stage ? 'text-sm' : 'text-[0.5rem]'} truncate`}>tty0 · jarvis@stark-core</span>
           <span className="flex-1" />
-          {stage && <span className="jx-label text-[0.62rem] hidden md:inline">◆ = odczyt z przeglądarki</span>}
+          {stage && <span className="jx-label text-[0.62rem]! hidden md:inline">◆ = odczyt z przeglądarki</span>}
           <DemoBadge label="SYMULACJA" title="Log rozruchu jest symulowany; wiersze z ◆ to prawdziwe odczyty z przeglądarki" className={stage ? '' : 'scale-75 origin-right'} />
         </header>
         <div
@@ -246,7 +262,16 @@ export default function TerminalBoot({ stage, reducedMotion, paused }: FxProps) 
           aria-live="off"
           className={`relative flex-1 min-h-0 overflow-hidden border-x border-b border-jx-line/50 bg-black/40 ${stage ? 'px-5 py-4' : 'px-1.5 py-1'} font-term ${fs} leading-[1.55]`}
         >
-          {rows.map((r, i) => (
+          {stage && (
+            <pre key={boot} className="tb-banner m-0 mb-3 font-mono text-jx-accent tb-glow leading-[1.05] text-[clamp(0.45rem,0.75vw,0.72rem)]" aria-hidden="true">
+              {BANNER.map((l, i) => (
+                <span key={i} className="block" style={{ animationDelay: `${i * 70}ms` }}>
+                  {l}
+                </span>
+              ))}
+            </pre>
+          )}
+          {shownRows.map((r, i) => (
             <div key={i} className={`flex items-baseline gap-[0.6em] whitespace-pre min-w-0 ${r.final ? 'text-jx-accent tb-glow mt-[0.4em]' : 'text-jx-text/85'}`}>
               {c.timestamps && <span className="text-jx-dim/80 shrink-0">[{r.ts.toFixed(3).padStart(8, ' ')}]</span>}
               {r.real && <span className="text-jx-accent shrink-0" aria-label="prawdziwy odczyt">◆</span>}
@@ -265,7 +290,7 @@ export default function TerminalBoot({ stage, reducedMotion, paused }: FxProps) 
               {r.status && <span className={`shrink-0 ${STATUS_CLS[r.status]} tb-glow`}>[{STATUS_LABEL[r.status]}]</span>}
             </div>
           ))}
-          {prompt && (
+          {showPrompt && (
             <div className="whitespace-pre text-jx-ok mt-[0.3em]">
               {PROMPT}
               <span className={caretCls} aria-hidden="true" />

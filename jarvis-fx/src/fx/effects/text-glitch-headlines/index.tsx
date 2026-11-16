@@ -4,6 +4,7 @@ import type { PowerGlitchOptions, RecursivePartial } from 'powerglitch'
 import { IconAlertTriangle, IconAntennaBars5, IconBolt, IconPointer, IconRefresh, IconWaveSine } from '@tabler/icons-react'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
+import '../motion-kit/kit.css'
 import { playBleep } from '@/lib/sound'
 
 type Opts = RecursivePartial<PowerGlitchOptions>
@@ -195,7 +196,7 @@ function Headline({ v, k, stage, paused, reduced, hue }: { v: Variant; k: { inte
         <span className={`${tone.text} [&>svg]:size-full shrink-0 ${stage ? 'size-5' : 'size-2.5'}`} aria-hidden="true">
           {v.icon}
         </span>
-        <span className={`jx-label truncate ${stage ? '' : 'text-[0.42rem]'}`}>{v.kicker}</span>
+        <span className={`jx-label truncate ${stage ? '' : 'text-[0.42rem]! tracking-[0.08em]!'}`}>{v.kicker}</span>
         <span className="flex-1" />
         {stage && (
           <span className={`jx-num text-[0.6rem] px-1.5 py-px border ${v.mode === 'always' ? 'border-jx-line text-jx-dim' : 'border-jx-accent text-jx-accent'}`}>
@@ -271,7 +272,7 @@ export default function GlitchHeadlines({ stage, reducedMotion, paused, hue }: F
   const list = stage ? VARIANTS : [VARIANTS[0], VARIANTS[3]]
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-jx-bg">
+    <div className="fxk-noblur absolute inset-0 overflow-hidden bg-jx-bg">
       <div className="absolute inset-0 jx-grid-bg opacity-40" aria-hidden="true" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgb(255_59_92/0.10),transparent_55%)]" aria-hidden="true" />
       <div className={`relative h-full grid ${stage ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3 auto-rows-fr gap-5 p-8 max-w-[90rem] mx-auto content-center' : 'grid-rows-2 gap-1.5 p-2'}`}>
@@ -279,7 +280,7 @@ export default function GlitchHeadlines({ stage, reducedMotion, paused, hue }: F
           <Headline key={v.id} v={v} k={k} stage={stage} paused={paused} reduced={reducedMotion} hue={hue} />
         ))}
       </div>
-      {reducedMotion && stage && <p className="absolute bottom-3 inset-x-0 text-center jx-label text-[0.62rem]">Ograniczony ruch: zakłócenia wyłączone</p>}
+      {reducedMotion && stage && <p className="absolute bottom-3 inset-x-0 text-center jx-label text-[0.62rem]!">Ograniczony ruch: zakłócenia wyłączone</p>}
     </div>
   )
 }

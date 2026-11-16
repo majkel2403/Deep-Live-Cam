@@ -1,0 +1,50 @@
+/*
+ * hud-icon-matrix – static tile chrome; anime.js only animates `opacity` of .hx-lit and the
+ * `scale` of .hx-glyph (compositor-friendly), so the wave stays cheap even with 150+ tiles.
+ */
+.hx-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: color-mix(in oklab, var(--jx-accent) 62%, var(--jx-text-dim));
+  border: 1px solid hsl(var(--jx-hue) 100% 60% / 0.14);
+  background: hsl(var(--jx-hue) 70% 8% / 0.35);
+}
+/* corner notch (top-right) */
+.hx-tile::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-top: 1px solid var(--jx-line-strong);
+  border-right: 1px solid var(--jx-line-strong);
+}
+.hx-lit {
+  position: absolute;
+  inset: -1px;
+  opacity: 0;
+  border: 1px solid var(--jx-accent);
+  background: radial-gradient(circle at 50% 50%, hsl(var(--jx-hue) 100% 55% / 0.35), hsl(var(--jx-hue) 100% 50% / 0.12) 70%);
+  box-shadow: 0 0 12px hsl(var(--jx-hue) 100% 55% / 0.45);
+  will-change: opacity;
+  pointer-events: none;
+}
+.hx-glyph {
+  position: relative;
+  display: grid;
+  place-items: center;
+  will-change: transform;
+}
+.hx-tile[data-flip="true"] .hx-glyph > * { animation: hx-flip 0.5s cubic-bezier(.2,.7,.2,1); }
+@keyframes hx-flip {
+  0% { transform: rotateX(90deg) scale(0.8); opacity: 0; }
+  60% { transform: rotateX(-12deg) scale(1.1); opacity: 1; }
+  100% { transform: none; }
+}
+.hx-ms {
+  font-variation-settings: 'FILL' 0, 'wght' 100, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
+}
+[data-motion="reduced"] .hx-tile[data-flip="true"] .hx-glyph > * { animation: none; }

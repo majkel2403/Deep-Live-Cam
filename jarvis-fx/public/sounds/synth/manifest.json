@@ -1,0 +1,111 @@
+{
+  "pack": "wav",
+  "title": "JARVIS FX · synteza własna (WAV)",
+  "author": "JARVIS FX — wygenerowane przez scripts/render-sounds.mjs",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "sampleRate": 44100,
+  "bitDepth": 16,
+  "channels": 1,
+  "bleeps": {
+    "click": {
+      "files": [
+        "click.wav"
+      ],
+      "durationMs": 43,
+      "bytes": 3836,
+      "peak": 0.142,
+      "note": "naciśnięcie przycisku"
+    },
+    "hover": {
+      "files": [
+        "hover.wav"
+      ],
+      "durationMs": 28,
+      "bytes": 2514,
+      "peak": 0.047,
+      "note": "najechanie kursorem (bardzo cicho)"
+    },
+    "open": {
+      "files": [
+        "open.wav"
+      ],
+      "durationMs": 128,
+      "bytes": 11334,
+      "peak": 0.212,
+      "note": "otwarcie panelu / okna"
+    },
+    "close": {
+      "files": [
+        "close.wav"
+      ],
+      "durationMs": 108,
+      "bytes": 9570,
+      "peak": 0.191,
+      "note": "zamknięcie panelu / okna"
+    },
+    "type": {
+      "files": [
+        "type.wav"
+      ],
+      "durationMs": 20,
+      "bytes": 1808,
+      "peak": 0.03,
+      "note": "tyknięcie dekodowanego tekstu"
+    },
+    "success": {
+      "files": [
+        "success.wav"
+      ],
+      "durationMs": 178,
+      "bytes": 15744,
+      "peak": 0.18,
+      "note": "potwierdzenie / sukces"
+    },
+    "error": {
+      "files": [
+        "error.wav"
+      ],
+      "durationMs": 258,
+      "bytes": 22800,
+      "peak": 0.107,
+      "note": "błąd"
+    },
+    "alert": {
+      "files": [
+        "alert.wav"
+      ],
+      "durationMs": 228,
+      "bytes": 20154,
+      "peak": 0.094,
+      "note": "ostrzeżenie / zwrócenie uwagi"
+    },
+    "scan": {
+      "files": [
+        "scan.wav"
+      ],
+      "durationMs": 148,
+      "bytes": 13098,
+      "peak": 0.097,
+      "note": "przemiatanie radaru / skanowanie"
+    },
+    "boot": {
+      "files": [
+        "boot.wav"
+      ],
+      "durationMs": 708,
+      "bytes": 62490,
+      "peak": 0.145,
+      "note": "narastanie mocy przy rozruchu (wyjątek od limitu 150 ms)"
+    },
+    "toggle": {
+      "files": [
+        "toggle.wav"
+      ],
+      "durationMs": 48,
+      "bytes": 4278,
+      "peak": 0.152,
+      "note": "przełącznik"
+    }
+  }
+}
