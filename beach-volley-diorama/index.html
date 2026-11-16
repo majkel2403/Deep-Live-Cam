@@ -1,0 +1,972 @@
+<title>Sunfire vs Tide</title>
+<style>
+/* Single-look, dark stage: the canvas is the whole page. Palette lives in the JS (P = pixel palette). */
+:root { --stage: #05060f; --hint: #8fb4ff; color-scheme: dark; }
+html, body { height: 100%; }
+body { background: var(--stage); margin: 0; overflow: hidden; display: grid; place-items: center; }
+#stage { display: block; width: min(100vw, calc(100vh * 16 / 9)); max-width: 100%; aspect-ratio: 16 / 9; image-rendering: pixelated; cursor: pointer; }
+#hint { position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); font: 600 11px/1.2 ui-monospace, Menlo, Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--hint); opacity: .55; pointer-events: none; transition: opacity .6s; }
+.cap #hint { display: none; }
+</style>
+<canvas id="stage" width="1920" height="1080" aria-label="Animated pixel-art beach volleyball match, looping"></canvas>
+<div id="hint">Click: fullscreen · Space: pause</div>
+<script>
+'use strict';
+// ---------------------------------------------------------------------------
+//  World: 480x270 pixel canvas; the camera shows a 384x216 window at exactly 5x.
+//  Every frame is a pure function of t in [0, L) so the loop is seamless.
+// ---------------------------------------------------------------------------
+const W = 480, H = 270, L = 6, M = 8;                   // M = margin for screen shake
+const VIEW = { x: 48, y: 44, w: 384, h: 216 };            // camera: 384x216 crop, upscaled exactly 5x to 1920x1080
+const TAU = Math.PI * 2;
+const CAPTURE = /capture/.test(location.search);
+if (CAPTURE) document.documentElement.classList.add('cap');
+
+const out = document.getElementById('stage');
+const octx = out.getContext('2d');
+function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; return [c, x]; }
+const CW = W + 2 * M, CH_ = H + 2 * M;
+const [lo, g]   = mk(CW, CH_);   // main pixel layer
+const [gl, gg]  = mk(CW, CH_);   // emissive layer (feeds the bloom)
+const [bl, blx] = mk(CW, CH_);   // blurred bloom
+const [bl2, bl2x] = mk(CW, CH_);
+const [bgc, bgx] = mk(CW, CH_);  // static background
+const SEA_Y0 = 118, SEA_H = 50;
+const [sea, seax] = mk(CW, SEA_H);
+const seaImg = seax.createImageData(CW, SEA_H);
+
+const mod = (a, b) => ((a % b) + b) % b;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp = (a, b, p) => a + (b - a) * p;
+const ease = p => { p = clamp(p, 0, 1); return p * p * (3 - 2 * p); };
+const R = Math.round;
+function hash(n) { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); }
+function h2(x, y) { return hash(x * 12.9898 + y * 78.233); }
+function rng(seed) { let s = (seed * 2654435761) >>> 0 || 1; return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+function hex(c) { const n = parseInt(c.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+function toHex(r, g2, b) { return '#' + [r, g2, b].map(v => clamp(R(v), 0, 255).toString(16).padStart(2, '0')).join(''); }
+function shade(c, k) { const [r, g2, b] = hex(c); return toHex(r * k, g2 * k, b * k); }
+function mix(a, b, p) { const A = hex(a), B = hex(b); return toHex(lerp(A[0], B[0], p), lerp(A[1], B[1], p), lerp(A[2], B[2], p)); }
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
+const bay = (x, y) => BAYER[(mod(y, 4)) * 4 + mod(x, 4)];
+
+function rect(c, x, y, w, h, col) { c.fillStyle = col; c.fillRect(R(x), R(y), w, h); }
+function tline(c, x0, y0, x1, y1, w, col) {
+  c.fillStyle = col;
+  const dx = x1 - x0, dy = y1 - y0, n = Math.max(1, Math.ceil(Math.max(Math.abs(dx), Math.abs(dy))));
+  const o = Math.floor(w / 2);
+  for (let i = 0; i <= n; i++) { const p = i / n; c.fillRect(R(x0 + dx * p) - o, R(y0 + dy * p) - o, w, w); }
+}
+function disc(c, cx, cy, r, col) {
+  c.fillStyle = col;
+  for (let y = -Math.ceil(r); y <= Math.ceil(r); y++) {
+    const hw = Math.sqrt(Math.max(0, r * r - y * y));
+    if (hw <= 0 && y !== 0) continue;
+    c.fillRect(R(cx - hw), R(cy + y), Math.max(1, R(hw * 2)), 1);
+  }
+}
+function ell(c, cx, cy, rx, ry, col) {
+  c.fillStyle = col;
+  for (let y = -Math.ceil(ry); y <= Math.ceil(ry); y++) {
+    const hw = rx * Math.sqrt(Math.max(0, 1 - (y * y) / (ry * ry)));
+    if (hw < 0.5) continue;
+    c.fillRect(R(cx - hw), R(cy + y), R(hw * 2), 1);
+  }
+}
+
+// ---------------------------------------------------------------------------
+//  Palette: warm sun / sand / Sunfire team against cool sky / sea / Tide team
+// ---------------------------------------------------------------------------
+const P = {
+  out: '#160c2c',
+  sky: ['#101654', '#16237a', '#1d36a0', '#2650c4', '#3471dc', '#4c95ea', '#7ab8f4', '#aedaff', '#e4f4ff'],
+  sunCore: '#fffbe8', sun: '#ffe58a', sunRim: '#ffbf3c',
+  warm: '#ffd77a',
+  sand: ['#e7cd9b', '#f4e1b8', '#fbefd2', '#fff9ec'],
+  speck: '#e2c08a', speck2: '#c99c62',
+  rope: '#2563e8', ropeHi: '#a8dcff',
+};
+const SUN = { x: 150, y: 74 };
+const GROUND_A = 240;
+const groundB = x => 230 - (x - 252) * 16 / 53;   // setter/blocker moves diagonally: net (230) -> set spot (214)
+
+// ---------------------------------------------------------------------------
+//  Static background (sky, distant land, sand, court ropes)
+// ---------------------------------------------------------------------------
+function buildBackground() {
+  const img = bgx.createImageData(CW, CH_);
+  const d = img.data;
+  const skyRGB = P.sky.map(hex);
+  const warm = hex('#ffe9b0');
+  const sandRGB = P.sand.map(hex);
+  for (let yy = 0; yy < CH_; yy++) {
+    const y = yy - M;
+    for (let xx = 0; xx < CW; xx++) {
+      const x = xx - M, i = (yy * CW + xx) * 4;
+      let c;
+      const th = bay(x, y);
+      if (y < SEA_Y0) {
+        const v = clamp((y + 8) / (SEA_Y0 + 8), 0, 1);
+        const f = Math.pow(v, 1.15) * (skyRGB.length - 1);
+        const k = Math.floor(f), fr = f - k;
+        c = skyRGB[Math.min(skyRGB.length - 1, k + (fr > 0.5 + (th - 0.5) * 0.25 ? 1 : 0))].slice();
+        // warm sunlight halo, posterised with dither
+        const dist = Math.hypot((x - SUN.x) * 0.85, y - SUN.y);
+        let w = clamp(1 - dist / 120, 0, 1); w = w * w * 0.5;
+        const q = Math.floor(w * 4 + 0.5 + (th - 0.5) * 0.25) / 4;
+        c = c.map((ch, j) => lerp(ch, warm[j], q));
+        // horizon haze band
+        if (y > SEA_Y0 - 7) { const hz = (y - (SEA_Y0 - 7)) / 7; if (hz > th) c = c.map((ch, j) => lerp(ch, warm[j], 0.35)); }
+      } else {
+        // sand: darker far, brightest mid-court, warmer foreground lip
+        let f;
+        if (y < 200) f = lerp(0.6, 3, clamp((y - 160) / 40, 0, 1));
+        else if (y < 258) f = 3;
+        else f = lerp(3, 1.2, clamp((y - 258) / 12, 0, 1));
+        const k = Math.floor(f), fr = f - k;
+        c = sandRGB[Math.min(3, k + (fr > th ? 1 : 0))].slice();
+        const hh = h2(x, y);
+        const rip = Math.sin(x * 0.21 + y * 1.7 + Math.sin(x * 0.043 + y * 0.2) * 3);
+        if (rip > 0.94 && y > 168) c = hex('#f0dcb0');
+        if (hh < 0.035) c = hex(P.speck);
+        else if (hh < 0.042) c = hex(P.speck2);
+        else if (hh > 0.994) c = [255, 255, 255];
+      }
+      d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
+    }
+  }
+  bgx.putImageData(img, 0, 0);
+  bgx.setTransform(1, 0, 0, 1, M, M);
+  // distant headland (left) and island (right) in hazy blue
+  for (let x = -M; x < 90; x++) {
+    const hgt = R(9 * Math.exp(-Math.pow((x - 12) / 34, 2)) + 3 * Math.exp(-Math.pow((x - 52) / 14, 2)));
+    if (hgt > 0) { rect(bgx, x, SEA_Y0 - hgt, 1, hgt, '#5f97de'); rect(bgx, x, SEA_Y0 - hgt, 1, 1, '#8fc0f2'); }
+  }
+  for (let x = 330; x < 410; x++) {
+    const hgt = R(7 * Math.exp(-Math.pow((x - 368) / 22, 2)));
+    if (hgt > 0) { rect(bgx, x, SEA_Y0 - hgt, 1, hgt, '#5a91da'); rect(bgx, x, SEA_Y0 - hgt, 1, 1, '#88baf0'); }
+  }
+  // tiny island palms
+  [[356, 6], [372, 7], [384, 5]].forEach(([x, h]) => {
+    tline(bgx, x, SEA_Y0 - 5, x + 1, SEA_Y0 - 5 - h, 1, '#4d84d0');
+    [[-3, 1], [3, 1], [-2, -1], [2, -1]].forEach(([dx, dy]) => tline(bgx, x + 1, SEA_Y0 - 5 - h, x + 1 + dx, SEA_Y0 - 5 - h + dy + 1, 1, '#4d84d0'));
+  });
+  // court ropes (diorama 3/4 perspective)
+  const ropes = [[52, 206, 428, 206], [22, 252, 458, 252], [52, 206, 22, 252], [428, 206, 458, 252]];
+  ropes.forEach(([x0, y0, x1, y1]) => {
+    tline(bgx, x0, y0 + 1, x1, y1 + 1, 1, '#d8bd8c');
+    tline(bgx, x0, y0, x1, y1, 1, P.rope);
+  });
+  rect(bgx, 52, 205, 377, 1, P.ropeHi); rect(bgx, 22, 251, 437, 1, P.ropeHi);
+  // centre line beneath net
+  tline(bgx, 252, 206, 230, 252, 1, '#e0c592');
+  bgx.setTransform(1, 0, 0, 1, 0, 0);
+}
+
+// ---------------------------------------------------------------------------
+//  Clouds (pre-rendered pixel sprites)
+// ---------------------------------------------------------------------------
+function makeCloud(blobs, w, h) {
+  const [c, x] = mk(w, h);
+  const im = x.createImageData(w, h);
+  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) {
+    let inside = false, top = 1e9;
+    for (const [bx, by, r] of blobs) {
+      const dd = Math.hypot(xx - bx, (y - by) * 1.15);
+      if (dd <= r) { inside = true; top = Math.min(top, (y - (by - r / 1.15)) / (r * 1.6)); }
+    }
+    if (!inside) continue;
+    const yy = y / h;
+    let col = yy > 0.72 ? '#9cc0ef' : yy > 0.55 ? '#cfe5ff' : '#ffffff';
+    if (yy > 0.6 && yy <= 0.72 && bay(xx, y) > 0.5) col = '#b5d3f7';
+    if (top < 0.12 && xx < w * 0.55) col = '#fff3cf';
+    const i = (y * w + xx) * 4, cc = hex(col);
+    im.data[i] = cc[0]; im.data[i + 1] = cc[1]; im.data[i + 2] = cc[2]; im.data[i + 3] = 255;
+  }
+  x.putImageData(im, 0, 0);
+  return c;
+}
+const CLOUDS = [
+  { c: makeCloud([[10, 12, 8], [22, 8, 10], [36, 11, 9], [48, 14, 6], [28, 15, 7]], 58, 22), x: 196, y: 48, a: 3 },
+  { c: makeCloud([[8, 9, 6], [18, 6, 8], [30, 8, 7], [40, 11, 5]], 48, 16), x: 296, y: 58, a: 2 },
+  { c: makeCloud([[8, 8, 6], [20, 5, 8], [33, 7, 8], [46, 9, 6], [58, 10, 5]], 66, 16), x: 368, y: 46, a: 2.5 },
+  { c: makeCloud([[6, 6, 4], [14, 4, 6], [24, 6, 5]], 32, 11), x: 262, y: 92, a: 1.5 },
+  { c: makeCloud([[6, 5, 4], [14, 4, 5], [22, 5, 4]], 28, 9), x: 64, y: 100, a: 1 },
+];
+
+// ---------------------------------------------------------------------------
+//  Ball sprites (8 spin frames)
+// ---------------------------------------------------------------------------
+const BALL = [];
+for (let f = 0; f < 8; f++) {
+  const [c, x] = mk(11, 11);
+  const cols = [['#ffffff', '#d5dcf0'], ['#ffd23a', '#d99418'], ['#2f7bff', '#1c4dbb']];
+  for (let dy = -5; dy <= 5; dy++) for (let dx = -5; dx <= 5; dx++) {
+    const d2 = dx * dx + dy * dy;
+    if (d2 > 27) continue;
+    let col;
+    if (d2 > 18) col = P.out;
+    else {
+      const rr = Math.sqrt(d2) / 4.3;
+      const a = Math.atan2(dy, dx) + f * TAU / 24 + rr * 1.6;
+      const sec = mod(Math.floor(a / (TAU / 3)), 3);
+      col = cols[sec][(dx + dy > 2) ? 1 : 0];
+      if (dx === -2 && dy === -2) col = '#ffffff';
+      if (dx === -1 && dy === -3) col = '#ffffff';
+    }
+    rect(x, dx + 5, dy + 5, 1, 1, col);
+  }
+  BALL.push(c);
+}
+
+// ---------------------------------------------------------------------------
+//  Characters: four original chibi athletes, skeleton-posed each frame
+// ---------------------------------------------------------------------------
+const CHARS = {
+  '0A': { name: 'Blaze', hair: 'spiky', hairC: '#ff3b2f', hairD: '#9e1430', hairH: '#ffa04a', skin: '#f6bd92', jersey: '#ff4d2e', trim: '#ffd23a', shorts: '#ffd23a', acc: '#ffffff', glow: '#ffb02e' },
+  '0B': { name: 'Mira',  hair: 'ponytail', hairC: '#ff4fa8', hairD: '#9c1f6a', hairH: '#ffb0dc', skin: '#c98a5e', jersey: '#ff4d2e', trim: '#ffd23a', shorts: '#ffd23a', acc: '#ffffff', glow: '#ff7a3c' },
+  '1A': { name: 'Kai',   hair: 'afro', hairC: '#3b2519', hairD: '#1c100a', hairH: '#6a4430', skin: '#7c4a30', jersey: '#16c9d6', trim: '#ffffff', shorts: '#1d3fa8', acc: '#7ff4ff', glow: '#3ae0ff' },
+  '1B': { name: 'Nori',  hair: 'cap', hairC: '#ffd84a', hairD: '#c08a22', hairH: '#fff1a0', cap: '#1d3fa8', skin: '#ffd6b6', jersey: '#16c9d6', trim: '#ffffff', shorts: '#1d3fa8', acc: '#7ff4ff', glow: '#5aa8ff' },
+};
+for (const k in CHARS) { const c = CHARS[k]; c.skinD = shade(c.skin, 0.78); c.jerseyD = shade(c.jersey, 0.72); c.shortsD = shade(c.shorts, 0.78); }
+
+// pose space: x forward, y up; hip at (0, hy); arms relative to shoulder, legs to hip
+const PO = {
+  ready:     { hy: 10, n: [2, 11], aF: [3, -5, 6, -3],  aB: [0, -5, 3, -4],   lF: [3, -5, 4, -10],  lB: [-3, -5, -4, -10] },
+  blockReady:{ hy: 10, n: [1, 11], aF: [2, 3, 3, 7],    aB: [1, 3, 2, 7],     lF: [2, -5, 2, -10],  lB: [-2, -5, -3, -10] },
+  digready:  { hy: 8,  n: [4, 10], aF: [4, -4, 7, -6],  aB: [3, -4, 6, -6],   lF: [5, -3, 6, -8],   lB: [-4, -4, -6, -8] },
+  dig:       { hy: 6,  n: [5, 9],  aF: [4, -5, 9, -7],  aB: [3, -5, 8, -7],   lF: [6, -1, 7, -6],   lB: [-4, -3, -7, -6] },
+  set:       { hy: 11, n: [0, 12], aF: [4, 5, 5, 12],   aB: [2, 5, 3, 12],     lF: [2, -6, 3, -11],  lB: [-2, -6, -3, -11] },
+  setfollow: { hy: 11, n: [1, 12], aF: [4, 7, 7, 14],   aB: [3, 7, 6, 14],    lF: [2, -6, 3, -11],  lB: [-2, -6, -3, -11] },
+  load:      { hy: 7,  n: [3, 10], aF: [-4, -4, -7, -2],aB: [-5, -4, -8, -1], lF: [5, -3, 3, -7],   lB: [1, -4, -2, -7] },
+  wind:      { hy: 10, n: [-1, 12],aF: [-4, 4, -5, 8],  aB: [3, 6, 5, 11],    lF: [3, -5, -1, -9],  lB: [-2, -4, -6, -7] },
+  hit:       { hy: 10, n: [3, 11], aF: [3, 7, 8, 13],   aB: [2, -3, 0, -7],   lF: [3, -6, 2, -10],  lB: [-2, -5, -4, -9] },
+  follow:    { hy: 10, n: [4, 10], aF: [5, -1, 6, -6],  aB: [-2, -4, -5, -6], lF: [4, -4, 2, -9],   lB: [-1, -6, -3, -10] },
+  block:     { hy: 11, n: [1, 12], aF: [2, 8, 3, 16],   aB: [1, 8, 2, 16],    lF: [1, -6, 1, -11],  lB: [-1, -6, -2, -11] },
+  land:      { hy: 7,  n: [4, 9],  aF: [4, -3, 8, -2],  aB: [-3, -3, -6, -2], lF: [5, -3, 5, -7],   lB: [-3, -3, -5, -7] },
+  cheer:     { hy: 10, n: [1, 11], aF: [3, 5, 5, 10],   aB: [-2, 5, -3, 10],  lF: [3, -5, 4, -10],  lB: [-3, -5, -4, -10] },
+};
+function runPose(ph, lean = 3) {
+  const s = Math.sin(ph), c = Math.cos(ph);
+  const hy = 9.6 + Math.abs(c) * 0.9;
+  const leg = (ss, cc) => { const fx = 5 * ss, fy = -hy + Math.max(0, cc) * 3.5; return [fx * 0.5 + 2, fy * 0.5 - 0.5, fx, fy]; };
+  return { hy, n: [lean, 10.5], aF: [-3 * s, -4, -3 * s + 3, -2], aB: [3 * s, -4, 3 * s + 3, -2], lF: leg(s, c), lB: leg(-s, -c) };
+}
+function lp(a, b, p) {
+  p = clamp(p, 0, 1);
+  const o = { hy: lerp(a.hy, b.hy, p) };
+  for (const k of ['n', 'aF', 'aB', 'lF', 'lB']) o[k] = a[k].map((v, i) => lerp(v, b[k][i], p));
+  return o;
+}
+
+// Rally choreography (right-team coordinates, facing left). Left team = mirror, offset by L/2.
+const JA = 50, JB = 20;
+const RUN_A = TAU * 3.2, RUN_BACK = TAU * 2.4, RUN_B = TAU * 3, SHUF_B = TAU * 2.6;
+function stateA(tau) {
+  let x = 414, pose = PO.ready, jump = 0, shout = 0, aura = 0, running = false;
+  if (tau < 0.5) { pose = lp(PO.digready, PO.dig, ease((tau - 0.3) / 0.2)); shout = tau > 0.4 ? 1 : 0; }
+  else if (tau < 0.8) { pose = lp(PO.dig, runPose(0), ease((tau - 0.6) / 0.2)); shout = tau < 0.66 ? 1 : 0; }
+  else if (tau < 2.35) { x = lerp(414, 298, ease((tau - 0.8) / 1.55)); pose = runPose((tau - 0.8) * RUN_A); running = true; }
+  else if (tau < 2.55) { const p = (tau - 2.35) / 0.2; x = lerp(298, 294, p); pose = lp(runPose(1.55 * RUN_A), PO.load, ease(p * 1.6)); }
+  else if (tau < 3.45) {
+    const s = (tau - 3) / 0.45; jump = JA * (1 - s * s);
+    x = tau < 3 ? lerp(295, 281, (tau - 2.55) / 0.45) : lerp(281, 273, (tau - 3) / 0.45);
+    if (tau < 2.68) pose = lp(PO.load, PO.wind, (tau - 2.55) / 0.13);
+    else if (tau < 2.9) pose = PO.wind;
+    else if (tau < 3.0) pose = lp(PO.wind, PO.hit, (tau - 2.9) / 0.1);
+    else if (tau < 3.1) pose = lp(PO.hit, PO.follow, (tau - 3) / 0.1);
+    else pose = lp(PO.follow, PO.land, (tau - 3.3) / 0.15);
+    aura = clamp(1 - Math.abs(tau - 2.95) / 0.35, 0, 1);
+    shout = tau > 2.85 && tau < 3.3 ? 1 : 0;
+  }
+  else if (tau < 3.75) { x = 272; pose = lp(PO.land, PO.ready, ease((tau - 3.5) / 0.25)); }
+  else if (tau < 5.5) {
+    x = lerp(272, 414, ease((tau - 3.75) / 1.75));
+    pose = lp(lp(PO.ready, runPose(-(tau - 3.75) * RUN_BACK, 1), ease((tau - 3.75) / 0.2)), PO.ready, ease((tau - 5.3) / 0.2));
+    running = tau < 5.35;
+  }
+  else pose = lp(PO.ready, PO.digready, ease((tau - 5.5) / 0.4));
+  return { x, pose, jump, shout, aura, running, G: GROUND_A, f: -1 };
+}
+function stateB(tau) {
+  let x = 305, pose = PO.ready, jump = 0, shout = 0, aura = 0, running = false;
+  const tb = tau >= 5.6 ? tau - 6 : tau;
+  if (tb >= -0.4 && tb < 0.6) {
+    x = 252;
+    if (tb < -0.25) pose = lp(PO.blockReady, PO.load, ease((tb + 0.4) / 0.15));
+    else if (tb < 0.41) {
+      const s = (tb - 0.08) / 0.33; jump = Math.max(0, JB * (1 - s * s));
+      pose = tb < -0.15 ? lp(PO.load, PO.block, ease((tb + 0.25) / 0.1)) : tb > 0.33 ? lp(PO.block, PO.land, (tb - 0.33) / 0.08) : PO.block;
+      shout = tb > -0.1 && tb < 0.25 ? 1 : 0;
+    }
+    else pose = lp(PO.land, PO.ready, ease((tb - 0.41) / 0.19));
+  }
+  else if (tau < 1.3) {
+    x = lerp(252, 305, ease((tau - 0.6) / 0.7));
+    pose = lp(lp(PO.ready, runPose(-(tau - 0.6) * RUN_B, 1), ease((tau - 0.6) / 0.12)), PO.ready, ease((tau - 1.18) / 0.12));
+    running = tau < 1.2;
+  }
+  else if (tau < 1.6) pose = lp(PO.ready, PO.set, ease((tau - 1.3) / 0.22));
+  else if (tau < 1.9) pose = lp(PO.set, PO.setfollow, ease((tau - 1.6) / 0.12));
+  else if (tau < 2.3) pose = lp(PO.setfollow, PO.ready, ease((tau - 1.9) / 0.3));
+  else if (tau < 3.5) {
+    // watches the spike, then a little fist-pump hop
+    const hop = tau > 3.05 && tau < 3.35 ? Math.sin((tau - 3.05) / 0.3 * Math.PI) : 0;
+    jump = hop * 6; pose = lp(PO.ready, PO.cheer, hop);
+  }
+  else if (tau < 5.1) {
+    x = lerp(305, 252, ease((tau - 3.5) / 1.6));
+    pose = lp(lp(PO.ready, runPose((tau - 3.5) * SHUF_B, 2), ease((tau - 3.5) / 0.15)), PO.ready, ease((tau - 4.95) / 0.15));
+    running = tau < 5.0;
+  }
+  else pose = lp(PO.ready, PO.blockReady, ease((tau - 5.1) / 0.2));
+  return { x, pose, jump, shout, aura, running, G: groundB(x), f: -1 };
+}
+function teamState(team, role, tw) {
+  const tau = team === 1 ? mod(tw, L) : mod(tw + L / 2, L);
+  const st = (role === 'A' ? stateA : stateB)(tau);
+  st.tau = tau;
+  if (team === 0) { st.x = W - st.x; st.f = 1; }
+  return st;
+}
+
+// sprite composition buffers
+const SW = 64, SH = 80, OX = 32, OY = 64;
+const [cs, csx] = mk(SW, SH), [ct, ctx2] = mk(SW, SH), [cc, ccx] = mk(SW, SH), [ca, cax] = mk(SW, SH);
+function drawFigure(c, ch, pose, f, tau, jump) {
+  const P2 = (p) => [OX + f * p[0], OY - p[1]];
+  const hip = [0, pose.hy], neck = [pose.n[0], pose.hy + pose.n[1]], sh = [neck[0], neck[1] - 2];
+  const arm = a => [[sh[0] + a[0], sh[1] + a[1]], [sh[0] + a[2], sh[1] + a[3]]];
+  const leg = l => [[hip[0] + l[0], hip[1] + l[1]], [hip[0] + l[2], hip[1] + l[3]]];
+  const L2 = (a, b, w, col) => { const A = P2(a), B = P2(b); tline(c, A[0], A[1], B[0], B[1], w, col); };
+  const [kB, fB] = leg(pose.lB), [kF, fF] = leg(pose.lF);
+  const [eB, hB] = arm(pose.aB), [eF, hF] = arm(pose.aF);
+  const foot = (fp, col) => { const A = P2(fp); rect(c, f > 0 ? A[0] - 1 : A[0] - 2, A[1], 4, 1, col); };
+  // back leg + back arm
+  L2(hip, kB, 3, ch.skinD); L2(kB, fB, 2, ch.skinD); foot(fB, ch.skinD);
+  L2(sh, eB, 2, ch.skinD); L2(eB, hB, 2, ch.skinD);
+  const HB = P2(hB); rect(c, HB[0] - 1, HB[1] - 1, 2, 2, ch.skinD);
+  // shorts
+  L2(hip, [lerp(hip[0], kB[0], 0.5), lerp(hip[1], kB[1], 0.5)], 4, ch.shortsD);
+  L2(hip, [lerp(hip[0], kF[0], 0.5), lerp(hip[1], kF[1], 0.5)], 4, ch.shorts);
+  // torso (jersey) with side trim
+  L2([hip[0], hip[1] + 2], [neck[0], neck[1] - 1], 6, ch.jersey);
+  L2([hip[0] - 2, hip[1] + 1], [neck[0] - 2, neck[1] - 2], 1, ch.jerseyD);
+  L2([hip[0] + 1, hip[1] + 2], [neck[0] + 1, neck[1] - 2], 1, ch.trim);
+  L2([hip[0] - 2, hip[1]], [hip[0] + 2, hip[1]], 2, ch.shortsD);
+  // front leg
+  L2(hip, kF, 3, ch.skin); L2(kF, fF, 2, ch.skin); foot(fF, ch.skin);
+  // head
+  const HC = P2([neck[0] + 1, neck[1] + 6]);
+  drawHead(c, ch, HC[0], HC[1], f, tau, jump);
+  // front arm (drawn last so it can swing over the head), with its own dark edge so it reads against the face
+  L2(sh, eF, 4, P.out); L2(eF, hF, 4, P.out);
+  L2(sh, eF, 2, ch.skin); L2(eF, hF, 2, ch.skin);
+  const HF = P2(hF); rect(c, HF[0] - 1, HF[1] - 1, 2, 2, ch.skin);
+  const EF = P2(eF); rect(c, lerp(EF[0], HF[0], 0.7) - 1, lerp(EF[1], HF[1], 0.7), 2, 1, ch.acc);
+}
+function drawHead(c, ch, hx, hy, f, tau, jump) {
+  const Hr = (x, y, w, h, col) => { c.fillStyle = col; c.fillRect(f > 0 ? hx + x : hx - x - w + 1, hy + y, w, h); };
+  const shout = ch._shout;
+  // back-of-head hair first
+  if (ch.hair === 'afro') { Hr(-8, -11, 13, 8, ch.hairC); Hr(-7, -12, 11, 1, ch.hairC); Hr(-9, -9, 1, 6, ch.hairC); Hr(-8, -4, 4, 6, ch.hairC); Hr(-9, -3, 1, 3, ch.hairD); }
+  if (ch.hair === 'ponytail') {
+    const sw = Math.sin(tau * TAU * 2.5) + (jump > 2 ? -1.2 : 0);
+    const Q = (x, y) => [hx + f * x, hy + y];
+    const a0 = Q(-6, -6), a1 = Q(-9, -5 + sw * 1.2), a2 = Q(-11, -2 + sw * 2.2);
+    tline(c, a0[0], a0[1], a1[0], a1[1], 3, ch.hairC);
+    tline(c, a1[0], a1[1], a2[0], a2[1], 2, ch.hairD);
+    rect(c, a0[0] - 1, a0[1] - 1, 2, 2, ch.acc);
+  }
+  // face
+  Hr(-4, -5, 9, 1, ch.skin); Hr(-5, -4, 11, 8, ch.skin); Hr(-4, 4, 9, 1, ch.skinD); Hr(-5, 2, 1, 2, ch.skinD);
+  Hr(-2, 0, 1, 2, ch.skinD); // ear
+  // eyes / brows / mouth
+  Hr(3, -1, 1, 2, P.out); Hr(0, -1, 1, 2, P.out);
+  Hr(2, -2, 3, 1, ch.hairD); Hr(-1, -3, 2, 1, ch.hairD);
+  Hr(4, 1, 1, 1, '#ff8f8f');
+  if (shout) { Hr(2, 2, 3, 1, '#ffffff'); Hr(2, 3, 3, 1, '#6a1028'); }
+  else Hr(2, 2, 2, 1, '#8a3a3a');
+  // hair styles
+  if (ch.hair === 'spiky') {
+    Hr(-6, -7, 12, 3, ch.hairC); Hr(-6, -4, 3, 4, ch.hairC);
+    Hr(-8, -9, 3, 2, ch.hairC); Hr(-5, -10, 3, 3, ch.hairC); Hr(-2, -10, 2, 3, ch.hairC); Hr(1, -9, 3, 2, ch.hairC); Hr(4, -8, 2, 1, ch.hairC);
+    Hr(-9, -6, 3, 2, ch.hairC); Hr(-9, -3, 2, 2, ch.hairD);
+    Hr(-4, -9, 1, 2, ch.hairH); Hr(0, -8, 2, 1, ch.hairH); Hr(-1, -6, 4, 1, ch.hairH);
+    Hr(-5, -4, 11, 1, ch.acc);
+    const flap = R(Math.sin(tau * TAU * 4));
+    Hr(-8, -4, 2, 1, ch.acc); Hr(-10, -3 + flap, 2, 1, ch.acc);
+  } else if (ch.hair === 'ponytail') {
+    Hr(-6, -7, 12, 3, ch.hairC); Hr(-6, -4, 3, 6, ch.hairC); Hr(0, -4, 6, 1, ch.hairC); Hr(3, -3, 3, 1, ch.hairC);
+    Hr(-3, -7, 4, 1, ch.hairH); Hr(-6, -5, 1, 3, ch.hairD);
+    Hr(-0, -1, 6, 2, '#170d2b'); Hr(-4, -1, 4, 1, '#170d2b'); Hr(4, -1, 1, 1, '#7ff4ff'); Hr(1, -1, 1, 1, '#ff9be0');
+  } else if (ch.hair === 'afro') {
+    Hr(4, -10, 2, 6, ch.hairC); Hr(-6, -10, 3, 2, ch.hairH); Hr(-2, -12, 3, 1, ch.hairH); Hr(-8, -5, 2, 2, ch.hairD);
+    Hr(-6, -5, 12, 1, ch.acc);
+  } else if (ch.hair === 'cap') {
+    Hr(-6, -4, 2, 4, ch.hairC); Hr(3, -4, 3, 2, ch.hairC); Hr(5, -5, 1, 1, ch.hairC); Hr(-7, -2, 1, 2, ch.hairD);
+    Hr(-6, -8, 11, 4, ch.cap); Hr(-5, -9, 9, 1, ch.cap); Hr(-10, -5, 5, 1, shade(ch.cap, 0.7)); Hr(1, -7, 2, 1, '#ffffff'); Hr(-4, -9, 3, 1, '#4f7fe8');
+  }
+}
+function drawCharacter(key, st, tw) {
+  const ch = CHARS[key];
+  ch._shout = st.shout;
+  csx.clearRect(0, 0, SW, SH);
+  drawFigure(csx, ch, st.pose, st.f, st.tau, st.jump);
+  // silhouette -> outline
+  ctx2.globalCompositeOperation = 'source-over'; ctx2.clearRect(0, 0, SW, SH); ctx2.drawImage(cs, 0, 0);
+  ctx2.globalCompositeOperation = 'source-in'; ctx2.fillStyle = P.out; ctx2.fillRect(0, 0, SW, SH);
+  ccx.clearRect(0, 0, SW, SH);
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) ccx.drawImage(ct, dx, dy);
+  ccx.drawImage(cs, 0, 0);
+  // warm rim light (sun upper-left) and cool bounce shade (lower-right)
+  for (const [col, ox, oy, al] of [['#fff2b8', 1, 1, 0.8], ['#2b3fae', -1, -1, 0.45]]) {
+    ctx2.globalCompositeOperation = 'source-over'; ctx2.clearRect(0, 0, SW, SH); ctx2.drawImage(cs, 0, 0);
+    ctx2.globalCompositeOperation = 'source-in'; ctx2.fillStyle = col; ctx2.fillRect(0, 0, SW, SH);
+    ctx2.globalCompositeOperation = 'destination-out'; ctx2.drawImage(cs, ox, oy);
+    ccx.globalAlpha = al; ccx.drawImage(ct, 0, 0); ccx.globalAlpha = 1;
+  }
+  ctx2.globalCompositeOperation = 'source-over';
+  const px0 = R(st.x) - OX, py0 = R(st.G - st.jump) - OY;
+  if (st.aura > 0) {
+    // team-coloured silhouette in its own buffer
+    cax.globalCompositeOperation = 'source-over'; cax.globalAlpha = 1;
+    cax.clearRect(0, 0, SW, SH); cax.drawImage(cs, 0, 0);
+    cax.globalCompositeOperation = 'source-in'; cax.fillStyle = ch.glow; cax.fillRect(0, 0, SW, SH);
+    cax.globalCompositeOperation = 'source-over';
+    // afterimages (behind), crisp energy outline, soft glow
+    for (let k = 3; k >= 1; k--) {
+      const pst = teamState(key[0] === '0' ? 0 : 1, key[1], tw - k * 0.04);
+      g.globalAlpha = 0.28 * st.aura / k;
+      g.drawImage(ca, R(pst.x) - OX, R(pst.G - pst.jump) - OY);
+    }
+    g.globalAlpha = st.aura;
+    for (const [dx, dy] of [[2, 0], [-2, 0], [0, 2], [0, -2]]) g.drawImage(ca, px0 + dx, py0 + dy);
+    g.globalAlpha = 1;
+    gg.globalAlpha = 0.15 * st.aura;
+    for (const [dx, dy] of [[2, 0], [-2, 0], [0, 2], [0, -2]]) gg.drawImage(ca, px0 + dx, py0 + dy);
+    gg.globalAlpha = 1;
+  }
+  g.drawImage(cc, px0, py0);
+}
+
+// ---------------------------------------------------------------------------
+//  Ball flight (game time). First half: left spike -> right dig -> set -> right spike.
+// ---------------------------------------------------------------------------
+function ballHalf(u) {
+  if (u < 0.5) { const p = u / 0.5; return { x: lerp(210, 400, p), y: 158 + 76 * (0.75 * p + 0.25 * p * p), seg: 0, p }; }
+  if (u < 1.6) { const p = (u - 0.5) / 1.1; return { x: lerp(400, 300, p), y: lerp(234, 181, p) - 140 * 4 * p * (1 - p), seg: 1, p }; }
+  const p = (u - 1.6) / 1.4; return { x: lerp(300, 270, p), y: lerp(181, 158, p) - 110 * 4 * p * (1 - p), seg: 2, p };
+}
+function ballAt(tw) {
+  tw = mod(tw, L);
+  if (tw < L / 2) { const b = ballHalf(tw); b.team = 0; return b; }
+  const b = ballHalf(tw - L / 2); b.x = W - b.x; b.team = 1; return b;
+}
+function ballDepth(b) { // ground y beneath the ball (for its shadow)
+  if (b.seg === 0) return GROUND_A;
+  if (b.seg === 1) return lerp(GROUND_A, 214, b.p);
+  return lerp(214, GROUND_A, b.p);
+}
+
+// ---------------------------------------------------------------------------
+//  Impact events (game time)
+// ---------------------------------------------------------------------------
+const TEAMFX = [
+  ['#fff6b0', '#ffd23a', '#ff8a2a', '#ff3d6e', '#ffffff'],
+  ['#e8ffff', '#7ff4ff', '#3ab0ff', '#8a6bff', '#ffffff'],
+];
+const EVENTS = [
+  { t: 0,    type: 'spike', x: 210, y: 158, team: 0 },
+  { t: 0.1,  type: 'swish', x: 249, y: 172, team: 1 },
+  { t: 0.41, type: 'land',  x: 252, y: 230 },
+  { t: 0.45, type: 'land',  x: 208, y: GROUND_A },
+  { t: 0.5,  type: 'dig',   x: 400, y: 234, team: 1 },
+  { t: 1.6,  type: 'set',   x: 300, y: 181, team: 1 },
+  { t: 3,    type: 'spike', x: 270, y: 158, team: 1 },
+  { t: 3.1,  type: 'swish', x: 231, y: 172, team: 0 },
+  { t: 3.41, type: 'land',  x: 228, y: 230 },
+  { t: 3.45, type: 'land',  x: 272, y: GROUND_A },
+  { t: 3.5,  type: 'dig',   x: 80,  y: 234, team: 0 },
+  { t: 4.6,  type: 'set',   x: 180, y: 181, team: 0 },
+];
+EVENTS.forEach((e, i) => e.seed = 1000 + i * 97);
+
+function drawEvent(e, a) {
+  const fx = TEAMFX[e.team ?? 0];
+  if (e.type === 'spike') {
+    if (a > 1.0) return;
+    const r = rng(e.seed);
+    // speed lines (anime impact)
+    if (a < 0.32) {
+      const al = 1 - a / 0.32;
+      g.globalAlpha = 0.75 * al;
+      for (let i = 0; i < 26; i++) {
+        const ang = r() * TAU, r0 = 26 + r() * 30 + a * 180, len = 30 + r() * 70;
+        tline(g, e.x + Math.cos(ang) * r0, e.y + Math.sin(ang) * r0 * 0.8, e.x + Math.cos(ang) * (r0 + len), e.y + Math.sin(ang) * (r0 + len) * 0.8, 1, i % 3 ? '#ffffff' : fx[1]);
+      }
+      g.globalAlpha = 1;
+    } else for (let i = 0; i < 26 * 5; i++) r();
+    // shockwave rings
+    for (const [delay, spd, col] of [[0, 300, fx[0]], [0.05, 200, fx[2]]]) {
+      const aa = a - delay; if (aa < 0 || aa > 0.32) continue;
+      const rad = 5 + aa * spd, al = 1 - aa / 0.32, n = Math.max(24, R(rad * 3));
+      g.globalAlpha = al; gg.globalAlpha = al;
+      for (let i = 0; i < n; i++) {
+        const t2 = i / n * TAU, x = e.x + Math.cos(t2) * rad, y = e.y + Math.sin(t2) * rad * 0.85;
+        rect(g, x, y, 2, 2, col); rect(gg, x - 1, y - 1, 3, 3, col);
+      }
+      g.globalAlpha = 1; gg.globalAlpha = 1;
+    }
+    // impact star
+    if (a < 0.2) {
+      const s = (1 - a / 0.2), len = 6 + 22 * s;
+      for (const [dx, dy, k] of [[1, 0, 1], [0, 1, 0.8], [0.7, 0.7, 0.5], [0.7, -0.7, 0.5]]) {
+        tline(g, e.x - dx * len * k, e.y - dy * len * k, e.x + dx * len * k, e.y + dy * len * k, 1, '#ffffff');
+        tline(gg, e.x - dx * len * k, e.y - dy * len * k, e.x + dx * len * k, e.y + dy * len * k, 1, fx[1]);
+      }
+      disc(g, e.x, e.y, 4 * s + 1, '#ffffff'); if (a < 0.08) disc(gg, e.x, e.y, 6 * (1 - a / 0.08) + 2, fx[0]);
+    }
+    // glowing sparks
+    for (let i = 0; i < 46; i++) {
+      const ang = r() * TAU, sp = 60 + r() * 230, life = 0.35 + r() * 0.6, sz = r() < 0.3 ? 2 : 1, ci = R(r() * 3);
+      if (a > life) continue;
+      const k = a / life, x = e.x + Math.cos(ang) * sp * a * (1 - k * 0.45), y = e.y + Math.sin(ang) * sp * a * (1 - k * 0.45) + 90 * a * a;
+      g.globalAlpha = 1 - k * k; rect(g, x, y, sz, sz, fx[ci]);
+      gg.globalAlpha = 1 - k; rect(gg, x - 1, y - 1, sz + 2, sz + 2, fx[ci]);
+    }
+    g.globalAlpha = 1; gg.globalAlpha = 1;
+  } else if (e.type === 'dig') {
+    if (a > 1.1) return;
+    const r = rng(e.seed);
+    // sand spray
+    for (let i = 0; i < 42; i++) {
+      const ang = -Math.PI / 2 + (r() - 0.5) * 2.4, sp = 50 + r() * 120, life = 0.5 + r() * 0.5, col = ['#fff6dc', '#f2dcaa', '#e0bf86', '#ffffff'][R(r() * 3)];
+      if (a > life) continue;
+      const x = e.x + Math.cos(ang) * sp * a, y = e.y + 4 + Math.sin(ang) * sp * a + 260 * a * a;
+      if (y > e.y + 10) continue;
+      g.globalAlpha = 1 - (a / life) ** 2; rect(g, x, y, r() < 0.4 ? 2 : 1, 1, col);
+    }
+    g.globalAlpha = 1;
+    // dust clouds
+    for (let i = 0; i < 5; i++) {
+      const dir = (i - 2) * 0.5, life = 0.9;
+      if (a > life) continue;
+      const k = a / life;
+      g.globalAlpha = 0.55 * (1 - k);
+      ell(g, e.x + dir * 30 * Math.sqrt(k), e.y + 6 - 6 * k, 3 + 8 * k, 2 + 4 * k, i % 2 ? '#f6e7c4' : '#ead2a0');
+    }
+    g.globalAlpha = 1;
+    // impact ring + glow
+    if (a < 0.25) {
+      const k = a / 0.25, rad = 4 + 26 * k;
+      gg.globalAlpha = 1 - k; g.globalAlpha = 1 - k;
+      for (let i = 0; i < 36; i++) { const t2 = i / 36 * TAU; rect(g, e.x + Math.cos(t2) * rad, e.y + Math.sin(t2) * rad * 0.6, 1, 1, fx[0]); rect(gg, e.x + Math.cos(t2) * rad - 1, e.y + Math.sin(t2) * rad * 0.6 - 1, 3, 3, fx[1]); }
+      disc(gg, e.x, e.y, 8 * (1 - k) + 2, fx[1]);
+      g.globalAlpha = 1; gg.globalAlpha = 1;
+    }
+  } else if (e.type === 'set') {
+    if (a > 0.6) return;
+    const k = a / 0.6;
+    for (let i = 0; i < 10; i++) {
+      const t2 = i / 10 * TAU + k * 1.5, rad = 4 + 20 * Math.sqrt(k);
+      const x = e.x + Math.cos(t2) * rad, y = e.y + Math.sin(t2) * rad;
+      gg.globalAlpha = 1 - k; g.globalAlpha = 1 - k;
+      const s = R(2 * (1 - k)) + 1;
+      rect(g, x - s, y, 2 * s + 1, 1, TEAMFX[e.team][4]); rect(g, x, y - s, 1, 2 * s + 1, TEAMFX[e.team][4]);
+      rect(gg, x - 2, y - 2, 5, 5, TEAMFX[e.team][1]);
+    }
+    if (a < 0.12) disc(gg, e.x, e.y, 9, TEAMFX[e.team][0]);
+    g.globalAlpha = 1; gg.globalAlpha = 1;
+  } else if (e.type === 'swish') {
+    if (a > 0.25) return;
+    const k = a / 0.25;
+    g.globalAlpha = 1 - k;
+    for (let i = 0; i < 5; i++) tline(g, e.x - 8 + i * 4, e.y - 4 - i - k * 10, e.x - 6 + i * 4, e.y - 9 - i - k * 14, 1, '#ffffff');
+    g.globalAlpha = 1;
+  } else if (e.type === 'land') {
+    if (a > 0.55) return;
+    const k = a / 0.55;
+    for (const s of [-1, 1]) for (let i = 0; i < 2; i++) {
+      g.globalAlpha = 0.6 * (1 - k);
+      ell(g, e.x + s * (6 + 22 * Math.sqrt(k) + i * 6), e.y - 1 - 3 * k - i * 2, 2 + 5 * k, 1 + 3 * k, i ? '#f6e7c4' : '#e8cf9c');
+    }
+    g.globalAlpha = 1;
+  }
+}
+
+// ---------------------------------------------------------------------------
+//  Scenery pieces
+// ---------------------------------------------------------------------------
+function drawSun(t) {
+  const ph = t / L;
+  // glow (emissive)
+  gg.globalAlpha = 0.45; disc(gg, SUN.x, SUN.y, 22, '#ffb84a'); gg.globalAlpha = 0.7; disc(gg, SUN.x, SUN.y, 14, '#fff2c0'); gg.globalAlpha = 1;
+  // rotating rays: alternating long/short, one pair-spacing per loop
+  const n = 14, rot = ph * TAU * 2 / n;
+  for (let i = 0; i < n; i++) {
+    const a = i / n * TAU + rot, long = i % 2 === 0;
+    const pulse = 1 + 0.15 * Math.sin(TAU * ph * 2 + i);
+    const r0 = 18, r1 = (long ? 40 : 28) * pulse;
+    g.globalAlpha = long ? 0.55 : 0.35;
+    for (let s = r0; s < r1; s += 1) {
+      const w = s < r0 + 6 ? 2 : 1;
+      rect(g, SUN.x + Math.cos(a) * s, SUN.y + Math.sin(a) * s, w, w, s < r1 * 0.75 ? '#fff4c4' : '#ffd77a');
+    }
+    gg.globalAlpha = long ? 0.5 : 0.3;
+    tline(gg, SUN.x + Math.cos(a) * r0, SUN.y + Math.sin(a) * r0, SUN.x + Math.cos(a) * r1, SUN.y + Math.sin(a) * r1, 2, '#ffd77a');
+  }
+  g.globalAlpha = 1; gg.globalAlpha = 1;
+  disc(g, SUN.x, SUN.y, 14, P.sunRim); disc(g, SUN.x, SUN.y, 12.5, P.sun); disc(g, SUN.x - 1, SUN.y - 1, 9.5, P.sunCore);
+  // pixel shimmer on the rim
+  for (let i = 0; i < 6; i++) {
+    const a = i / 6 * TAU + ph * TAU;
+    rect(g, SUN.x + Math.cos(a) * 15, SUN.y + Math.sin(a) * 15, 1, 1, '#fff8dc');
+  }
+}
+function drawClouds(t) {
+  const ph = t / L;
+  CLOUDS.forEach((c, i) => {
+    const x = c.x + c.a * Math.sin(TAU * ph + i * 1.7), y = c.y + 0.6 * Math.sin(TAU * ph * 2 + i);
+    g.drawImage(c.c, R(x), R(y));
+  });
+}
+function drawGulls(t) {
+  const ph = t / L;
+  [[0, 62, 1], [180, 78, 0.8], [330, 56, 1.1], [90, 94, 0.7]].forEach(([b, y0, s], i) => {
+    const x = mod(b + ph * 540, 540) - 30, y = y0 + 4 * Math.sin(TAU * (ph * 2 + i * 0.3));
+    const fr = mod(Math.floor(t * 8 + i * 3), 4);
+    const wing = [-2, -1, 0, -1][fr];
+    const col = '#ffffff';
+    rect(g, x, y, 1, 1, '#c8d6ef');
+    for (const sd of [-1, 1]) {
+      rect(g, x + sd * 1, y + wing * 0.5, 1, 1, col);
+      rect(g, x + sd * 2, y + wing, 1, 1, col);
+      if (s > 0.9) rect(g, x + sd * 3, y + wing * 1.2, 1, 1, col);
+    }
+  });
+}
+function drawSea(t) {
+  const ph = t / L, d = seaImg.data;
+  d.fill(0);
+  const stops = [[0, '#6aa8ea'], [2, '#3f7ed8'], [7, '#2a5fc2'], [16, '#1a44a2'], [26, '#13378e'], [33, '#1856ad'], [38, '#2392cf'], [43, '#4cc8e4']].map(([y, c]) => [y, hex(c)]);
+  const k8 = Math.floor(ph * 48);
+  const glit = [];
+  const shoreBase = 159 + 2.5 * Math.sin(TAU * ph * 2);
+  const breakP = mod(ph * 2 + 0.35, 1), breakY = lerp(138, shoreBase - 1, breakP);
+  for (let yy = 0; yy < SEA_H; yy++) {
+    const y = SEA_Y0 + yy;
+    let s = 0; while (s < stops.length - 2 && stops[s + 1][0] <= yy) s++;
+    const [ya, ca] = stops[s], [yb, cb] = stops[s + 1];
+    const fr = clamp((yy - ya) / (yb - ya), 0, 1);
+    const dd = clamp(yy / 40, 0, 1);
+    const fq = lerp(0.5, 0.13, dd), m = [2, -1, 1][yy % 3];
+    for (let xx = 0; xx < CW; xx++) {
+      const x = xx - M, i = (yy * CW + xx) * 4;
+      // shoreline
+      const edge = shoreBase + Math.sin(x * 0.09 + TAU * ph * 2) * 1.2 + Math.sin(x * 0.031 - TAU * ph) * 1.5;
+      let c;
+      if (y > edge + 0.5) {
+        const reach = 162.5 + Math.sin(x * 0.031) * 1.5;
+        if (y <= reach) c = (bay(x, y) > 0.5) ? hex('#e3c695') : hex('#ecd3a6');
+        else continue; // dry sand (static bg shows through)
+      } else if (y > edge - 0.6) c = [242, 253, 255];
+      else {
+        c = (fr > bay(x, y) ? cb : ca);
+        if (y > edge - 4) c = hex(y > edge - 2 ? '#9cecf6' : '#5fd2ea');
+        const v = Math.sin(x * fq + yy * 1.9 + TAU * m * ph + 1.6 * Math.sin(x * 0.027 + yy * 0.7));
+        if (yy % 2 === 0 && v > 0.9) c = hex(dd < 0.5 ? '#8fd0ff' : '#c4f1ff');
+        else if (v > 0.8 && yy % 2 === 1) c = hex(dd < 0.5 ? '#4b8fe6' : '#3aa6e6');
+        // travelling breaker
+        if (breakP < 0.92 && Math.abs(y - breakY) < 0.8 && h2(Math.floor(x / 3), 7) > 0.25 * (1 - breakP) + 0.15) c = hex(breakP > 0.6 ? '#ffffff' : '#d6f6ff');
+        if (breakP < 0.92 && Math.abs(y - (breakY - 1.2)) < 0.6) c = hex('#0f2f7a');
+        // sun glitter path
+        const pw = 5 + yy * 0.9;
+        if (Math.abs(x - SUN.x + yy * 0.15) < pw && h2(x * 1.3 + k8 * 7.1, yy * 3.7 + k8) > 0.83 && yy < 40) { c = hex('#fff7d6'); glit.push(x, y); }
+        else if (h2(x + k8 * 13, yy + k8 * 5) > 0.997) { c = [255, 255, 255]; glit.push(x, y); }
+      }
+      d[i] = c[0]; d[i + 1] = c[1]; d[i + 2] = c[2]; d[i + 3] = 255;
+    }
+  }
+  seax.putImageData(seaImg, 0, 0);
+  g.drawImage(sea, -M, SEA_Y0);
+  gg.fillStyle = '#ffe9a0';
+  for (let i = 0; i < glit.length; i += 2) gg.fillRect(glit[i] - 1, glit[i + 1], 3, 1);
+}
+function drawBoat(t) {
+  const ph = t / L, x = 196 + R(3 * Math.sin(TAU * ph)), y = SEA_Y0 + 2 + R(Math.sin(TAU * ph * 2));
+  rect(g, x - 5, y, 11, 1, '#f5f5ff'); rect(g, x - 4, y + 1, 9, 1, '#c33a4a');
+  for (let i = 0; i < 9; i++) rect(g, x, y - 1 - i, 1 + R(i * 0.55), 1, i % 4 === 3 ? '#ff6a3c' : '#ffffff');
+  rect(g, x - 1, y - 9, 1, 9, '#6a4a3a');
+}
+const CROWD = (() => {
+  const r = rng(7), list = [];
+  const shirts0 = ['#ff4d2e', '#ff8a2a', '#ffd23a', '#ff5fa8'], shirts1 = ['#16c9d6', '#2f7bff', '#7ff4ff', '#8a6bff'];
+  const skins = ['#f6bd92', '#c98a5e', '#7c4a30', '#ffd6b6', '#a8683f'], hairs = ['#2a1810', '#ffd84a', '#ff3b2f', '#3a2a6a', '#111111', '#8a5a2a'];
+  for (const row of [168, 176]) {
+    for (let x = 16 + (row === 176 ? 4 : 0); x < 468; x += 8 + R(r() * 4)) {
+      if (row === 176 && Math.abs(x - 240) < 18) continue;
+      const team = x < 240 ? 0 : 1;
+      list.push({ x, y: row, team, shirt: (team ? shirts1 : shirts0)[R(r() * 3)], skin: skins[R(r() * 4)], hair: hairs[R(r() * 5)], ph: r(), big: r() < 0.25 });
+    }
+  }
+  return list;
+})();
+function excitement(team, tw) {
+  let e = 0;
+  for (const ev of EVENTS) {
+    const a = mod(tw - ev.t, L);
+    if (ev.type === 'spike') e = Math.max(e, (ev.team === team ? 1 : 0.35) * Math.exp(-a * 1.1));
+    if (ev.type === 'dig' && ev.team === team) e = Math.max(e, 0.6 * Math.exp(-a * 2));
+  }
+  return e;
+}
+function drawUmbrella(x, y, c1, c2, t, i) {
+  rect(g, x, y - 18, 1, 18, '#efe6da');
+  for (let row = 0; row < 6; row++) {
+    const hw = R(3 + row * 2.2);
+    for (let dx = -hw; dx <= hw; dx++) rect(g, x + dx, y - 24 + row, 1, 1, (Math.floor((dx + 40) / 4) % 2) ? c1 : c2);
+  }
+  rect(g, x - 14, y - 18, 29, 1, shade(c1, 0.7));
+  ell(g, x + 3, y, 9, 2, 'rgba(70,90,170,0.25)');
+}
+function drawCrowd(t, tw) {
+  const ex = [excitement(0, tw), excitement(1, tw)];
+  drawUmbrella(70, 168, '#ff4d2e', '#ffffff', t, 0);
+  drawUmbrella(150, 166, '#ffd23a', '#ff6a3c', t, 1);
+  drawUmbrella(338, 166, '#16c9d6', '#ffffff', t, 2);
+  drawUmbrella(418, 168, '#2f7bff', '#7ff4ff', t, 3);
+  for (const p of CROWD) {
+    const e = ex[p.team];
+    const bob = Math.max(0, Math.sin(TAU * (2 * t / L * 3 + p.ph))) ;
+    const jy = -R(bob * (0.4 + e * 3.2));
+    const x = p.x, y = p.y + jy, up = e > 0.35 || (p.big && bob > 0.7);
+    rect(g, x - 1, y - 2, 1, 2, p.skin); rect(g, x + 1, y - 2, 1, 2, p.skin);
+    rect(g, x - 1, y - 6, 3, 4, p.shirt);
+    rect(g, x - 1, y - 9, 3, 3, p.skin); rect(g, x - 1, y - 10, 3, 1, p.hair);
+    if (up) { const w = mod(Math.floor(t * 8 + p.ph * 8), 2); rect(g, x - 2 - w, y - 11, 1, 4, p.skin); rect(g, x + 2 + w, y - 11, 1, 4, p.skin); }
+    else { rect(g, x - 2, y - 6, 1, 3, p.skin); rect(g, x + 2, y - 6, 1, 3, p.skin); }
+  }
+  // fluttering pennants on the back corners
+  [[52, 206, '#ff4d2e', -1], [428, 206, '#16c9d6', 1]].forEach(([x, y, col], i) => {
+    rect(g, x, y - 20, 1, 20, '#f2f2f2');
+    for (let k = 0; k < 9; k++) {
+      const wav = R(Math.sin(TAU * (t / L * 4) - k * 0.7 + i) * 1.2);
+      const h = R(4 * (1 - k / 9)) + 1;
+      rect(g, x + 1 + k, y - 20 + wav + (4 - h / 2) * 0.5, 1, h, k % 3 === 2 ? shade(col, 0.8) : col);
+    }
+  });
+}
+function drawNetBack() {
+  // back post
+  rect(g, 251, 144, 3, 62, '#e8edf6'); rect(g, 253, 144, 1, 62, '#9aa7c8');
+  ell(g, 254, 206, 4, 1, 'rgba(60,80,160,0.35)');
+  // mesh
+  g.globalAlpha = 0.55;
+  const top = (p) => [lerp(252, 230, p), lerp(147, 182, p)], bot = (p) => [lerp(252, 230, p), lerp(172, 214, p)];
+  for (let i = 0; i <= 22; i++) { const p = i / 22, a = top(p), b = bot(p); tline(g, a[0], a[1], b[0], b[1], 1, '#122050'); }
+  for (let j = 1; j < 8; j++) { const q = j / 8; tline(g, 252, lerp(147, 172, q), 230, lerp(182, 214, q), 1, '#122050'); }
+  g.globalAlpha = 1;
+  tline(g, 252, 172, 230, 214, 1, '#f4f6ff');
+  // top tape
+  tline(g, 252, 146, 230, 181, 2, '#ffffff'); tline(g, 252, 148, 230, 183, 1, '#2563e8');
+}
+function drawNetFront() {
+  rect(g, 228, 180, 4, 74, '#f4f7ff'); rect(g, 231, 180, 1, 74, '#9aa7c8'); rect(g, 228, 180, 1, 74, '#ffffff');
+  rect(g, 227, 179, 6, 2, '#ff4d2e');
+  ell(g, 234, 254, 6, 1.5, 'rgba(60,80,160,0.35)');
+}
+function drawPalm(rootX, rootY, topX, topY, bend, t, seed, dirs) {
+  const ph = t / L;
+  const sway = Math.sin(TAU * ph + seed) * 2 + Math.sin(TAU * 2 * ph + seed * 2) * 0.7;
+  const cx = topX + sway, cy = topY + Math.abs(sway) * 0.3;
+  const kx = (rootX + cx) / 2 + bend, ky = (rootY + cy) / 2;
+  const N = 60;
+  for (let i = 0; i <= N; i++) {
+    const p = i / N, q = 1 - p;
+    const x = q * q * rootX + 2 * q * p * kx + p * p * cx, y = q * q * rootY + 2 * q * p * ky + p * p * cy;
+    const w = R(lerp(9, 4, p));
+    const band = Math.floor(i / 3) % 2;
+    rect(g, x - w / 2, y, w, 2, band ? '#8a5634' : '#704226');
+    rect(g, x - w / 2, y, 1, 2, P.out);
+    rect(g, x - w / 2 + 1, y, 1, 2, '#c8905a');
+    rect(g, x + w / 2 - 1, y, 1, 2, '#3c2a5a');
+  }
+  // coconuts
+  [[-2, 3], [2, 4], [0, 6]].forEach(([dx, dy]) => { disc(g, cx + dx, cy + dy, 2, '#5a3418'); rect(g, cx + dx - 1, cy + dy - 1, 1, 1, '#a8703a'); });
+  // fronds
+  dirs.forEach((deg, k) => {
+    const ang = deg * Math.PI / 180 + 0.07 * Math.sin(TAU * 2 * ph + k * 1.3 + seed);
+    const len = 30 + (k % 3) * 4;
+    let lx = cx, ly = cy;
+    for (let s = 0; s <= len; s++) {
+      const u = s / len;
+      const x = cx + Math.cos(ang) * s, y = cy + Math.sin(ang) * s + 18 * u * u + Math.sin(TAU * ph * 2 + k + u * 3) * u * 1.5;
+      const lit = Math.cos(ang) < 0.2;
+      rect(g, x, y, 2, 1, '#0f4a2c');
+      if (s % 2 === 0 && s > 2) {
+        const ll = R(6 * (1 - u) + 2);
+        for (const sd of [-1, 1]) {
+          const la = ang + sd * 1.15 + 0.5;
+          tline(g, x, y, x + Math.cos(la) * ll, y + Math.sin(la) * ll + 2, 1, sd < 0 && lit ? '#5fd06a' : (sd < 0 ? '#2fa858' : '#1a7a44'));
+        }
+      }
+      lx = x; ly = y;
+    }
+    rect(g, lx, ly, 1, 1, '#9cf07a');
+  });
+}
+function drawGrass(x0, y0, t, n, seed) {
+  const r = rng(seed), ph = t / L;
+  for (let i = 0; i < n; i++) {
+    const x = x0 + r() * 26 - 13, h = 6 + r() * 10, lean = (r() - 0.5) * 6;
+    const sw = Math.sin(TAU * ph * 2 + x * 0.3) * 1.5;
+    tline(g, x, y0, x + lean + sw, y0 - h, 1, r() < 0.5 ? '#3c9a4a' : '#7cc95a');
+  }
+}
+const MOTES = Array.from({ length: 34 }, (_, i) => { const r = rng(300 + i); return { x: r() * W, o: r(), k: 1 + R(r() * 2), warm: r() < 0.55, s: r() }; });
+function drawMotes(t) {
+  const ph = t / L;
+  for (const m of MOTES) {
+    const u = mod(m.o + ph, 1);                         // one lap per loop
+    const y = 262 - u * 130, x = m.x + 5 * Math.sin(TAU * (ph * m.k + m.o));
+    const al = Math.sin(u * Math.PI) * (0.6 + 0.4 * Math.sin(TAU * (ph * 4 + m.s)));
+    if (al <= 0.05) continue;
+    const col = m.warm ? '#ffd77a' : '#8ff4ff';
+    g.globalAlpha = al; rect(g, x, y, 1, 1, '#ffffff');
+    gg.globalAlpha = al * 0.8; rect(gg, x - 1, y - 1, 3, 3, col);
+  }
+  g.globalAlpha = 1; gg.globalAlpha = 1;
+}
+function drawShadow(x, y, w, al) {
+  g.globalAlpha = al; ell(g, x, y, w, Math.max(1, w * 0.28), '#3a4fa8'); g.globalAlpha = 1;
+}
+function drawRunDust(team, role, tw) {
+  const st = teamState(team, role, tw);
+  for (let k = 0; k < 4; k++) {
+    const ts = Math.floor(tw / 0.12) * 0.12 - k * 0.12, age = tw - ts;
+    const s0 = teamState(team, role, ts);
+    if (!s0.running || age > 0.4) continue;
+    const kk = age / 0.4;
+    g.globalAlpha = 0.6 * (1 - kk);
+    ell(g, s0.x + (h2(ts * 10, team) - 0.5) * 6, s0.G - 1 - kk * 4, 1.5 + kk * 4, 1 + kk * 2, k % 2 ? '#f2e2bd' : '#e3c894');
+  }
+  g.globalAlpha = 1;
+  return st;
+}
+
+// ---------------------------------------------------------------------------
+//  Vignette (full-res, built once)
+// ---------------------------------------------------------------------------
+const [vig, vigx] = mk(1920, 1080);
+(() => {
+  const gr = vigx.createRadialGradient(960, 560, 380, 960, 560, 1250);
+  gr.addColorStop(0, 'rgba(8,6,30,0)'); gr.addColorStop(1, 'rgba(8,6,30,0.55)');
+  vigx.fillStyle = gr; vigx.fillRect(0, 0, 1920, 1080);
+})();
+
+// ---------------------------------------------------------------------------
+//  Frame
+// ---------------------------------------------------------------------------
+const TW_A = 0.45, OM = TAU / (L / 2);
+const gameTime = t => mod(t - (TW_A / OM) * Math.sin(OM * t), L);   // slow-mo at each spike, faster mid-rally; same loop length
+
+function render(t) {
+  t = mod(t, L);
+  const tw = gameTime(t);
+  // screen shake from spikes
+  let shx = 0, shy = 0, flash = 0;
+  for (const e of EVENTS) {
+    if (e.type !== 'spike') continue;
+    const a = mod(tw - e.t, L);
+    if (a < 0.45) { const amp = 4 * Math.exp(-a * 9); shx += R(Math.sin(a * 97) * amp); shy += R(Math.cos(a * 83) * amp * 0.7); }
+    if (a < 0.06) flash = Math.max(flash, 0.2 * (1 - a / 0.06));
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+  g.drawImage(bgc, 0, 0);
+  gg.setTransform(1, 0, 0, 1, 0, 0); gg.clearRect(0, 0, CW, CH_);
+  g.setTransform(1, 0, 0, 1, M, M); gg.setTransform(1, 0, 0, 1, M, M);
+
+  drawSun(t);
+  drawClouds(t);
+  drawGulls(t);
+  drawSea(t);
+  drawBoat(t);
+  drawCrowd(t, tw);
+
+  // players + ball shadows
+  const b = ballAt(tw);
+  const sts = {};
+  for (const team of [0, 1]) for (const role of ['B', 'A']) sts[team + role] = teamState(team, role, tw);
+  for (const k in sts) { const s = sts[k]; drawShadow(s.x + 3, s.G + 1, Math.max(3, 8 - s.jump * 0.08), 0.35 - Math.min(0.2, s.jump * 0.003)); }
+  const bg2 = ballDepth(b), bh = bg2 - b.y;
+  drawShadow(b.x + 2 + bh * 0.05, bg2 + 1, Math.max(2, 5 - bh * 0.02), clamp(0.4 - bh * 0.003, 0.12, 0.4));
+
+  drawNetBack();
+  for (const team of [0, 1]) for (const role of ['B', 'A']) drawRunDust(team, role, tw);
+  // depth-sorted: setters (further back) first
+  Object.keys(sts).sort((a, b2) => sts[a].G - sts[b2].G).forEach(k => drawCharacter(k, sts[k], tw));
+
+  // ball trail + ball
+  const fast = b.seg === 0;
+  const fx = TEAMFX[b.team];
+  const nT = fast ? 7 : 4;
+  for (let k = nT; k >= 1; k--) {
+    const pb = ballAt(tw - k * (fast ? 0.018 : 0.03));
+    if (pb.seg !== b.seg) continue;
+    const al = (1 - k / (nT + 1)) * (fast ? 0.8 : 0.35);
+    g.globalAlpha = al; disc(g, pb.x, pb.y, fast ? 3.5 - k * 0.3 : 2.5, fast ? fx[k % 3] : '#ffffff');
+    if (fast) { gg.globalAlpha = al; disc(gg, pb.x, pb.y, 5 - k * 0.4, fx[1]); }
+  }
+  g.globalAlpha = 1; gg.globalAlpha = 1;
+  const spin = mod(Math.floor(t / L * 96), 8);
+  g.drawImage(BALL[spin], R(b.x) - 5, R(b.y) - 5);
+  disc(gg, b.x, b.y, fast ? 9 : 5, fast ? fx[1] : '#fff4c8');
+
+  drawNetFront();
+  for (const e of EVENTS) drawEvent(e, mod(tw - e.t, L));
+  drawMotes(t);
+
+  // foreground framing
+  drawPalm(18, 300, 64, 74, 26, t, 0.4, [195, 228, 262, 296, 330, 4, 160]);
+  drawPalm(466, 300, 418, 82, -24, t, 2.1, [200, 236, 268, 300, 338, 14, 170]);
+  drawGrass(58, 261, t, 14, 11); drawGrass(110, 262, t, 8, 12); drawGrass(426, 261, t, 14, 13); drawGrass(372, 262, t, 7, 14);
+
+  // ---- compose to 1080p
+  octx.globalCompositeOperation = 'source-over'; octx.globalAlpha = 1;
+  octx.imageSmoothingEnabled = false;
+  octx.drawImage(lo, M + VIEW.x + shx, M + VIEW.y + shy, VIEW.w, VIEW.h, 0, 0, 1920, 1080);
+  // bloom: tight + wide
+  blx.clearRect(0, 0, CW, CH_); blx.filter = 'blur(2px)'; blx.drawImage(gl, 0, 0); blx.filter = 'none';
+  bl2x.clearRect(0, 0, CW, CH_); bl2x.filter = 'blur(7px)'; bl2x.drawImage(gl, 0, 0); bl2x.filter = 'none';
+  octx.imageSmoothingEnabled = true;
+  octx.globalCompositeOperation = 'lighter';
+  octx.globalAlpha = 0.75; octx.drawImage(bl, M + VIEW.x + shx, M + VIEW.y + shy, VIEW.w, VIEW.h, 0, 0, 1920, 1080);
+  octx.globalAlpha = 0.4; octx.drawImage(bl2, M + VIEW.x + shx, M + VIEW.y + shy, VIEW.w, VIEW.h, 0, 0, 1920, 1080);
+  octx.globalAlpha = 1; octx.globalCompositeOperation = 'source-over';
+  octx.drawImage(vig, 0, 0);
+  if (flash > 0) { octx.fillStyle = `rgba(255,250,235,${flash})`; octx.fillRect(0, 0, 1920, 1080); }
+}
+
+buildBackground();
+window.renderAt = render;
+window.LOOP_SECONDS = L;
+
+// realtime playback
+let paused = false, offset = 0, last = 0;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame(now) {
+  if (!paused) { last = now / 1000 - offset; render(last); }
+  requestAnimationFrame(frame);
+}
+if (!CAPTURE) {
+  if (reduce) { paused = true; render(2.97); document.getElementById('hint').textContent = 'Reduced motion: Space to play'; }
+  requestAnimationFrame(frame);
+  out.addEventListener('click', () => { const el = document.documentElement; if (!document.fullscreenElement) el.requestFullscreen?.().catch(() => {}); else document.exitFullscreen?.(); });
+  addEventListener('keydown', e => {
+    if (e.code === 'Space') { e.preventDefault(); if (paused) { offset = performance.now() / 1000 - last; } paused = !paused; }
+    if (e.key === 'f') out.click();
+  });
+  setTimeout(() => { document.getElementById('hint').style.opacity = 0; }, 4000);
+} else render(0);
+</script>
