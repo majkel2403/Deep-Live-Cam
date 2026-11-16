@@ -40,9 +40,13 @@ export function Glitch({
   }, [trigger])
 
   if (reduced) return <span className={className}>{children}</span>
+  // PowerGlitch wraps/re-parents the element it is attached to, so it gets an inner span;
+  // the outer span stays a stable node for React's reconciler (safe unmount inside lists).
   return (
-    <span ref={glitch.ref} className={className} style={{ display: 'inline-block' }}>
-      {children}
+    <span className={className} style={{ display: 'inline-block' }}>
+      <span ref={glitch.ref} style={{ display: 'inline-block' }}>
+        {children}
+      </span>
     </span>
   )
 }

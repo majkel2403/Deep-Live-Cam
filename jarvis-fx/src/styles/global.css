@@ -1,5 +1,6 @@
 @import "tailwindcss";
-@import "augmented-ui/augmented-ui.min.css";
+/* augmented-ui sets default --aug-* vars on [data-augmented-ui]; layer it below components so .jx-aug skins and utilities win. */
+@import "augmented-ui/augmented-ui.min.css" layer(base);
 @import "./tokens.css";
 @import "./hud.css";
 

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Leva } from 'leva'
+import * as Tooltip from '@radix-ui/react-tooltip'
 import {
   IconLayoutDashboard,
   IconSparkles,
@@ -101,23 +102,26 @@ export default function App() {
   const View = VIEWS[route.view].Comp
 
   return (
+    <Tooltip.Provider delayDuration={250} skipDelayDuration={150}>
     <div className="h-full flex flex-col">
       <Leva hidden />
       <Backdrop />
       {scanlines && <div className="jx-scanlines" aria-hidden="true" />}
 
-      <header className="flex items-center gap-3 px-4 h-14 shrink-0 border-b border-jx-line/50 bg-jx-bg/60 backdrop-blur">
-        <button className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('bridge')} aria-label="J.A.R.V.I.S — strona główna">
+      <header className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 h-14 shrink-0 min-w-0 border-b border-jx-line/50 bg-jx-bg/60 backdrop-blur">
+        <button className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => navigate('bridge')} aria-label="J.A.R.V.I.S — strona główna">
           <span className="size-7 rounded-full border border-jx-accent shadow-[var(--jx-glow)] grid place-items-center">
             <span className="size-2.5 rounded-full bg-jx-accent shadow-[var(--jx-glow)]" />
           </span>
-          <Glitch mode="always">
-            <span className="jx-display text-base font-bold text-jx-accent jx-glow-text">J.A.R.V.I.S</span>
-          </Glitch>
+          <span className="hidden sm:inline-block">
+            <Glitch mode="always">
+              <span className="jx-display text-base font-bold text-jx-accent jx-glow-text">J.A.R.V.I.S</span>
+            </Glitch>
+          </span>
           <span className="jx-label hidden md:inline">Mission Control · FX</span>
         </button>
 
-        <nav className="flex items-center gap-1 ml-4 overflow-x-auto" aria-label="Widoki">
+        <nav className="flex items-center gap-1 ml-1 sm:ml-4 min-w-0 overflow-x-auto" aria-label="Widoki">
           {(Object.keys(VIEWS) as ViewId[]).map((id, i) => (
             <HudButton key={id} size="sm" active={route.view === id} onClick={() => navigate(id)} icon={VIEWS[id].icon} title={`${VIEWS[id].label} (Alt+${i + 1})`}>
               <span className="hidden lg:inline">{VIEWS[id].label}</span>
@@ -125,13 +129,15 @@ export default function App() {
           ))}
         </nav>
 
-        <span className="flex-1" />
-        <HudButton size="sm" onClick={() => setPaletteOpen(true)} icon={<IconCommand />} title="Paleta poleceń (Ctrl+K)">
-          <span className="hidden md:inline jx-num">Ctrl K</span>
-        </HudButton>
+        <span className="flex-1 min-w-0" />
+        <span className="hidden sm:inline-flex">
+          <HudButton size="sm" onClick={() => setPaletteOpen(true)} icon={<IconCommand />} title="Paleta poleceń (Ctrl+K)">
+            <span className="hidden md:inline jx-num">Ctrl K</span>
+          </HudButton>
+        </span>
         <HudButton size="sm" aria-label={soundOn ? 'Wycisz' : 'Włącz dźwięk'} active={soundOn} onClick={() => set({ soundOn: !soundOn })} icon={soundOn ? <IconVolume /> : <IconVolumeOff />} />
         <SettingsMenu />
-        <span className="flex items-center gap-2 pl-2 border-l border-jx-line/50">
+        <span className="hidden sm:flex items-center gap-2 pl-2 border-l border-jx-line/50">
           <StatusDot tone="ok" pulse />
           <Clock />
         </span>
@@ -155,5 +161,6 @@ export default function App() {
         />
       )}
     </div>
+    </Tooltip.Provider>
   )
 }
