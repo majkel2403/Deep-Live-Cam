@@ -1,0 +1,10 @@
+{
+  "extraKnownMarketplaces": {
+    "explainer-video-skills": {
+      "source": { "source": "github", "repo": "iart-ai/explainer-video-skills" }
+    }
+  },
+  "enabledPlugins": {
+    "explainer-video-skills@explainer-video-skills": true
+  }
+}
