@@ -89,7 +89,22 @@ export function EnginePanel() {
         <span className="jx-label text-[0.62rem]" id="jxs-pref-label">
           Preferowane źródło
         </span>
-        <div className="jxs-seg self-start" role="radiogroup" aria-labelledby="jxs-pref-label">
+        <div
+          className="jxs-seg self-start"
+          role="radiogroup"
+          aria-labelledby="jxs-pref-label"
+          onKeyDown={(e) => {
+            // WAI-ARIA radio group: arrows move the selection between enabled options
+            if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) return
+            e.preventDefault()
+            const enabled = PREFS.filter((p) => !(p.id === 'kenney' && kenneyAbsent))
+            const i = enabled.findIndex((p) => p.id === pref)
+            const next = enabled[(i + (e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 1) + enabled.length) % enabled.length]
+            setPref(next.id)
+            playBleep('toggle')
+            e.currentTarget.querySelector<HTMLButtonElement>(`[data-pref="${next.id}"]`)?.focus()
+          }}
+        >
           {PREFS.map((p) => {
             const disabled = p.id === 'kenney' && kenneyAbsent
             return (
@@ -97,6 +112,8 @@ export function EnginePanel() {
                 key={p.id}
                 type="button"
                 role="radio"
+                data-pref={p.id}
+                tabIndex={pref === p.id ? 0 : -1}
                 aria-checked={pref === p.id}
                 aria-disabled={disabled || undefined}
                 title={disabled ? 'Paczki Kenney nie są zainstalowane — uruchom node scripts/fetch-kenney.mjs' : undefined}
