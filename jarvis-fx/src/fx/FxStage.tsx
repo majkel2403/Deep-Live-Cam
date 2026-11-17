@@ -48,6 +48,8 @@ export function FxStage({ id, ids, solo = false }: { id: string; ids: string[]; 
       if (e.key === 'Escape') {
         if (field) {
           field.blur()
+          // blur alone would drop focus to document.body, outside the dialog: park it on the close button
+          closeRef.current?.focus({ preventScroll: true })
           return
         }
         playBleep('close')

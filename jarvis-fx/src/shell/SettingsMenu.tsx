@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
+import IconCommand from '@tabler/icons-react/icons/IconCommand'
 import IconSettings from '@tabler/icons-react/icons/IconSettings'
 import IconX from '@tabler/icons-react/icons/IconX'
 import { HudButton, Panel } from '@/hud'
@@ -9,9 +11,14 @@ const HUE_SWATCHES = [188, 200, 160, 28, 350, 265] as const
 const QUALITY_LABELS: Record<QualityPref, string> = { auto: 'Auto', low: 'Niska', med: 'Średnia', high: 'Wysoka' }
 const MOTION_LABELS: Record<MotionPref, string> = { auto: 'Systemowy', full: 'Pełny', reduced: 'Ograniczony' }
 
-/** Global settings (Radix Dialog primitive, restyled as a HUD panel). */
-export function SettingsMenu() {
+/**
+ * Global settings (Radix Dialog primitive, restyled as a HUD panel).
+ * Also the touch route to the command palette: the header button is hidden below sm, so phones open it from here.
+ */
+export function SettingsMenu({ onOpenPalette }: { onOpenPalette?: () => void }) {
   const s = useSettings()
+  // Opening the palette closes this dialog; keep focus on the palette instead of returning it to the trigger.
+  const handOffToPalette = useRef(false)
   return (
     <Dialog.Root onOpenChange={(o) => playBleep(o ? 'open' : 'close')}>
       <Dialog.Trigger asChild>
@@ -19,7 +26,16 @@ export function SettingsMenu() {
       </Dialog.Trigger>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
-        <Dialog.Content className="fixed z-50 right-2 sm:right-4 top-16 w-[min(380px,calc(100vw-1rem))] outline-none" aria-describedby={undefined}>
+        <Dialog.Content
+          className="fixed z-50 right-2 sm:right-4 top-16 w-[min(380px,calc(100vw-1rem))] outline-none"
+          aria-describedby={undefined}
+          onCloseAutoFocus={(e) => {
+            if (handOffToPalette.current) {
+              e.preventDefault()
+              handOffToPalette.current = false
+            }
+          }}
+        >
           {/* Panel already renders the heading, so the Radix title is a span that only supplies aria-labelledby. */}
           <Panel
             title={
@@ -36,6 +52,20 @@ export function SettingsMenu() {
             }
             bodyClassName="p-4 flex flex-col gap-4 overflow-y-auto"
           >
+            {onOpenPalette && (
+              <Dialog.Close asChild>
+                <HudButton
+                  size="sm"
+                  icon={<IconCommand />}
+                  onClick={() => {
+                    handOffToPalette.current = true
+                    onOpenPalette()
+                  }}
+                >
+                  Paleta poleceń · Ctrl K
+                </HudButton>
+              </Dialog.Close>
+            )}
             <div className="flex flex-col gap-1.5">
               <span id="jx-set-hue" className="jx-label">
                 Kolor akcentu · {s.hue}°

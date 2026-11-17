@@ -138,13 +138,13 @@ export default function App() {
         </nav>
 
         <span className="flex-1 min-w-0" />
-        <span className="inline-flex">
+        <span className="hidden sm:inline-flex">
           <HudButton size="sm" aria-label="Paleta poleceń" onClick={() => setPaletteOpen(true)} icon={<IconCommand />} title="Paleta poleceń (Ctrl+K)">
             <span className="hidden md:inline jx-num">Ctrl K</span>
           </HudButton>
         </span>
         <HudButton size="sm" aria-label={soundOn ? 'Wycisz' : 'Włącz dźwięk'} active={soundOn} onClick={() => set({ soundOn: !soundOn })} icon={soundOn ? <IconVolume /> : <IconVolumeOff />} />
-        <SettingsMenu />
+        <SettingsMenu onOpenPalette={() => setPaletteOpen(true)} />
         <span className="hidden sm:flex items-center gap-2 pl-2 border-l border-jx-line/50">
           <StatusDot tone="ok" pulse />
           <Clock />

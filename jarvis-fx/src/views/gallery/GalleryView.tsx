@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import IconSearch from '@tabler/icons-react/icons/IconSearch'
 import { FX } from '@/fx/registry'
 import { FX_CATEGORIES, type FxCategory } from '@/fx/types'
@@ -13,6 +13,7 @@ export default function GalleryView() {
   const { fxId } = useRoute()
   const [cat, setCat] = useState<FxCategory | 'all'>('all')
   const [q, setQ] = useState('')
+  const searchRef = useRef<HTMLInputElement>(null)
   const quality = useQuality()
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function GalleryView() {
           <Frame kind="underline" enter={false} />
           <IconSearch size={14} className="text-jx-accent shrink-0" aria-hidden="true" />
           <input
+            ref={searchRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Szukaj: shader, GSAP, radar…"
@@ -76,6 +78,8 @@ export default function GalleryView() {
                 onClick={() => {
                   setQ('')
                   setCat('all')
+                  // the button unmounts with the empty state: move focus to the field that stays mounted
+                  searchRef.current?.focus()
                 }}
               >
                 Pokaż wszystkie
