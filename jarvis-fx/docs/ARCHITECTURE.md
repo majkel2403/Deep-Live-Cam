@@ -24,7 +24,7 @@ Dokument dla osób rozwijających projekt. Skrót jest w [README](../README.md);
 │   └─ lib/          store · router · sound · agents · telemetry
 └─ styles/           tokens.css → hud.css (@layer components) → global.css (Tailwind + @theme)
 public/              sounds/ (WAV, index.json) · posters/ (plakaty galerii) · fonty ładuje Fontsource (npm)
-scripts/             shoot.mjs · posters.mjs · render-sounds.mjs · fetch-kenney.mjs · check-text-floor.mjs · agents-example-server.mjs
+scripts/             shoot.mjs · posters.mjs · render-sounds.mjs · fetch-kenney.mjs · check-text-floor.mjs · smoke-keyboard.mjs · subset-material-symbols.py · agents-example-server.mjs
 docs/                ARCHITECTURE.md · gen-licenses.mjs · licenses/ · screens/ (zrzuty do README)
 ```
 
@@ -340,7 +340,7 @@ na żywo widać prawdziwy kolor.
   na nowszy three usunie drugą kopię three.js (§5.6).
 - Nieobsłużone: brak pliku `LICENSE` w katalogu projektu; zestaw UI Audio Kenneya nie jest pobierany przez
   `fetch-kenney.mjs` (wymaga sieci do kenney.nl); brak automatycznego axe-core (wymaga decyzji o zależności).
-  Test klawiatury bez zależności jest w `scripts/smoke-keyboard.mjs` (§12).
+  Test klawiatury jest w `scripts/smoke-keyboard.mjs` (§12). Wymaga Playwrighta (`npm i -D playwright` albo `PLAYWRIGHT_MODULE=<ścieżka>`), bez niego kończy się kodem 2.
 - Atlas fontu Inter (MSDF z `@pmndrs/msdfonts`, domyślny krój uikit) trafia do paczki wyłącznie z leniwym
   fragmentem efektu `r3f-uikit-panel` (ok. 420 KB); główny fragment aplikacji go nie zawiera.
 - Pakiet Theatre: każde zamontowanie `r3f-theatre-flythrough` dodaje arkusz do wspólnego projektu, którego API nie

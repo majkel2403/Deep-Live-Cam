@@ -86,7 +86,7 @@ public/
   sounds/              index.json (paczki), synth/ (nasze WAV-y CC0), kenney/ (opcjonalnie)
   posters/             plakaty efektów dla galerii (scripts/posters.mjs)
 scripts/               shoot.mjs · posters.mjs · render-sounds.mjs · fetch-kenney.mjs · check-text-floor.mjs
-                       subset-material-symbols.py · agents-example-server.mjs (przykładowe źródło agentów SSE)
+                       smoke-keyboard.mjs · subset-material-symbols.py · agents-example-server.mjs (przykładowe źródło agentów SSE)
 docs/                  ARCHITECTURE.md · gen-licenses.mjs · licenses/ · screens/
 ```
 
@@ -257,6 +257,7 @@ w repozytorium; paczki Kenney nie.
 ## Licencje
 
 Kod aplikacji: **MIT** (deklaracja autora; plik `LICENSE` w katalogu projektu trzeba dodać przy przenoszeniu).
+**Uwaga:** dopóki folder `jarvis-fx/` leży w repozytorium `Deep-Live-Cam`, obowiązuje tam plik `LICENSE` tego repozytorium (GNU AGPL-3.0). Deklaracja MIT dla aplikacji wymaga decyzji autora przed publikacją.
 Zależności i zasoby mają własne licencje — **[LICENSES.md](LICENSES.md)** (tabele generowane z `node_modules`:
 `node docs/gen-licenses.mjs`). Pełne teksty licencji, których wymaga nagłówek portu, są w `docs/licenses/`.
 

@@ -7,7 +7,7 @@
  *   2. our CC0 WAVs      – /sounds/synth/*.wav played via howler (scripts/render-sounds.mjs)
  *   3. ARWES bleeps      – the same WAVs through @arwes/bleeps (MIT), only when explicitly selected (./arwes.ts)
  *   4. WebAudio synth    – procedural, always available, also the fallback while files load
- * Respects the global sound settings (soundOn, volume). Sounds are short (<150 ms) and quiet.
+ * Respects the global sound settings (soundOn, volume). Sounds are short and quiet: most last 40–260 ms, boot about 0.7 s.
  */
 import { useSettings } from '../store'
 import type { BleepName } from './names'

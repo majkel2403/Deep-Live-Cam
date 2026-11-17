@@ -4,8 +4,8 @@ Ten plik zbiera noty licencyjne wszystkiego, co trafia do aplikacji: pakietów n
 („ported/adapted”) z innych projektów, fontów, ikon, dźwięków i danych. Te same informacje są dostępne w
 interfejsie: **Arsenał → Rejestr** (`#/arsenal`), dane w `src/data/resources.ts`.
 
-- **Kod samej aplikacji JARVIS FX: MIT** (deklaracja w README). Plik `LICENSE` w katalogu projektu jeszcze
-  nie istnieje — dodaj go przy przenoszeniu folderu do własnego repozytorium (patrz README, „Jak przenieść
+- **Kod samej aplikacji JARVIS FX: MIT** (deklaracja w README). Plik `LICENSE` w katalogu `jarvis-fx/` jeszcze
+  nie istnieje. Dopóki folder leży w repozytorium `Deep-Live-Cam`, obowiązuje tam plik `LICENSE` tego repozytorium (GNU AGPL-3.0), więc deklaracja MIT wymaga decyzji autora. Dodaj plik przy przenoszeniu folderu do własnego repozytorium (patrz README, „Jak przenieść
   folder”). Do tego czasu deklaracja obowiązuje wyłącznie jako zapis intencji autora.
 - Tabele zależności na końcu pliku są **generowane** z `node_modules` skryptem `node docs/gen-licenses.mjs`
   (czyta pole `license` z `package.json` każdego zainstalowanego pakietu, a gdy go brak — rozpoznaje tekst
@@ -49,7 +49,7 @@ shadcn-admin i TailAdmin (układ paneli), eDEX-UI i jego forki (kierunek wizualn
 | Animacja orbu Lottie | MIT (własna) | `src/fx/effects/loader-lottie-orb/orb.ts` | JSON Bodymovin generowany w kodzie — bez plików z LottieFiles. |
 | Podzbiory ikon [game-icons.net](https://game-icons.net) (20 ikon w efekcie, 12 w Arsenale) | **CC BY 3.0** | `src/fx/effects/hud-icon-matrix/gameIcons.ts`, `src/data/gameIconsArsenal.ts` | Wyciągnięte offline z `@iconify-json/game-icons`. Atrybucja poniżej. |
 | Dźwięki WAV `public/sounds/synth/*.wav` | CC0 1.0 (własne) | `scripts/render-sounds.mjs` | Synteza offline; te same receptury co syntezator WebAudio. |
-| Plakaty galerii `public/posters/*.jpg` (49 plików, ok. 1,7 MB) | jak w repozytorium (MIT) **z zastrzeżeniem** | `scripts/posters.mjs` | Zrzuty własnych efektów. Na zrzutach widać treści objęte innymi licencjami — fonty OFL (Fontsource) i ikony game-icons (CC BY 3.0, efekt „Matryca ikon”) — więc przy redystrybucji obowiązują te same noty co w tym pliku. |
+| Plakaty galerii `public/posters/*.jpg` (49 plików, ok. 1,6 MB) | jak w repozytorium (MIT) **z zastrzeżeniem** | `scripts/posters.mjs` | Zrzuty własnych efektów. Na zrzutach widać treści objęte innymi licencjami — fonty OFL (Fontsource) i ikony game-icons (CC BY 3.0, efekt „Matryca ikon”) — więc przy redystrybucji obowiązują te same noty co w tym pliku. |
 | Zrzuty ekranu `docs/screens/*.jpg` | jak w repozytorium (MIT) | `docs/screens/` | Zrzuty interfejsu, w tym treści j.w. |
 
 ### Wymagana atrybucja — game-icons.net

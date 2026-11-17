@@ -25,6 +25,8 @@ dist-ssr
 
 # jarvis-fx
 shots/
+# Kenney packs are installed locally by scripts/fetch-kenney.mjs and never committed
+public/sounds/kenney/
 .vite-*/
 node_modules/.vite*
 # root repo ignores *.png – re-include curated screenshots
