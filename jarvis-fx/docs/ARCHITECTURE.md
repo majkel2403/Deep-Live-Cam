@@ -293,6 +293,7 @@ npm run build                                 # tsc -b + vite build → dist/
 node docs/gen-licenses.mjs                    # odśwież tabele w LICENSES.md
 node scripts/check-text-floor.mjs             # żaden rozmiar tekstu poniżej 10 px (--fix podnosi)
 node scripts/shoot.mjs --wait 6000 fx:<id> view:gallery view:arsenal/paleta   # zrzuty → shots/*.png
+node scripts/smoke-keyboard.mjs --base http://127.0.0.1:5173   # test klawiatury: Tab, Alt+1…6, Ctrl+K/Esc, karta galerii
 PLAYWRIGHT_MODULE=/ścieżka/do/playwright node scripts/shoot.mjs ...   # gdy playwright nie jest w projekcie
 ```
 
@@ -328,15 +329,19 @@ na żywo widać prawdziwy kolor.
   (`navigator.userActivation`), więc Chrome nie zgłasza „AudioContext was not allowed to start”. Biblioteka howler
   tworzy własny kontekst przy załadowaniu, w stanie zawieszonym (bez ostrzeżenia); adopcja do wspólnego busa
   następuje przy pierwszym dźwięku.
-- Radar (`hud-radar-sweep`) na renderze programowym: liczba klatek rAF spada z ok. 120 do ok. 25–45 na 2 s po
-  kilku–kilkunastu sekundach, mimo że czas callbacku JS jest stały (0,3–0,9 ms). Stan rysowania nie rośnie
-  (statyczna warstwa, wstęp klina i poświaty są w buforach poza pętlą). Spadek jest po stronie rasteryzacji
+- Radar (`hud-radar-sweep`) na renderze programowym: liczba klatek rAF spada z ok. 120 do ok. 36–40 na 2 s po
+  kilku sekundach (pomiar 24 s, quality low) i na tym poziomie się utrzymuje; nie spada dalej. Czas callbacku JS jest
+  stały (0,3–0,9 ms). Stan rysowania nie rośnie (statyczna warstwa, wstęp klina i poświaty są w buforach poza pętlą,
+  a pętla `useCanvas2D` planuje klatki tylko przy działającym efekcie). Spadek jest po stronie rasteryzacji
   SwiftShadera, podobnie jak w innych efektach canvas. Nie sprawdzono tego na sprzętowym GPU.
 - Karty galerii są przyciskami (`<button>`): efekt nie może renderować w trybie karty interaktywnych elementów
   (zagnieżdżone przyciski); tam, gdzie są potrzebne, rysuj wizualne odpowiedniki (jak `hud-cyber-elements`).
 - Do zrobienia przy aktualizacji zależności: R3F 9 przejdzie na `THREE.Timer` (dziś `THREE.Clock`); zmiana Vanty
   na nowszy three usunie drugą kopię three.js (§5.6).
 - Nieobsłużone: brak pliku `LICENSE` w katalogu projektu; zestaw UI Audio Kenneya nie jest pobierany przez
-  `fetch-kenney.mjs` (wymaga sieci do kenney.nl); brak automatycznego axe-core i testu klawiatury (wymaga decyzji o zależności).
+  `fetch-kenney.mjs` (wymaga sieci do kenney.nl); brak automatycznego axe-core (wymaga decyzji o zależności).
+  Test klawiatury bez zależności jest w `scripts/smoke-keyboard.mjs` (§12).
+- Atlas fontu Inter (MSDF z `@pmndrs/msdfonts`, domyślny krój uikit) trafia do paczki wyłącznie z leniwym
+  fragmentem efektu `r3f-uikit-panel` (ok. 420 KB); główny fragment aplikacji go nie zawiera.
 - Pakiet Theatre: każde zamontowanie `r3f-theatre-flythrough` dodaje arkusz do wspólnego projektu, którego API nie
   pozwala usunąć — przy wielokrotnym montowaniu projekt rośnie nieznacznie.

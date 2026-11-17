@@ -250,8 +250,10 @@ function Timeline({
                       : 'border-jx-accent/60 bg-jx-accent/15 data-[active]:bg-jx-accent/45 data-[active]:shadow-[0_0_10px_var(--jx-accent)]'
                   }`}
                   style={{ left: `${(l.at / BOOT_TOTAL) * 100}%`, width: `${(l.dur / BOOT_TOTAL) * 100}%` }}
+                  title={l.tech.join(' · ')}
                 >
-                  <span className="jx-num text-[0.625rem] text-jx-text/80 truncate">{l.tech[0]}</span>
+                  {/* Library name inside the bar only where there is room; phones show the step name alone. */}
+                  <span className="hidden sm:inline jx-num text-[0.625rem] text-jx-text/80 truncate">{l.tech[0]}</span>
                 </div>
               </div>
             </div>

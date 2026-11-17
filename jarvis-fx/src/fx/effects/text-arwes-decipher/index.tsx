@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+// @arwes/text API used here: animateTextDecipher, animateTextSequence, getAnimationTextDuration.
+// Developer API names stay out of the Polish UI on purpose (the sidebar describes behaviour instead).
 import { animateTextDecipher, animateTextSequence, getAnimationTextDuration } from '@arwes/text'
 import IconBroadcast from '@tabler/icons-react/icons/IconBroadcast'
 import IconLock from '@tabler/icons-react/icons/IconLock'
@@ -306,7 +308,7 @@ export default function ArwesDecipher({ stage, reducedMotion, paused }: FxProps)
               <span className="jx-num text-xs text-jx-accent">{c.cps} zn/s</span>
             </div>
             <p className="m-0 text-[0.7rem] text-jx-dim leading-snug">
-              Klucze: <code className="text-jx-text/80">animateTextDecipher()</code>, wartości: <code className="text-jx-text/80">animateTextSequence()</code>, czas: <code className="text-jx-text/80">getAnimationTextDuration()</code>.
+              Klucze odsłaniają się znakami, wartości pojawiają się kolejno z migającym kursorem, a czas trwania zależy od długości tekstu.
             </p>
           </div>
         </aside>

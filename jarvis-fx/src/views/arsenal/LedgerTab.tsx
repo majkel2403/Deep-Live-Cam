@@ -132,7 +132,7 @@ export function LedgerTab() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Szukaj: MIT, shader, ikony…"
-              className="bg-transparent outline-none text-sm flex-1 min-w-0 placeholder:text-jx-dim"
+              className="bg-transparent text-sm flex-1 min-w-0 placeholder:text-jx-dim"
               aria-label="Szukaj zasobu"
             />
           </label>
