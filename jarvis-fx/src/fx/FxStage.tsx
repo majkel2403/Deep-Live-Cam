@@ -43,12 +43,21 @@ export function FxStage({ id, ids, solo = false }: { id: string; ids: string[]; 
     const onKey = (e: KeyboardEvent) => {
       // Radix dialogs (command palette) handle Escape first and mark the event; leave it to them.
       if (e.defaultPrevented) return
+      // Escape inside a Leva field only leaves the field; a second Escape closes the stage.
+      const field = (e.target as HTMLElement)?.closest?.('input,textarea,select,[contenteditable]') as HTMLElement | null
       if (e.key === 'Escape') {
+        if (field) {
+          field.blur()
+          return
+        }
         playBleep('close')
         navigate('gallery')
         return
       }
       if (e.key === 'Tab' && dialogRef.current) {
+        // Another open dialog (the command palette) owns Tab while it is focused.
+        const ownDialog = (e.target as HTMLElement)?.closest?.('[role="dialog"]')
+        if (ownDialog && ownDialog !== dialogRef.current) return
         // keep Tab focus inside the modal dialog (checked before the text-field guard: Leva sliders are inputs)
         const items = [...dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => el.offsetParent !== null)
         if (!items.length) return
@@ -64,7 +73,7 @@ export function FxStage({ id, ids, solo = false }: { id: string; ids: string[]; 
         }
         return
       }
-      if ((e.target as HTMLElement)?.closest('input,textarea,select,[contenteditable]')) return
+      if (field) return
       if (e.key === 'ArrowRight' && next) navigate('gallery', next)
       else if (e.key === 'ArrowLeft' && prev) navigate('gallery', prev)
     }
@@ -103,7 +112,7 @@ export function FxStage({ id, ids, solo = false }: { id: string; ids: string[]; 
         </div>
         <aside
           aria-label="Parametry efektu"
-          className={`${showControls ? 'flex' : 'hidden'} w-full md:w-72 md:shrink-0 max-h-[42vh] md:max-h-none flex-col gap-3 border-t md:border-t-0 md:border-l border-jx-line/60 p-3 overflow-y-auto`}
+          className={`${showControls ? 'flex' : 'hidden'} w-full md:w-80 md:shrink-0 max-h-[42vh] md:max-h-none flex-col gap-3 border-t md:border-t-0 md:border-l border-jx-line/60 p-3 overflow-y-auto`}
         >
           <p className="text-sm text-jx-text/90">{fx.description}</p>
           <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">

@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -68,11 +69,18 @@ export function useAccent(): { hue: number; hex: string; hex2: string; dim: stri
 
 const mq = typeof window !== 'undefined' ? window.matchMedia?.('(prefers-reduced-motion: reduce)') : undefined
 
+const subscribeReducedMotion = (onChange: () => void) => {
+  mq?.addEventListener?.('change', onChange)
+  return () => mq?.removeEventListener?.('change', onChange)
+}
+
+/** Follows the OS setting live, so an OS toggle reaches FxHost and Glitch without a reload. */
 export function useReducedMotion(): boolean {
   const motion = useSettings((s) => s.motion)
+  const osReduced = useSyncExternalStore(subscribeReducedMotion, () => !!mq?.matches, () => false)
   if (motion === 'full') return false
   if (motion === 'reduced') return true
-  return !!mq?.matches
+  return osReduced
 }
 
 /** Resolve 'auto' quality from device hints (cores, memory, DPR, coarse pointer). */

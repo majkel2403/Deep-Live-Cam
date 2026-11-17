@@ -68,7 +68,20 @@ export default function GalleryView() {
           {list.map((fx) => (
             <FxCard key={fx.id} fx={fx} onOpen={(id) => navigate('gallery', id)} />
           ))}
-          {list.length === 0 && <p className="jx-label p-6">Brak efektów dla tego filtra.</p>}
+          {list.length === 0 && (
+            <div className="p-6 flex flex-col items-start gap-3">
+              <p className="jx-label">Brak efektów dla tego filtra.</p>
+              <HudButton
+                size="sm"
+                onClick={() => {
+                  setQ('')
+                  setCat('all')
+                }}
+              >
+                Pokaż wszystkie
+              </HudButton>
+            </div>
+          )}
         </div>
       </div>
 

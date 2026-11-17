@@ -19,6 +19,8 @@ export interface SourceInfo {
 }
 
 const STATUS_TEXT: Record<LinkStatus, string> = { live: 'na żywo', connecting: 'łączenie', error: 'błąd łącza' }
+/** Synthetic sources never say "na żywo": that would read as real data next to the DEMO badge. */
+const statusLabel = (info: SourceInfo) => (info.synthetic && info.status === 'live' ? 'symulacja aktywna' : STATUS_TEXT[info.status])
 const STATUS_TONE = { live: 'ok', connecting: 'warn', error: 'danger' } as const
 const KIND_TEXT = { demo: 'Symulator', ws: 'WebSocket', sse: 'SSE (EventSource)' } as const
 
@@ -51,7 +53,7 @@ export function SourceControl({ info }: { info: SourceInfo }) {
           <span className="jx-label text-[0.625rem]">Źródło · {KIND_TEXT[info.kind]}</span>
           <StatusDot tone={STATUS_TONE[info.status]} pulse={info.status !== 'live'} />
           <span className="jx-label text-[0.625rem] text-jx-text" aria-live="polite">
-            {STATUS_TEXT[info.status]}
+            {statusLabel(info)}
           </span>
         </span>
         <span className="font-mono text-[0.7rem] text-jx-text truncate max-w-[14rem]" title={info.detail ? `${info.label} – ${info.detail}` : info.label}>
@@ -156,7 +158,7 @@ function SourceForm({ info, onDone }: { info: SourceInfo; onDone: () => void }) 
         <span className="font-mono text-jx-text break-all">{info.label}</span>
         <span className="inline-flex items-center gap-1.5">
           <StatusDot tone={STATUS_TONE[info.status]} pulse={info.status !== 'live'} />
-          <span className="jx-label text-[0.625rem]">{STATUS_TEXT[info.status]}</span>
+          <span className="jx-label text-[0.625rem]">{statusLabel(info)}</span>
         </span>
         {info.synthetic && <span className="jx-label text-[0.625rem] text-jx-warn">dane syntetyczne</span>}
         {info.detail && <span className="w-full text-jx-warn text-[0.72rem]">{info.detail}</span>}

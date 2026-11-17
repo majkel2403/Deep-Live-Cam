@@ -138,7 +138,7 @@ export default function App() {
         </nav>
 
         <span className="flex-1 min-w-0" />
-        <span className="hidden sm:inline-flex">
+        <span className="inline-flex">
           <HudButton size="sm" aria-label="Paleta poleceń" onClick={() => setPaletteOpen(true)} icon={<IconCommand />} title="Paleta poleceń (Ctrl+K)">
             <span className="hidden md:inline jx-num">Ctrl K</span>
           </HudButton>
