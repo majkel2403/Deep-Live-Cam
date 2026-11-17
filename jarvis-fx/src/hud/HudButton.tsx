@@ -1,7 +1,9 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ButtonHTMLAttributes, ReactNode, Ref } from 'react'
 import { playBleep } from '@/lib/sound'
 
 export interface HudButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  /** React 19: ref is a plain prop on function components */
+  ref?: Ref<HTMLButtonElement>
   icon?: ReactNode
   active?: boolean
   size?: 'sm' | 'md'
@@ -9,15 +11,16 @@ export interface HudButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> 
 }
 
 /** augmented-ui clipped button with UI bleeps on hover/click. */
-export function HudButton({ icon, active, size = 'md', aug = 'tl-clip br-clip border', className = '', children, onClick, onMouseEnter, ...rest }: HudButtonProps & { children?: ReactNode }) {
+export function HudButton({ ref, icon, active, size = 'md', aug = 'tl-clip br-clip border', className = '', children, onClick, onMouseEnter, ...rest }: HudButtonProps & { children?: ReactNode }) {
   const pad = size === 'sm' ? 'px-2.5 py-1 text-[0.68rem]' : 'px-3.5 py-1.5 text-[0.78rem]'
   return (
     <button
+      ref={ref}
       type="button"
       data-augmented-ui={aug}
       data-active={active ? 'true' : undefined}
       aria-pressed={active === undefined ? undefined : active}
-      className={`jx-aug-btn inline-flex items-center gap-1.5 ${pad} ${className}`}
+      className={`jx-aug-btn inline-flex items-center gap-1.5 whitespace-nowrap ${pad} ${className}`}
       onMouseEnter={(e) => {
         playBleep('hover')
         onMouseEnter?.(e)

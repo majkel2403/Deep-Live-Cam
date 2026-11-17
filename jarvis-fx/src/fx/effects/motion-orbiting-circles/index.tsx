@@ -8,8 +8,16 @@
  */
 import { Children, useEffect, useState, type ReactElement, type ReactNode } from 'react'
 import { motion, useAnimationFrame, useMotionValue, useTransform, type MotionValue } from 'motion/react'
-import { IconBattery4, IconBrain, IconCpu, IconShieldCheck, IconWifi } from '@tabler/icons-react'
-import { AtomIcon, BroadcastIcon, EyeIcon, LightningIcon, PlanetIcon } from '@phosphor-icons/react'
+import IconBattery4 from '@tabler/icons-react/icons/IconBattery4'
+import IconBrain from '@tabler/icons-react/icons/IconBrain'
+import IconCpu from '@tabler/icons-react/icons/IconCpu'
+import IconShieldCheck from '@tabler/icons-react/icons/IconShieldCheck'
+import IconWifi from '@tabler/icons-react/icons/IconWifi'
+import { AtomIcon } from '@phosphor-icons/react/dist/csr/Atom'
+import { BroadcastIcon } from '@phosphor-icons/react/dist/csr/Broadcast'
+import { EyeIcon } from '@phosphor-icons/react/dist/csr/Eye'
+import { LightningIcon } from '@phosphor-icons/react/dist/csr/Lightning'
+import { PlanetIcon } from '@phosphor-icons/react/dist/csr/Planet'
 import { Cloud, Crosshair, Database, FingerprintPattern, Globe, Rocket, Satellite } from 'lucide-react'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
@@ -209,10 +217,10 @@ function Core({ size, time, active, stage }: { size: number; time: MotionValue<n
         <circle r={92} fill="none" stroke="var(--jx-accent-2)" strokeOpacity={0.8} strokeWidth={2} strokeDasharray="60 30 10 30" />
       </motion.svg>
       <div className="relative flex flex-col items-center text-center leading-none">
-        <span className={`jx-display text-white jx-glow-text ${stage ? 'text-[0.95rem]' : 'text-[0.42rem]'}`} style={{ letterSpacing: '0.18em' }}>
+        <span className={`jx-display text-white jx-glow-text ${stage ? 'text-[0.95rem]' : 'text-[0.625rem]'}`} style={{ letterSpacing: '0.18em' }}>
           J.A.R.V.I.S.
         </span>
-        {stage && <span className="jx-label text-[0.6rem]! mt-1.5 text-jx-accent!">{active ?? `${TOTAL} modułów`}</span>}
+        {stage && <span className="jx-label text-[0.625rem]! mt-1.5 text-jx-accent!">{active ?? `${TOTAL} modułów`}</span>}
       </div>
     </div>
   )

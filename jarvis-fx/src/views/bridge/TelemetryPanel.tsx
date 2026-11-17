@@ -1,8 +1,16 @@
 import type { ReactNode } from 'react'
-import { IconActivityHeartbeat, IconBattery2, IconBatteryCharging, IconCpu, IconWifi, IconWifiOff, IconClockHour4, IconPlugConnected } from '@tabler/icons-react'
+import IconActivityHeartbeat from '@tabler/icons-react/icons/IconActivityHeartbeat'
+import IconBattery2 from '@tabler/icons-react/icons/IconBattery2'
+import IconBatteryCharging from '@tabler/icons-react/icons/IconBatteryCharging'
+import IconCpu from '@tabler/icons-react/icons/IconCpu'
+import IconWifi from '@tabler/icons-react/icons/IconWifi'
+import IconWifiOff from '@tabler/icons-react/icons/IconWifiOff'
+import IconClockHour4 from '@tabler/icons-react/icons/IconClockHour4'
+import IconPlugConnected from '@tabler/icons-react/icons/IconPlugConnected'
 import { Panel, SegBar, StatusDot } from '@/hud'
 import { useAccent } from '@/lib/store'
 import { ND, fmtDuration, useTelemetry, type TelemetrySnapshot } from '@/lib/telemetry'
+import { rendererInfo } from '@/lib/gpu'
 import { EGauge } from './EGauge'
 import { Sparkline } from './Sparkline'
 import { LiveBadge } from './DemoBadge'
@@ -69,7 +77,14 @@ export function TelemetryPanel({ reducedMotion }: { reducedMotion: boolean }) {
     >
       <div className="flex items-center justify-between gap-2 shrink-0 -mb-1">
         <span className="jx-label text-[0.625rem] truncate" title="Wszystkie wartości mierzone na żywo w tej przeglądarce, próbkowanie 1 Hz">Pomiar lokalny · 1 Hz</span>
-        <LiveBadge />
+        <span className="flex items-center gap-2">
+          {rendererInfo()?.software && (
+            <span className="jx-label text-[0.625rem] text-jx-warn border border-jx-warn/60 px-1.5 py-px" title="Przeglądarka rysuje na procesorze (SwiftShader/llvmpipe): FPS i blokady są niższe niż na karcie graficznej, to nie usterka">
+              renderer programowy
+            </span>
+          )}
+          <LiveBadge />
+        </span>
       </div>
       {/* gauges */}
       <div className="grid grid-cols-3 gap-1 shrink-0">
@@ -260,6 +275,7 @@ function DeviceSection({ t }: { t: TelemetrySnapshot }) {
       <Row k="Okno" v={`${t.viewport.w}×${t.viewport.h}`} />
       <Row k="DPR" v={`${Number(t.dpr.toFixed(2))}×`} title="window.devicePixelRatio" />
       <Row k="Język" v={t.language ?? nd} />
+      <Row k="Renderer" v={rendererInfo() ? (rendererInfo()!.software ? 'programowy' : 'sprzętowy') : nd} tone={rendererInfo()?.software ? 'warn' : undefined} title={rendererInfo()?.renderer ?? 'WEBGL_debug_renderer_info niedostępne'} />
     </Section>
   )
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { IconAlertTriangle, IconCircleCheck } from '@tabler/icons-react'
+import IconAlertTriangle from '@tabler/icons-react/icons/IconAlertTriangle'
+import IconCircleCheck from '@tabler/icons-react/icons/IconCircleCheck'
 import { FONT_ROLES } from '@/styles/fonts'
 import { HudButton } from '@/hud'
 import { SectionHead, Tag } from './common'
@@ -35,7 +36,7 @@ export function TypeTab() {
     <div className="h-full min-h-0 flex flex-col gap-3">
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 flex-1 min-w-[14rem] max-w-xl">
-          <span className="jx-label text-[0.62rem]">Tekst próbki</span>
+          <span className="jx-label text-[0.625rem]">Tekst próbki</span>
           <input
             value={sample}
             onChange={(e) => setSample(e.target.value)}
@@ -44,7 +45,7 @@ export function TypeTab() {
           />
         </label>
         <label className="flex flex-col gap-1 w-44">
-          <span className="jx-label text-[0.62rem]">
+          <span className="jx-label text-[0.625rem]">
             Rozmiar · <span className="jx-num text-jx-accent">{size}px</span>
           </span>
           <input type="range" min={14} max={64} value={size} onChange={(e) => setSize(Number(e.target.value))} className="accent-[var(--jx-accent)]" aria-label="Rozmiar próbki" />
@@ -100,14 +101,14 @@ export function TypeTab() {
                 <div className="flex flex-col gap-0.5 border-t border-jx-line/40 pt-1.5">
                   {weights.map((w) => (
                     <div key={w} className="flex items-baseline gap-2 min-w-0">
-                      <span className="jx-num text-[0.6rem] text-jx-dim w-8 shrink-0">{w}</span>
+                      <span className="jx-num text-[0.625rem] text-jx-dim w-8 shrink-0">{w}</span>
                       <span className="truncate text-jx-text/90 text-[0.95rem]" style={{ fontFamily: stack, fontWeight: w }}>
                         AaĄą ĘęŁł ŚśŻż 0123456789
                       </span>
                     </div>
                   ))}
                 </div>
-                <footer className="flex flex-wrap items-center gap-x-3 gap-y-1 jx-num text-[0.6rem] text-jx-dim">
+                <footer className="flex flex-wrap items-center gap-x-3 gap-y-1 jx-num text-[0.625rem] text-jx-dim">
                   <span className="text-jx-accent/80">{f.cssVar}</span>
                   <span>{info?.variable ? `zmienny ${info.weights[0]}–${info.weights[1]}` : `${weights.length} ${weights.length === 1 ? 'grubość' : 'grubości'}`}</span>
                   {!info?.pl && <span className="text-jx-warn normal-case">Polski tekst: Michroma / Chakra Petch / JetBrains Mono</span>}
@@ -119,19 +120,19 @@ export function TypeTab() {
         <SectionHead>Role w interfejsie</SectionHead>
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4 pb-6 text-[0.78rem]">
           <div className="border border-jx-line/50 p-2">
-            <div className="jx-label text-[0.6rem]">.jx-display</div>
+            <div className="jx-label text-[0.625rem]">.jx-display</div>
             <div className="jx-display text-jx-accent jx-glow-text">J.A.R.V.I.S</div>
           </div>
           <div className="border border-jx-line/50 p-2">
-            <div className="jx-label text-[0.6rem]">.jx-title</div>
+            <div className="jx-label text-[0.625rem]">.jx-title</div>
             <div className="jx-title">Rejestr zasobów</div>
           </div>
           <div className="border border-jx-line/50 p-2">
-            <div className="jx-label text-[0.6rem]">.jx-label</div>
+            <div className="jx-label text-[0.625rem]">.jx-label</div>
             <div className="jx-label">Moc reaktora · stabilna</div>
           </div>
           <div className="border border-jx-line/50 p-2">
-            <div className="jx-label text-[0.6rem]">.jx-num</div>
+            <div className="jx-label text-[0.625rem]">.jx-num</div>
             <div className="jx-num text-jx-accent">T+00:42:17.093</div>
           </div>
         </div>

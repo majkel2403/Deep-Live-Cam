@@ -103,10 +103,10 @@ export default function UiversePack({ reducedMotion, stage, paused }: FxProps) {
               </div>
               {showLabels && (
                 <figcaption className="flex items-baseline gap-2 border-t border-jx-line/50 px-3 py-1.5">
-                  <span className="jx-num text-[0.62rem] text-jx-accent">{it.code}</span>
+                  <span className="jx-num text-[0.625rem] text-jx-accent">{it.code}</span>
                   <span className={`${LBL} truncate text-[0.68rem] text-jx-text`}>{it.name}</span>
                   <span className="flex-1" />
-                  <span className="jx-num truncate text-[0.58rem] text-jx-dim" title={`uiverse-io/galaxy · loaders/${it.file}.html`}>
+                  <span className="jx-num truncate text-[0.625rem] text-jx-dim" title={`uiverse-io/galaxy · loaders/${it.file}.html`}>
                     uiverse.io/{it.author} · MIT
                   </span>
                 </figcaption>
@@ -115,7 +115,7 @@ export default function UiversePack({ reducedMotion, stage, paused }: FxProps) {
           )
         })}
       </div>
-      <HudChrome code="LDR-UV · UIVERSE" title="Sześć loaderów CSS · MIT" stage={stage} corners={stage} footer={stage ? <span className={`${LBL} text-[0.6rem]`}>Źródło: github.com/uiverse-io/galaxy · przeniesione i przestylowane na tokeny JARVIS</span> : undefined} />
+      <HudChrome code="LDR-UV · UIVERSE" title="Sześć loaderów CSS · MIT" stage={stage} corners={stage} footer={stage ? <span className={`${LBL} text-[0.625rem]`}>Źródło: github.com/uiverse-io/galaxy · przeniesione i przestylowane na tokeny JARVIS</span> : undefined} />
     </div>
   )
 }

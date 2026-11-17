@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react'
 import { AnimatePresence, LayoutGroup, MotionConfig, motion, type Transition } from 'motion/react'
-import { IconAntenna, IconArrowsShuffle, IconAtom2, IconCompass, IconHeartbeat, IconShield, IconSortDescending, IconTarget, IconX } from '@tabler/icons-react'
+import IconAntenna from '@tabler/icons-react/icons/IconAntenna'
+import IconArrowsShuffle from '@tabler/icons-react/icons/IconArrowsShuffle'
+import IconAtom2 from '@tabler/icons-react/icons/IconAtom2'
+import IconCompass from '@tabler/icons-react/icons/IconCompass'
+import IconHeartbeat from '@tabler/icons-react/icons/IconHeartbeat'
+import IconShield from '@tabler/icons-react/icons/IconShield'
+import IconSortDescending from '@tabler/icons-react/icons/IconSortDescending'
+import IconTarget from '@tabler/icons-react/icons/IconTarget'
+import IconX from '@tabler/icons-react/icons/IconX'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
 import { HudButton, SegBar, StatusDot } from '@/hud'
@@ -158,7 +166,7 @@ function PanelFace({ s, stage, expanded }: { s: Sys; stage: boolean; expanded?: 
         <motion.span layoutId={`icon-${s.id}`} className={`text-jx-accent shrink-0 [&>svg]:size-full ${big ? 'size-9' : stage ? 'size-6' : 'size-3'}`}>
           {s.icon}
         </motion.span>
-        <motion.h3 layoutId={`title-${s.id}`} className={`m-0 jx-title truncate ${big ? 'text-3xl' : stage ? 'text-base' : 'text-[0.5rem]'}`}>
+        <motion.h3 layoutId={`title-${s.id}`} className={`m-0 jx-title truncate ${big ? 'text-3xl' : stage ? 'text-base' : 'text-[0.625rem]'}`}>
           {s.name}
         </motion.h3>
         <span className="flex-1" />
@@ -192,7 +200,7 @@ function PanelFace({ s, stage, expanded }: { s: Sys; stage: boolean; expanded?: 
           <div className="flex-1">
             <SegBar value={s.load} segments={stage ? 20 : 10} tone={s.status === 'ok' ? 'accent' : s.status} />
           </div>
-          <span className={`jx-num text-jx-text ${stage ? 'text-xs w-10 text-right' : 'text-[0.42rem]'}`}>{Math.round(s.load * 100)}%</span>
+          <span className={`jx-num text-jx-text ${stage ? 'text-xs w-10 text-right' : 'text-[0.625rem]'}`}>{Math.round(s.load * 100)}%</span>
         </div>
       </motion.div>
     </>
@@ -251,7 +259,8 @@ export default function LayoutPanels({ stage, reducedMotion, paused }: FxProps) 
         <div className="absolute inset-0 jx-grid-bg opacity-35 pointer-events-none" aria-hidden="true" />
         {stage && (
           <header className="relative flex flex-wrap items-center gap-2 px-8 pt-6">
-            <h2 className="m-0 jx-display text-jx-accent jx-glow-text text-lg mr-3">Moduły pokładowe</h2>
+            {/* Michroma: Orbitron has no Polish glyphs (Ł) */}
+            <h2 className="m-0 font-cmd uppercase tracking-[0.2em] text-jx-accent jx-glow-text text-lg mr-3">Moduły pokładowe</h2>
             <HudButton size="sm" icon={<IconArrowsShuffle />} onClick={() => setOrder((o) => shuffle(o))}>
               Przetasuj
             </HudButton>
@@ -336,8 +345,8 @@ export default function LayoutPanels({ stage, reducedMotion, paused }: FxProps) 
                       <div className={`grid grid-cols-3 ${stage ? 'gap-4' : 'gap-1'}`}>
                         {sel.parts.map((p) => (
                           <div key={p.name} className={`border border-jx-line/60 ${stage ? 'p-3' : 'p-0.5'} flex flex-col gap-1`}>
-                            <span className={`jx-label ${stage ? '' : 'text-[0.38rem]! tracking-[0.06em]!'}`}>{p.name}</span>
-                            <span className={`jx-num text-jx-accent jx-glow-text ${stage ? 'text-2xl' : 'text-[0.55rem]'}`}>{Math.round(p.v * 100)}%</span>
+                            <span className={`jx-label ${stage ? '' : 'text-[0.625rem]! tracking-[0.06em]!'}`}>{p.name}</span>
+                            <span className={`jx-num text-jx-accent jx-glow-text ${stage ? 'text-2xl' : 'text-[0.625rem]'}`}>{Math.round(p.v * 100)}%</span>
                             {stage && <SegBar value={p.v} segments={14} tone={p.v > 0.9 && sel.status === 'danger' ? 'danger' : 'accent'} />}
                           </div>
                         ))}

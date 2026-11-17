@@ -1,22 +1,20 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { Leva } from 'leva'
 import * as Tooltip from '@radix-ui/react-tooltip'
-import {
-  IconLayoutDashboard,
-  IconSparkles,
-  IconTopologyStar3,
-  IconWaveSine,
-  IconBooks,
-  IconPower,
-  IconVolume,
-  IconVolumeOff,
-  IconCommand,
-} from '@tabler/icons-react'
+import IconLayoutDashboard from '@tabler/icons-react/icons/IconLayoutDashboard'
+import IconSparkles from '@tabler/icons-react/icons/IconSparkles'
+import IconTopologyStar3 from '@tabler/icons-react/icons/IconTopologyStar3'
+import IconWaveSine from '@tabler/icons-react/icons/IconWaveSine'
+import IconBooks from '@tabler/icons-react/icons/IconBooks'
+import IconPower from '@tabler/icons-react/icons/IconPower'
+import IconVolume from '@tabler/icons-react/icons/IconVolume'
+import IconVolumeOff from '@tabler/icons-react/icons/IconVolumeOff'
+import IconCommand from '@tabler/icons-react/icons/IconCommand'
 import { Backdrop, ErrorBoundary, Glitch, HudButton, StatusDot } from '@/hud'
 import { navigate, useRoute } from '@/lib/router'
 import { useSettings, type ViewId } from '@/lib/store'
 import { playBleep } from '@/lib/sound'
-import { FxStage } from '@/views/gallery/GalleryView'
+import { FxStage } from '@/fx/FxStage'
 import { FX } from '@/fx/registry'
 import { CommandPalette } from '@/shell/CommandPalette'
 import { SettingsMenu } from '@/shell/SettingsMenu'
@@ -38,9 +36,9 @@ function Clock() {
     return () => clearInterval(t)
   }, [])
   return (
-    <span className="jx-num text-sm text-jx-accent jx-glow-text" aria-label="Zegar">
+    <time className="jx-num text-sm text-jx-accent jx-glow-text" dateTime={now.toISOString()}>
       {now.toLocaleTimeString('pl-PL', { hour12: false })}
-    </span>
+    </time>
   )
 }
 
@@ -115,7 +113,7 @@ export default function App() {
           </span>
           <span className="hidden sm:inline-block">
             <Glitch mode="always">
-              <span className="jx-display text-base font-bold text-jx-accent jx-glow-text">J.A.R.V.I.S</span>
+              <span className="jx-logo text-base font-bold text-jx-accent jx-glow-text">J.A.R.V.I.S</span>
             </Glitch>
           </span>
           <span className="jx-label hidden md:inline">Mission Control · FX</span>
@@ -123,15 +121,25 @@ export default function App() {
 
         <nav className="flex items-center gap-1 ml-1 sm:ml-4 min-w-0 overflow-x-auto" aria-label="Widoki">
           {(Object.keys(VIEWS) as ViewId[]).map((id, i) => (
-            <HudButton key={id} size="sm" active={route.view === id} onClick={() => navigate(id)} icon={VIEWS[id].icon} title={`${VIEWS[id].label} (Alt+${i + 1})`}>
-              <span className="hidden lg:inline">{VIEWS[id].label}</span>
+            <HudButton
+              key={id}
+              size="sm"
+              active={route.view === id}
+              aria-label={VIEWS[id].label}
+              aria-current={route.view === id ? 'page' : undefined}
+              onClick={() => navigate(id)}
+              icon={VIEWS[id].icon}
+              title={`${VIEWS[id].label} (Alt+${i + 1})`}
+              className="shrink-0"
+            >
+              <span className="hidden xl:inline">{VIEWS[id].label}</span>
             </HudButton>
           ))}
         </nav>
 
         <span className="flex-1 min-w-0" />
         <span className="hidden sm:inline-flex">
-          <HudButton size="sm" onClick={() => setPaletteOpen(true)} icon={<IconCommand />} title="Paleta poleceń (Ctrl+K)">
+          <HudButton size="sm" aria-label="Paleta poleceń" onClick={() => setPaletteOpen(true)} icon={<IconCommand />} title="Paleta poleceń (Ctrl+K)">
             <span className="hidden md:inline jx-num">Ctrl K</span>
           </HudButton>
         </span>
@@ -142,6 +150,11 @@ export default function App() {
           <Clock />
         </span>
       </header>
+      {/* Phones: nav buttons are icon-only, so name the current view on its own line. */}
+      <div className="sm:hidden flex items-center gap-2 px-3 h-7 shrink-0 border-b border-jx-line/40 bg-jx-bg/40 jx-label text-jx-accent min-w-0">
+        <span aria-hidden="true" className="shrink-0">▸</span>
+        <span className="truncate" aria-live="polite">{VIEWS[route.view].label}</span>
+      </div>
 
       <main className="flex-1 min-h-0 p-3 md:p-4">
         <ErrorBoundary label={route.view} key={route.view}>

@@ -50,6 +50,7 @@ export default defineConfig({
   },
   server: { host: '127.0.0.1' },
   build: {
-    chunkSizeWarningLimit: 2500,
+    // Warn above 900 KB (minified) so growth in the largest chunks (Graph3D, three) is flagged during builds.
+    chunkSizeWarningLimit: 900,
   },
 })

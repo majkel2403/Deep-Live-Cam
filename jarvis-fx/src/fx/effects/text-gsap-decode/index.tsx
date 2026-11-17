@@ -41,7 +41,8 @@ const FONTS = { Orbitron: 'var(--jx-font-display)', Michroma: 'var(--jx-font-cmd
 export default function GsapDecode({ stage, reducedMotion, paused }: FxProps) {
   const c = useFxControls({
     tempo: { value: 1, min: 0.25, max: 2.5, step: 0.05, label: 'tempo' },
-    charset: { value: CHARSETS.bloki as string, options: CHARSETS, label: 'szyfr' },
+    // hex by default: block glyphs fall back to a system font with very different metrics and look oversized
+    charset: { value: CHARSETS.hex as string, options: CHARSETS, label: 'szyfr' },
     font: { value: FONTS.Orbitron as string, options: FONTS, label: 'krój' },
     hold: { value: 1.8, min: 0.4, max: 6, step: 0.1, label: 'pauza (s)' },
     glow: { value: true, label: 'poświata' },
@@ -110,6 +111,8 @@ export default function GsapDecode({ stage, reducedMotion, paused }: FxProps) {
         lines.forEach((l) => (l.textContent = ''))
         oks.forEach((o) => (o.textContent = ''))
         kickerEl.textContent = ''
+        // reset the readout with the bar (the counter tween only writes its text after its 0.6 s offset)
+        pctEl.textContent = '0%'
         const counter = { v: 0 }
 
         const tl = gsap.timeline({
@@ -163,7 +166,7 @@ export default function GsapDecode({ stage, reducedMotion, paused }: FxProps) {
       <CornerBrackets size={stage ? 22 : 10} inset={stage ? 18 : 6} />
 
       <div className={`absolute inset-0 flex flex-col items-center justify-center ${stage ? 'gap-5 px-10' : 'gap-1.5 px-3'}`}>
-        <span data-kicker className={`jx-label text-jx-accent! ${stage ? 'text-sm! tracking-[0.4em]!' : 'text-[0.5rem]! tracking-[0.3em]!'}`} aria-hidden="true">
+        <span data-kicker className={`jx-label text-jx-accent! ${stage ? 'text-sm! tracking-[0.4em]!' : 'text-[0.625rem]! tracking-[0.3em]!'}`} aria-hidden="true">
           Sekwencja 01/03 · BOOT
         </span>
 
@@ -192,7 +195,7 @@ export default function GsapDecode({ stage, reducedMotion, paused }: FxProps) {
 
         <div className={`flex flex-col ${stage ? 'gap-2 w-[min(40rem,70%)]' : 'gap-0.5 w-[88%]'}`}>
           {[0, 1, 2].map((k) => (
-            <div key={k} data-row className={`flex items-center gap-2 font-head ${stage ? 'text-lg' : 'text-[0.55rem]'} text-jx-text/90`}>
+            <div key={k} data-row className={`flex items-center gap-2 font-head ${stage ? 'text-lg' : 'text-[0.625rem]'} text-jx-text/90`}>
               <span className="text-jx-accent">›</span>
               <span data-line className="flex-1 truncate tracking-wider">
                 {SEQUENCES[0].lines[k]}
@@ -205,11 +208,11 @@ export default function GsapDecode({ stage, reducedMotion, paused }: FxProps) {
         </div>
 
         <div className={`flex items-center gap-3 ${stage ? 'w-[min(40rem,70%)] mt-2' : 'w-[88%]'}`} aria-hidden="true">
-          <span className={`jx-label ${stage ? '' : 'text-[0.45rem]!'}`}>Synchronizacja</span>
+          <span className={`jx-label ${stage ? '' : 'text-[0.625rem]!'}`}>Synchronizacja</span>
           <div className="relative flex-1 h-1 bg-jx-accent-dim/30 overflow-hidden">
             <div data-bar className="absolute inset-0 origin-left bg-jx-accent shadow-[0_0_8px_var(--jx-accent)]" />
           </div>
-          <span data-pct className={`jx-num text-jx-accent ${stage ? 'text-sm' : 'text-[0.5rem]'} w-[3.2em] text-right`}>
+          <span data-pct className={`jx-num text-jx-accent ${stage ? 'text-sm' : 'text-[0.625rem]'} w-[3.2em] text-right`}>
             100%
           </span>
         </div>

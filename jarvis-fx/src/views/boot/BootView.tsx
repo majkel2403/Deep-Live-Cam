@@ -3,8 +3,15 @@
  * (driven by the same numbers as the GSAP timeline) and lets you scrub, slow down or launch the
  * real full-screen overlay.
  */
-import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from 'react'
-import { IconMaximize, IconPlayerPause, IconPlayerPlay, IconPower, IconRefresh, IconStack2, IconAccessible, IconVolume } from '@tabler/icons-react'
+import { useCallback, useRef, useState, type ReactNode, type RefObject } from 'react'
+import IconMaximize from '@tabler/icons-react/icons/IconMaximize'
+import IconPlayerPause from '@tabler/icons-react/icons/IconPlayerPause'
+import IconPlayerPlay from '@tabler/icons-react/icons/IconPlayerPlay'
+import IconPower from '@tabler/icons-react/icons/IconPower'
+import IconRefresh from '@tabler/icons-react/icons/IconRefresh'
+import IconStack2 from '@tabler/icons-react/icons/IconStack2'
+import IconAccessible from '@tabler/icons-react/icons/IconAccessible'
+import IconVolume from '@tabler/icons-react/icons/IconVolume'
 import { HudButton, Panel, StatusDot } from '@/hud'
 import { useReducedMotion, useSettings } from '@/lib/store'
 import { playBleep } from '@/lib/sound'
@@ -63,9 +70,8 @@ export default function BootView() {
     setRun((r) => r + 1)
   }
 
-  useEffect(() => {
-    onProgress(0)
-  }, [run, onProgress])
+  // no reset effect here: the freshly mounted BootStage (keyed by `run`) reports its own time, and a
+  // parent effect running after the child would overwrite the reduced-motion end state with T+0.
 
   const reducedNow = previewReduced || reducedPref
 
@@ -135,7 +141,7 @@ export default function BootView() {
           state={
             <span className="inline-flex items-center gap-1.5" role="status">
               <StatusDot tone={finished ? 'ok' : paused ? 'warn' : 'accent'} pulse={!finished && !paused} />
-              <span className="jx-label text-[0.62rem] hidden sm:inline">{finished ? 'Zakończono' : paused ? 'Wstrzymano' : reducedNow ? 'Ograniczony ruch' : 'Odtwarzanie'}</span>
+              <span className="jx-label text-[0.625rem] hidden sm:inline">{finished ? 'Zakończono' : paused ? 'Wstrzymano' : reducedNow ? 'Ograniczony ruch' : 'Odtwarzanie'}</span>
             </span>
           }
         />
@@ -161,17 +167,17 @@ export default function BootView() {
                 <p className="text-[0.74rem] leading-snug text-jx-dim mt-0.5">{l.desc}</p>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {l.tech.map((t) => (
-                    <span key={t} className="jx-num text-[0.6rem] px-1.5 py-px border border-jx-line/70 text-jx-accent">
+                    <span key={t} className="jx-num text-[0.625rem] px-1.5 py-px border border-jx-line/70 text-jx-accent">
                       {t}
                     </span>
                   ))}
                   {l.sound && (
-                    <span className="jx-num text-[0.6rem] px-1.5 py-px border border-jx-ok/40 text-jx-ok inline-flex items-center gap-1">
+                    <span className="jx-num text-[0.625rem] px-1.5 py-px border border-jx-ok/40 text-jx-ok inline-flex items-center gap-1">
                       <IconVolume className="size-3" aria-hidden="true" />
                       {l.sound}
                     </span>
                   )}
-                  {l.overlayOnly && <span className="jx-num text-[0.6rem] px-1.5 py-px border border-jx-warn/40 text-jx-warn">tylko pełny ekran</span>}
+                  {l.overlayOnly && <span className="jx-num text-[0.625rem] px-1.5 py-px border border-jx-warn/40 text-jx-warn">tylko pełny ekran</span>}
                 </div>
               </li>
             ))}
@@ -232,7 +238,7 @@ function Timeline({
         <div className="grid grid-cols-[112px_minmax(0,1fr)] gap-x-2">
           {BOOT_LAYERS.map((l) => (
             <div key={l.id} className="contents">
-              <span data-layer={l.id} className="jx-label text-[0.62rem] leading-[18px] truncate data-[active]:text-jx-accent">
+              <span data-layer={l.id} className="jx-label text-[0.625rem] leading-[18px] truncate data-[active]:text-jx-accent">
                 {l.name}
               </span>
               <div className="relative h-[18px] border-b border-jx-line/20">
@@ -245,7 +251,7 @@ function Timeline({
                   }`}
                   style={{ left: `${(l.at / BOOT_TOTAL) * 100}%`, width: `${(l.dur / BOOT_TOTAL) * 100}%` }}
                 >
-                  <span className="jx-num text-[0.58rem] text-jx-text/80 truncate">{l.tech[0]}</span>
+                  <span className="jx-num text-[0.625rem] text-jx-text/80 truncate">{l.tech[0]}</span>
                 </div>
               </div>
             </div>
@@ -253,7 +259,7 @@ function Timeline({
           <span />
           <div className="relative h-4">
             {ticks.map((s) => (
-              <span key={s} className="absolute top-0 jx-num text-[0.58rem] text-jx-dim -translate-x-1/2" style={{ left: `${(s / BOOT_TOTAL) * 100}%` }}>
+              <span key={s} className="absolute top-0 jx-num text-[0.625rem] text-jx-dim -translate-x-1/2" style={{ left: `${(s / BOOT_TOTAL) * 100}%` }}>
                 {s} s
               </span>
             ))}
@@ -265,7 +271,7 @@ function Timeline({
         </div>
       </div>
       <div className="grid grid-cols-[112px_minmax(0,1fr)] gap-x-2 items-center mt-1">
-        <span className="jx-label text-[0.62rem]">
+        <span className="jx-label text-[0.625rem]">
           T+<span ref={timeRef} className="jx-num text-jx-accent">0,00</span> s
         </span>
         <div className="relative flex items-center min-w-0">

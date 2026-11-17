@@ -2,7 +2,7 @@
  * GLSL + GL helpers for bg-reactbits-faulty-terminal – copied verbatim from React Bits "FaultyTerminal".
  * Source: https://github.com/DavidHDev/react-bits/blob/main/src/ts-tailwind/Backgrounds/FaultyTerminal/FaultyTerminal.tsx
  * License: MIT + Commons Clause (c) David Haz – https://github.com/DavidHDev/react-bits/blob/main/LICENSE.md
- * Ported/adapted for JARVIS FX; the component itself may not be resold on its own.
+ * Ported/adapted for JARVIS FX. Commons Clause applies: the software may not be sold as such.
  */
 
 export type Program = { program: WebGLProgram; uniforms: Record<string, WebGLUniformLocation | null> };

@@ -1,31 +1,29 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Command, defaultFilter } from 'cmdk'
-import {
-  IconBooks,
-  IconBrightnessHalf,
-  IconCommand,
-  IconLayoutDashboard,
-  IconPalette,
-  IconPower,
-  IconSearch,
-  IconSparkles,
-  IconTopologyStar3,
-  IconVolume,
-  IconVolumeOff,
-  IconWaveSine,
-  IconWalk,
-  IconLineScan,
-  IconCube,
-  IconPhoto,
-  IconAtom2,
-  IconCrosshair,
-  IconLoader2,
-  IconTypography,
-  IconChartDonut3,
-  IconTimeline,
-  IconGauge,
-} from '@tabler/icons-react'
+import IconBooks from '@tabler/icons-react/icons/IconBooks'
+import IconBrightnessHalf from '@tabler/icons-react/icons/IconBrightnessHalf'
+import IconCommand from '@tabler/icons-react/icons/IconCommand'
+import IconLayoutDashboard from '@tabler/icons-react/icons/IconLayoutDashboard'
+import IconPalette from '@tabler/icons-react/icons/IconPalette'
+import IconPower from '@tabler/icons-react/icons/IconPower'
+import IconSearch from '@tabler/icons-react/icons/IconSearch'
+import IconSparkles from '@tabler/icons-react/icons/IconSparkles'
+import IconTopologyStar3 from '@tabler/icons-react/icons/IconTopologyStar3'
+import IconVolume from '@tabler/icons-react/icons/IconVolume'
+import IconVolumeOff from '@tabler/icons-react/icons/IconVolumeOff'
+import IconWaveSine from '@tabler/icons-react/icons/IconWaveSine'
+import IconWalk from '@tabler/icons-react/icons/IconWalk'
+import IconLineScan from '@tabler/icons-react/icons/IconLineScan'
+import IconCube from '@tabler/icons-react/icons/IconCube'
+import IconPhoto from '@tabler/icons-react/icons/IconPhoto'
+import IconAtom2 from '@tabler/icons-react/icons/IconAtom2'
+import IconCrosshair from '@tabler/icons-react/icons/IconCrosshair'
+import IconLoader2 from '@tabler/icons-react/icons/IconLoader2'
+import IconTypography from '@tabler/icons-react/icons/IconTypography'
+import IconChartDonut3 from '@tabler/icons-react/icons/IconChartDonut3'
+import IconTimeline from '@tabler/icons-react/icons/IconTimeline'
+import IconGauge from '@tabler/icons-react/icons/IconGauge'
 import { FX } from '@/fx/registry'
 import { FX_CATEGORIES, type FxCategory } from '@/fx/types'
 import { navigate } from '@/lib/router'
@@ -99,7 +97,7 @@ function Item({
     >
       {icon && <span className="text-jx-accent shrink-0 [&>svg]:size-4 grid place-items-center">{icon}</span>}
       <span className="flex-1 min-w-0 truncate">{label}</span>
-      {hint && <span className="jx-num text-[0.62rem] text-jx-dim tracking-wider shrink-0">{hint}</span>}
+      {hint && <span className="jx-num text-[0.625rem] text-jx-dim tracking-wider shrink-0">{hint}</span>}
     </Command.Item>
   )
 }
@@ -109,7 +107,7 @@ function GroupHeading({ children, count }: { children: ReactNode; count?: number
     <span className="flex items-center gap-2 px-2 pt-2.5 pb-1">
       <span className="jx-label text-[0.64rem] text-jx-accent/80">{children}</span>
       <span className="flex-1 h-px bg-jx-line/60" />
-      {count !== undefined && <span className="jx-num text-[0.6rem] text-jx-dim">{count}</span>}
+      {count !== undefined && <span className="jx-num text-[0.625rem] text-jx-dim">{count}</span>}
     </span>
   )
 }
@@ -178,7 +176,7 @@ function PaletteBody({ close }: { close: () => void }) {
         <IconCommand className="size-4 text-jx-accent" aria-hidden="true" />
         <Dialog.Title className="jx-title text-[0.78rem] leading-none">Paleta poleceń</Dialog.Title>
         <span className="flex-1" />
-        <span className="jx-num text-[0.62rem] text-jx-dim tracking-widest">CMD · {FX.length} FX</span>
+        <span className="jx-num text-[0.625rem] text-jx-dim tracking-widest">CMD · {FX.length} FX</span>
       </header>
 
       <div className="flex items-center gap-2 px-3 py-2 border-b border-jx-line/40 bg-jx-accent/5">
@@ -194,7 +192,7 @@ function PaletteBody({ close }: { close: () => void }) {
           aria-label="Szukaj polecenia"
           className="flex-1 min-w-0 bg-transparent outline-none text-[0.95rem] font-ui text-jx-text placeholder:text-jx-dim/80"
         />
-        <kbd className="jx-num text-[0.6rem] text-jx-dim border border-jx-line/70 px-1.5 py-0.5">ESC</kbd>
+        <kbd className="jx-num text-[0.625rem] text-jx-dim border border-jx-line/70 px-1.5 py-0.5">ESC</kbd>
       </div>
 
       <Command.List ref={listRef} className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-1.5 pb-2 scroll-pt-8">
@@ -321,7 +319,7 @@ function PaletteBody({ close }: { close: () => void }) {
         ))}
       </Command.List>
 
-      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-1.5 border-t border-jx-line/50 jx-label text-[0.6rem]">
+      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-1.5 border-t border-jx-line/50 jx-label text-[0.625rem]">
         <span>
           <kbd className="jx-num text-jx-accent">↑↓</kbd> wybór
         </span>

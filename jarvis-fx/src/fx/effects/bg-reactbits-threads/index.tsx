@@ -2,7 +2,8 @@
  * bg-reactbits-threads – ported/adapted from React Bits "Threads" by David Haz.
  * Source: https://github.com/DavidHDev/react-bits/blob/main/src/ts-tailwind/Backgrounds/Threads/Threads.tsx
  * License: MIT + Commons Clause – https://github.com/DavidHDev/react-bits/blob/main/LICENSE.md
- *   (free to use inside an application; the component itself may not be sold or redistributed alone).
+ *   Commons Clause: the software may not be sold, i.e. offered for a fee as a product or service whose value
+ *   derives substantially from it. Use inside this free application is permitted.
  * Adaptations: FxProps (accent colours, quality → DPR cap, reducedMotion/paused from the app instead of
  * matchMedia), Leva controls, lighter card mode, HUD overlay, WebGL2-missing fallback, context release.
  */

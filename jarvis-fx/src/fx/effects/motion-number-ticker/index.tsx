@@ -7,7 +7,9 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useInView, useMotionValue, useSpring } from 'motion/react'
-import { IconArrowDownRight, IconArrowUpRight, IconMinus } from '@tabler/icons-react'
+import IconArrowDownRight from '@tabler/icons-react/icons/IconArrowDownRight'
+import IconArrowUpRight from '@tabler/icons-react/icons/IconArrowUpRight'
+import IconMinus from '@tabler/icons-react/icons/IconMinus'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
 import { DemoBadge, LiveBadge } from '../motion-kit/kit'
@@ -203,7 +205,8 @@ export default function NumberTickerWall({ stage, reducedMotion, paused }: FxPro
       <div className="absolute inset-0 jx-grid-bg opacity-35 pointer-events-none" aria-hidden="true" />
       {stage && (
         <header className="relative flex flex-wrap items-center gap-3 px-8 pt-6">
-          <h2 className="m-0 jx-display text-jx-accent jx-glow-text text-lg">Ściana telemetrii</h2>
+          {/* Michroma: Orbitron has no Polish glyphs (Ś) */}
+          <h2 className="m-0 font-cmd uppercase tracking-[0.2em] text-jx-accent jx-glow-text text-lg">Ściana telemetrii</h2>
           <span className="flex-1" />
           <span className="inline-flex items-center gap-2 text-xs text-jx-dim">
             <LiveBadge /> prawdziwy odczyt przeglądarki
@@ -230,7 +233,7 @@ export default function NumberTickerWall({ stage, reducedMotion, paused }: FxPro
                 style={m.live ? undefined : { ['--aug-border-bg' as string]: 'color-mix(in srgb, var(--jx-warn) 45%, transparent)' }}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className={`jx-label truncate ${stage ? '' : 'text-[0.42rem]! tracking-[0.08em]!'}`}>{m.label}</span>
+                  <span className={`jx-label truncate ${stage ? '' : 'text-[0.625rem]! tracking-[0.08em]!'}`}>{m.label}</span>
                   <span className="flex-1" />
                   {stage && (m.live ? <LiveBadge /> : <DemoBadge />)}
                   {!stage && <span className={`size-1 shrink-0 ${m.live ? 'bg-jx-ok' : 'bg-jx-warn'}`} aria-label={m.live ? 'na żywo' : 'demo'} />}
@@ -244,7 +247,7 @@ export default function NumberTickerWall({ stage, reducedMotion, paused }: FxPro
                     reduced={reducedMotion}
                     className={`jx-num jx-glow-text leading-none ${m.live ? 'text-jx-accent' : 'text-jx-warn'} ${stage ? 'text-[clamp(1.6rem,2.6vw,2.6rem)]' : 'text-[0.82rem]'}`}
                   />
-                  {m.unit && <span className={`jx-num text-jx-dim ${stage ? 'text-sm' : 'text-[0.45rem]'}`}>{m.unit}</span>}
+                  {m.unit && <span className={`jx-num text-jx-dim ${stage ? 'text-sm' : 'text-[0.625rem]'}`}>{m.unit}</span>}
                   <span className="flex-1" />
                   {stage && (
                     <span className={`inline-flex items-center ${trendCls}`} aria-label={dir > 0 ? 'wzrost' : dir < 0 ? 'spadek' : 'bez zmian'}>

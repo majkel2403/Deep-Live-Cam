@@ -39,7 +39,13 @@ export function BgHud({
   const fps = useFps(stage && !paused)
   return (
     <div className="pointer-events-none absolute inset-0 z-10 select-none" aria-hidden="true">
-      <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 50% 50%, transparent 52%, rgb(0 0 0 / ${vignette}) 100%)` }} />
+      {/* multi-stop falloff: a single transparent→dark step leaves a visible ellipse on warm, brown backdrops */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `radial-gradient(ellipse at 50% 50%, transparent 38%, rgb(0 0 0 / ${vignette * 0.3}) 70%, rgb(0 0 0 / ${vignette * 0.75}) 88%, rgb(0 0 0 / ${vignette}) 100%)`,
+        }}
+      />
       {stage && (
         <>
           {/* soft scrims keep the HUD captions readable over busy fields (glyph rain, dense particles) */}

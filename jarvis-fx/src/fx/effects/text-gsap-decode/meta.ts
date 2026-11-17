@@ -7,7 +7,7 @@ export const meta: FxMeta = {
   description:
     'Filmowe odsłonięcie tytułu: SplitText tnie napis na znaki, ScrambleTextPlugin przepuszcza je przez szyfr, a oś czasu GSAP zapętla trzy sekwencje komunikatów po polsku.',
   tech: ['GSAP 3', 'SplitText', 'ScrambleTextPlugin', '@gsap/react'],
-  license: 'GSAP Standard License (bezpłatna)',
+  license: 'GSAP Standard "no charge" License (Webflow, bezpłatna)',
   source: { label: 'gsap.com/docs – SplitText', url: 'https://gsap.com/docs/v3/Plugins/SplitText/' },
   cost: 1,
   order: 1,

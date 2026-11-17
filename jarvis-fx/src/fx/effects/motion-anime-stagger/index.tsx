@@ -10,8 +10,10 @@ type Pattern = 'wave' | 'lift' | 'spin' | 'color' | 'sweep'
 const PATTERNS = { fala: 'wave', uniesienie: 'lift', obrót: 'spin', barwa: 'color', przemiatanie: 'sweep' } as const
 const PATTERN_PL: Record<Pattern, string> = { wave: 'fala', lift: 'uniesienie', spin: 'obrót', color: 'barwa', sweep: 'przemiatanie' }
 const MAX_DOTS = 1500
+/** lighter grid on low quality (also used by gallery cards): every dot is a DOM node that anime.js restyles */
+const MAX_DOTS_LOW = 650
 
-export default function AnimeStagger({ stage, reducedMotion, paused, accent, accent2 }: FxProps) {
+export default function AnimeStagger({ stage, reducedMotion, paused, accent, accent2, quality }: FxProps) {
   const c = useFxControls({
     pattern: { value: PATTERNS.fala as string, options: PATTERNS, label: 'wzór' },
     step: { value: 32, min: 8, max: 120, step: 2, label: 'krok staggera (ms)' },
@@ -32,9 +34,9 @@ export default function AnimeStagger({ stage, reducedMotion, paused, accent, acc
   const geo = useMemo(() => {
     if (!w || !h) return { cols: 0, rows: 0, cell: 0 }
     let cell = stage ? c.cell : Math.max(11, c.cell * 0.5)
-    cell = Math.max(cell, Math.sqrt((w * h) / MAX_DOTS))
+    cell = Math.max(cell, Math.sqrt((w * h) / (quality === 'low' ? MAX_DOTS_LOW : MAX_DOTS)))
     return { cols: Math.max(4, Math.floor(w / cell)), rows: Math.max(3, Math.floor(h / cell)), cell }
-  }, [w, h, c.cell, stage])
+  }, [w, h, c.cell, stage, quality])
   const total = geo.cols * geo.rows
 
   const track = useCallback(<T extends JSAnimation | Timeline>(a: T) => {
@@ -201,6 +203,8 @@ export default function AnimeStagger({ stage, reducedMotion, paused, accent, acc
   return (
     <div ref={ref} className="fxk-noblur absolute inset-0 overflow-hidden bg-jx-bg">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(var(--jx-hue)_90%_25%/0.25),transparent_70%)]" aria-hidden="true" />
+      {/* vignette: keeps the matrix edges quiet so the pulses and the captions read */}
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_42%,var(--jx-bg)_100%)]" aria-hidden="true" />
       {total > 0 && (
         <div
           className={`absolute inset-0 grid place-content-center ${stage ? 'cursor-crosshair outline-none focus-visible:ring-1 focus-visible:ring-jx-accent' : ''}`}
@@ -223,7 +227,7 @@ export default function AnimeStagger({ stage, reducedMotion, paused, accent, acc
                 <span
                   key={`${geo.cols}x${geo.rows}-${i}`}
                   className="place-self-center rounded-full bg-jx-accent"
-                  style={{ width: dotSize, height: dotSize, opacity: reducedMotion ? Math.max(0.15, 0.9 - d) : 0.36, boxShadow: '0 0 4px var(--jx-accent)' }}
+                  style={{ width: dotSize, height: dotSize, opacity: reducedMotion ? Math.max(0.15, 0.9 - d) : 0.26, boxShadow: '0 0 4px var(--jx-accent)' }}
                 />
               )
             })}
@@ -252,7 +256,7 @@ export default function AnimeStagger({ stage, reducedMotion, paused, accent, acc
       {stage && (
         <>
           <div className="absolute left-6 top-6 pointer-events-none">
-            <div className="jx-aug flex flex-col gap-1 p-4 min-w-56" data-augmented-ui="tl-clip br-clip border">
+            <div className="jx-aug flex flex-col gap-1 p-4 min-w-56 bg-jx-bg/90" data-augmented-ui="tl-clip br-clip border">
               <span className="jx-title text-sm">Matryca impulsów</span>
               <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-0.5 text-xs">
                 <dt className="jx-label">Komórki</dt>
@@ -268,7 +272,7 @@ export default function AnimeStagger({ stage, reducedMotion, paused, accent, acc
               </dl>
             </div>
           </div>
-          <p className="absolute bottom-5 inset-x-0 text-center jx-label text-[0.65rem]! pointer-events-none">
+          <p className="absolute bottom-5 left-1/2 -translate-x-1/2 m-0 whitespace-nowrap jx-label text-[0.65rem]! px-3 py-1 bg-jx-bg/90 border border-jx-line/60 pointer-events-none">
             {reducedMotion ? 'Ograniczony ruch: matryca statyczna' : 'Kliknij siatkę · Tab, strzałki i Enter · stagger({ grid, from })'}
           </p>
         </>

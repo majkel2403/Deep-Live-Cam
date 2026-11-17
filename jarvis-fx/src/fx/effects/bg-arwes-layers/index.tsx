@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createBackgroundDots, createBackgroundGridLines, createBackgroundMovingLines, createBackgroundPuffs } from '@arwes/bgs'
 import type { AnimatorNode } from '@arwes/animator'
-import { IconPlayerPlay, IconPlayerStop } from '@tabler/icons-react'
+import IconPlayerPlay from '@tabler/icons-react/icons/IconPlayerPlay'
+import IconPlayerStop from '@tabler/icons-react/icons/IconPlayerStop'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
 import { HudButton, StatusDot } from '@/hud'
@@ -134,7 +135,7 @@ export default function ArwesLayers({ hue, reducedMotion, stage, paused }: FxPro
       <BgHud code="BG/ARWES · LAYERS" stage={stage} paused={paused} hint="Warstwy włączasz w panelu parametrów" vignette={0.45} />
       {stage && (
         // augmented-ui forces position:relative on its host, so the anchor is a separate wrapper
-        <div className="absolute bottom-6 left-6 z-20 w-72">
+        <div className="absolute bottom-6 left-6 z-20 w-80 max-w-[calc(100%-3rem)]">
           <section data-augmented-ui="tl-clip br-clip border" className="jx-aug flex flex-col gap-2 p-3" aria-label="Warstwy ARWES">
             <header className="flex items-center justify-between">
               <span className="jx-title text-xs">Animator</span>
@@ -146,8 +147,8 @@ export default function ArwesLayers({ hue, reducedMotion, stage, paused }: FxPro
               {LAYERS.map((l) => (
                 <li key={l.id} className="flex items-center gap-2 text-xs">
                   <StatusDot tone={enabled[l.id] ? 'ok' : 'dim'} pulse={enabled[l.id] && (state === 'entering' || state === 'exiting')} />
-                  <span className="font-ui text-jx-text">{l.label}</span>
-                  <span className="jx-num ml-auto truncate text-[0.66rem] text-jx-dim">{l.api}</span>
+                  <span className="font-ui whitespace-nowrap text-jx-text">{l.label}</span>
+                  <span className="jx-num ml-auto min-w-0 truncate text-[0.66rem] text-jx-dim">{l.api}</span>
                 </li>
               ))}
             </ul>

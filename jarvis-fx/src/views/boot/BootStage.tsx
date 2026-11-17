@@ -59,6 +59,7 @@ export function BootStage({ mode, onDone, onProgress, onPausedChange, speed = 1,
   const subRef = useRef<HTMLParagraphElement>(null)
   const tlRef = useRef<gsap.core.Timeline | null>(null)
   const skipRef = useRef<() => void>(() => undefined)
+  const reportRef = useRef<() => void>(() => undefined)
   const seekRef = useRef<(t: number) => void>(() => undefined)
   const doneRef = useRef(false)
   const cb = useRef({ onDone, onProgress, onPausedChange })
@@ -205,6 +206,7 @@ export function BootStage({ mode, onDone, onProgress, onPausedChange, speed = 1,
         cb.current.onProgress?.(t)
       }
       tl.eventCallback('onUpdate', report)
+      reportRef.current = report
 
       let finishing = false
       const finish = contextSafe((fast = false) => {
@@ -258,6 +260,13 @@ export function BootStage({ mode, onDone, onProgress, onPausedChange, speed = 1,
     tlRef.current?.timeScale(speed)
   }, [speed])
 
+  // The layout-phase timeline may have reported before the parent's refs (time readout, scrubber)
+  // were attached — the parent's siblings mount after this component. Passive effects run after that,
+  // so re-sending the current time here keeps the reduced-motion end state visible in BootView.
+  useEffect(() => {
+    reportRef.current()
+  }, [])
+
   useImperativeHandle(
     apiRef,
     () => ({
@@ -307,6 +316,8 @@ export function BootStage({ mode, onDone, onProgress, onPausedChange, speed = 1,
       <div className="jxb-bg" />
       <div className="jxb-grid" />
       <div className="jxb-scan" />
+      {/* light burst driven by the flash tween in the timeline (its target must exist, or GSAP warns) */}
+      <div className="jxb-flash" aria-hidden="true" />
       {(['tl', 'tr', 'bl', 'br'] as const).map((c) => (
         <span key={c} className="jxb-corner" data-c={c} data-chrome aria-hidden="true" />
       ))}

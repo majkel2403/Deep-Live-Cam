@@ -48,6 +48,8 @@ export function FxLevaPanel({ store }: { store: LevaStore }) {
           vivid1: '#ffb000',
         },
         fonts: { mono: 'JetBrains Mono, monospace', sans: 'Chakra Petch, sans-serif' },
+        // Leva defaults to 11px labels; 12px keeps Polish labels legible on the HUD panel
+        fontSizes: { root: '12px', toolTip: '11px' },
         radii: { xs: '0px', sm: '0px', lg: '0px' },
         // wider label column so Polish labels are not cut after ~9 characters
         sizes: { controlWidth: '54%' },

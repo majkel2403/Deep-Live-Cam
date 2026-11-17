@@ -36,7 +36,10 @@
   --jx-text-glow: 0 0 8px hsl(var(--jx-hue) 100% 60% / 0.65);
 
   /* typography (all SIL OFL 1.1, self-hosted via Fontsource) */
-  --jx-font-display: "Orbitron", "Michroma", system-ui, sans-serif;
+  /* Michroma first: Orbitron (latin subset only) has no Polish glyphs, so display text with ą ć ę ł ń ó ś ź ż would fall back per glyph. */
+  --jx-font-display: "Michroma", "Audiowide", system-ui, sans-serif;
+  /* Wordmark only (.jx-logo): ASCII "J.A.R.V.I.S" in Orbitron. */
+  --jx-font-logo: "Orbitron", "Michroma", system-ui, sans-serif;
   --jx-font-cmd: "Michroma", "Orbitron", system-ui, sans-serif;
   --jx-font-head: "Oxanium", "Chakra Petch", system-ui, sans-serif;
   --jx-font-label: "Rajdhani", "Chakra Petch", system-ui, sans-serif;

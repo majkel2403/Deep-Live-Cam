@@ -1,0 +1,78 @@
+/* hud-cyber-elements: scoped motion. All colour comes from `currentColor` / inline accent, never hard-coded here. */
+
+/* panel reveal: the frame wipes in from the left, replayed by re-keying the wrapper */
+.cy-reveal {
+  animation: cy-reveal 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes cy-reveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+    opacity: 0.2;
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+  }
+}
+
+/* sweep line that travels over the frame */
+.cy-scan {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 18%;
+  background: linear-gradient(90deg, transparent, currentColor 50%, transparent);
+  opacity: 0.12;
+  animation: cy-scan 3.4s linear infinite;
+}
+@keyframes cy-scan {
+  from {
+    transform: translateX(-120%);
+  }
+  to {
+    transform: translateX(620%);
+  }
+}
+
+/* level meter under the frame: each bar breathes out of phase */
+.cy-bar {
+  transform-origin: 50% 100%;
+  animation: cy-bar 1.6s ease-in-out infinite;
+}
+@keyframes cy-bar {
+  0%,
+  100% {
+    transform: scaleY(0.25);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* blinking caret in the input field */
+.cy-caret {
+  animation: cy-blink 1s steps(2, start) infinite;
+}
+@keyframes cy-blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* pause every loop when the card is off-screen or the tab is hidden; a paused reveal shows its final state
+   instead of freezing at the clipped start frame */
+.cy-root[data-paused="true"] .cy-reveal {
+  animation: none;
+}
+.cy-root[data-paused="true"] *,
+.cy-root[data-paused="true"] *::before,
+.cy-root[data-paused="true"] *::after {
+  animation-play-state: paused !important;
+}
+
+/* reduced motion: no loops at all, static frame and meter */
+.cy-root[data-reduced="true"] *,
+.cy-root[data-reduced="true"] *::before,
+.cy-root[data-reduced="true"] *::after {
+  animation: none !important;
+  transition: none !important;
+}

@@ -41,10 +41,20 @@ function construct(): AudioContext | null {
   }
 }
 
-/** Shared context + bus. Creates it on first use and nudges a suspended context to resume. */
-export function getAudio(create = true): { ctx: AudioContext; bus: AudioNode } | null {
+/**
+ * Browsers refuse to start an AudioContext before a user gesture and log "AudioContext was not allowed
+ * to start". Bleeps can fire on page load (boot sequence, hover before any click), so the context is
+ * only created once the page has seen user activation. Without support for the API we assume yes.
+ */
+function gestureSeen(): boolean {
+  const ua = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation
+  return ua ? ua.hasBeenActive : true
+}
+
+/** Shared context + bus. Creates it on first use (after a user gesture) and nudges a suspended context to resume. */
+export function getAudio(create = true): { ctx: AudioContext; bus: GainNode } | null {
   if (!ctx) {
-    if (!create) return null
+    if (!create || !gestureSeen()) return null
     ctx = construct()
     if (!ctx) return null
     wire(ctx)

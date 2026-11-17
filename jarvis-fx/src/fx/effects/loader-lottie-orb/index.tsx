@@ -58,12 +58,12 @@ export default function LottieOrb({ accent, accent2, reducedMotion, stage, pause
         />
         {c.caption && (
           <div className="flex flex-col items-center gap-1" role="status" aria-live="polite">
-            <span className={`${LBL} jx-caret ${stage ? 'text-[0.8rem] text-jx-accent' : 'text-[0.5rem] text-jx-accent'}`}>{phrase}</span>
-            {stage && <span className="jx-num text-[0.62rem] text-jx-dim">lottie · 400×400 · 30 kl/s · 60 klatek · 8 warstw</span>}
+            <span className={`${LBL} jx-caret ${stage ? 'text-[0.8rem] text-jx-accent' : 'text-[0.625rem] text-jx-accent'}`}>{phrase}</span>
+            {stage && <span className="jx-num text-[0.625rem] text-jx-dim">lottie · 400×400 · 30 kl/s · 60 klatek · 8 warstw</span>}
           </div>
         )}
       </div>
-      <HudChrome code="LDR-LT · LOTTIE" title="Orb AI · animacja własna" stage={stage} corners={stage} footer={stage ? <span className={`${LBL} text-[0.6rem]`}>JSON Bodymovin napisany ręcznie · przebarwiany na żywo ({c.recolor ? 'akcent HUD' : 'cyjan bazowy'})</span> : undefined} />
+      <HudChrome code="LDR-LT · LOTTIE" title="Orb AI · animacja własna" stage={stage} corners={stage} footer={stage ? <span className={`${LBL} text-[0.625rem]`}>JSON Bodymovin napisany ręcznie · przebarwiany na żywo ({c.recolor ? 'akcent HUD' : 'cyjan bazowy'})</span> : undefined} />
     </div>
   )
 }

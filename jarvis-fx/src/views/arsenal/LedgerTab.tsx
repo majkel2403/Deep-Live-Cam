@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react'
-import { IconFilterOff, IconScale, IconSearch, IconShieldCheck, IconListDetails } from '@tabler/icons-react'
+import IconFilterOff from '@tabler/icons-react/icons/IconFilterOff'
+import IconScale from '@tabler/icons-react/icons/IconScale'
+import IconSearch from '@tabler/icons-react/icons/IconSearch'
+import IconShieldCheck from '@tabler/icons-react/icons/IconShieldCheck'
+import IconListDetails from '@tabler/icons-react/icons/IconListDetails'
 import { Decipher, Frame, HudButton, Panel, SegBar } from '@/hud'
 import { FX } from '@/fx/registry'
 import { playBleep } from '@/lib/sound'
@@ -38,7 +42,7 @@ const CAVEATS: { title: string; text: string; tone: 'warn' | 'danger' | 'accent'
 function StatTile({ label, value, sub, tone = 'text-jx-accent' }: { label: string; value: number | string; sub?: string; tone?: string }) {
   return (
     <div data-augmented-ui="tl-clip br-clip border" className="jx-aug px-3 py-2 min-w-0 [will-change:transform]">
-      <div className="jx-label text-[0.62rem] truncate">{label}</div>
+      <div className="jx-label text-[0.625rem] truncate">{label}</div>
       <div className={`jx-num text-2xl leading-tight jx-glow-text ${tone}`}>{value}</div>
       {sub && <div className="text-[0.66rem] text-jx-dim truncate">{sub}</div>}
     </div>
@@ -100,8 +104,8 @@ export function LedgerTab() {
         <StatTile label="Efekty powiązane" value={`${stats.fxCovered}/${FX.length}`} sub="z meta.ts w galerii" />
         <div data-augmented-ui="tl-clip br-clip border" className="jx-aug px-3 py-2 col-span-2 flex flex-col justify-between gap-1 [will-change:transform]">
           <div className="flex items-center justify-between">
-            <span className="jx-label text-[0.62rem]">Flagi licencji</span>
-            <span className="jx-num text-[0.62rem] text-jx-dim">
+            <span className="jx-label text-[0.625rem]">Flagi licencji</span>
+            <span className="jx-num text-[0.625rem] text-jx-dim">
               raport {stats.report} · dodatkowe {stats.extra}
             </span>
           </div>
@@ -162,7 +166,7 @@ export function LedgerTab() {
             </HudButton>
           )}
         </div>
-        <div className="flex gap-1 overflow-x-auto pb-1 -mb-1" role="group" aria-label="Filtr kategorii">
+        <div className="flex flex-wrap gap-1" role="group" aria-label="Filtr kategorii">
           <HudButton size="sm" active={cat === 'all'} onClick={() => setCat('all')}>
             Wszystkie <span className="jx-num text-jx-dim">{total}</span>
           </HudButton>
@@ -180,7 +184,7 @@ export function LedgerTab() {
           <table className="w-full text-left border-collapse text-[0.8rem]">
             <caption className="sr-only">Zasoby z raportu badawczego: licencja, flaga i sposób użycia w aplikacji</caption>
             <thead className="sticky top-0 z-10 bg-jx-panel-solid/95">
-              <tr className="jx-label text-[0.6rem] [&>th]:px-2 [&>th]:py-1.5 [&>th]:font-semibold border-b border-jx-line/60">
+              <tr className="jx-label text-[0.625rem] [&>th]:px-2 [&>th]:py-1.5 [&>th]:font-semibold border-b border-jx-line/60">
                 <th scope="col">Zasób</th>
                 <th scope="col" className="hidden lg:table-cell">
                   Kategoria
@@ -212,8 +216,8 @@ export function LedgerTab() {
                         aria-label={`Szczegóły: ${r.name}`}
                       >
                         <span className={`font-head font-semibold tracking-wide ${selected ? 'text-white' : 'text-jx-text'}`}>{r.name}</span>
-                        {r.extra && <span className="ml-1.5 jx-num text-[0.55rem] text-jx-dim align-middle">+DOD.</span>}
-                        <span className="block jx-num text-[0.62rem] text-jx-dim truncate max-w-[16rem]">{hostOf(r.url)}</span>
+                        {r.extra && <span className="ml-1.5 jx-num text-[0.625rem] text-jx-dim align-middle">+DOD.</span>}
+                        <span className="block jx-num text-[0.625rem] text-jx-dim truncate max-w-[16rem]">{hostOf(r.url)}</span>
                       </button>
                     </td>
                     <td className="px-2 py-1.5 hidden lg:table-cell text-jx-dim text-[0.74rem] whitespace-nowrap">{CATEGORY_LABELS[r.category]}</td>
@@ -258,11 +262,11 @@ export function LedgerTab() {
               {sel.extra && <Tag className="text-jx-dim border-jx-line border-dashed">spoza raportu</Tag>}
             </div>
             <dl className="grid grid-cols-[5.5rem_1fr] gap-x-2 gap-y-1.5 text-[0.78rem]">
-              <dt className="jx-label text-[0.6rem] pt-0.5">Licencja</dt>
+              <dt className="jx-label text-[0.625rem] pt-0.5">Licencja</dt>
               <dd className="text-jx-text">{sel.license}</dd>
               {sel.verified && (
                 <>
-                  <dt className="jx-label text-[0.6rem] pt-0.5">Weryfikacja</dt>
+                  <dt className="jx-label text-[0.625rem] pt-0.5">Weryfikacja</dt>
                   <dd className="text-jx-ok/90 text-[0.72rem] flex gap-1">
                     <IconShieldCheck className="size-3.5 shrink-0 mt-px" aria-hidden="true" />
                     {sel.verified}
@@ -271,7 +275,7 @@ export function LedgerTab() {
               )}
               {sel.pkg && (
                 <>
-                  <dt className="jx-label text-[0.6rem] pt-0.5">Pakiety</dt>
+                  <dt className="jx-label text-[0.625rem] pt-0.5">Pakiety</dt>
                   <dd className="flex flex-wrap gap-1">
                     {sel.pkg.map((p) => (
                       <code key={p} className="jx-num text-[0.64rem] text-jx-accent bg-jx-accent/8 px-1">
@@ -281,7 +285,7 @@ export function LedgerTab() {
                   </dd>
                 </>
               )}
-              <dt className="jx-label text-[0.6rem] pt-0.5">Notatka</dt>
+              <dt className="jx-label text-[0.625rem] pt-0.5">Notatka</dt>
               <dd className="text-jx-text/90 leading-snug">{sel.note}</dd>
             </dl>
             {(sel.where.length > 0 || selFx.length > 0) && (
@@ -320,7 +324,7 @@ export function LedgerTab() {
               </ul>
             </div>
             <div className="border-t border-jx-line/40 pt-2">
-              <div className="jx-label text-[0.6rem] mb-1">Udział zasobów w kodzie</div>
+              <div className="jx-label text-[0.625rem] mb-1">Udział zasobów w kodzie</div>
               <SegBar value={(stats.usage.get('code') ?? 0) / total} segments={24} />
             </div>
           </Panel>

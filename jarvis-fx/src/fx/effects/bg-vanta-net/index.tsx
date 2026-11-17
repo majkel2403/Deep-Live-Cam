@@ -38,7 +38,7 @@ export default function VantaNet({ accent, hue, quality, reducedMotion, stage, p
       background={bg}
       code="BG/VANTA · NET"
       hint="Ruch kursora obraca kamerę wokół sieci"
-      stats={[{ label: 'Węzły', value: points * points * 2 }]}
+      stats={[{ label: 'Węzły (szac.)', value: points * points * 2 }]}
       stage={stage}
       paused={paused}
     />

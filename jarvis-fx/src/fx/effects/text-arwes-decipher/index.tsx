@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { animateTextDecipher, animateTextSequence, getAnimationTextDuration } from '@arwes/text'
-import { IconBroadcast, IconLock, IconShieldHalfFilled } from '@tabler/icons-react'
+import IconBroadcast from '@tabler/icons-react/icons/IconBroadcast'
+import IconLock from '@tabler/icons-react/icons/IconLock'
+import IconShieldHalfFilled from '@tabler/icons-react/icons/IconShieldHalfFilled'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
 import { Decipher, Frame, StatusDot } from '@/hud'
@@ -35,6 +37,8 @@ const PHASES = [
 ]
 
 const CHANNELS = ['Orbita niska', 'Przekaźnik Ł-7', 'Zespół Mark VII', 'Dowództwo', 'Satelita meteo', 'Kanał awaryjny']
+/** scripted signal level per channel (0..1), shown as a meter */
+const SIGNAL = [0.9, 0.8, 0.95, 0.7, 0.85, 0.35]
 
 const CHARSETS = {
   ARWES: '    ----____abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
@@ -178,7 +182,7 @@ export default function ArwesDecipher({ stage, reducedMotion, paused }: FxProps)
     return () => window.clearInterval(t)
   }, [stage, reducedMotion, paused])
 
-  const txt = stage ? 'text-[1.05rem]' : 'text-[0.52rem]'
+  const txt = stage ? 'text-[1.05rem]' : 'text-[0.625rem]'
   // static (reduced motion / paused) → everything is shown, so the briefing counts as fully deciphered
   const shown = reducedMotion || paused ? { done: total, total } : progress
   const pct = shown.total ? shown.done / shown.total : 0
@@ -189,7 +193,7 @@ export default function ArwesDecipher({ stage, reducedMotion, paused }: FxProps)
       <Frame kind="nefrex" size={stage ? 18 : 10} key={`f-${cycle}`} />
       <header className="flex items-center gap-2">
         <IconLock className="text-jx-accent shrink-0" size={stage ? 20 : 10} />
-        <h2 className={`m-0 jx-title ${stage ? 'text-xl' : 'text-[0.6rem]'}`}>
+        <h2 className={`m-0 jx-title ${stage ? 'text-xl' : 'text-[0.625rem]'}`}>
           <Decipher text="Briefing operacyjny" replayKey={cycle} duration={0.9} />
         </h2>
         <span className="flex-1" />
@@ -200,7 +204,7 @@ export default function ArwesDecipher({ stage, reducedMotion, paused }: FxProps)
       <dl className={`grid grid-cols-[auto_1fr] ${stage ? 'gap-x-6 gap-y-2.5' : 'gap-x-2 gap-y-0.5'} m-0`}>
         {rows.map((r, i) => (
           <div key={r.key} className="contents">
-            <dt className={`jx-label text-jx-accent/90! ${stage ? 'text-[0.8rem]!' : 'text-[0.45rem]! tracking-[0.06em]!'} self-start pt-[0.1em]`}>
+            <dt className={`jx-label text-jx-accent/90! ${stage ? 'text-[0.8rem]!' : 'text-[0.625rem]! tracking-[0.06em]!'} self-start pt-[0.1em]`}>
               <span ref={setSlot(i * 2, 'root')} className="relative block">
                 <span ref={setSlot(i * 2, 'content')}>{r.key}</span>
               </span>
@@ -215,10 +219,11 @@ export default function ArwesDecipher({ stage, reducedMotion, paused }: FxProps)
       </dl>
 
       {stage && (
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(14rem,22rem)] gap-6 items-start">
+        <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1fr)_minmax(14rem,22rem)] gap-6 items-center">
           <div className="border-l-2 border-jx-accent/50 pl-4 py-1">
             <div className="jx-label mb-1">Uwagi dowódcy</div>
-            <p className={`m-0 font-term ${txt} text-jx-text/85 leading-relaxed`}>
+            {/* IBM Plex Mono, not Share Tech Mono: the note contains Polish diacritics */}
+            <p className={`m-0 font-plex ${txt} text-jx-text/85 leading-relaxed`}>
               <span ref={setSlot(rows.length * 2, 'root')} className="relative block">
                 <span ref={setSlot(rows.length * 2, 'content')}>{NOTE}</span>
               </span>
@@ -247,12 +252,12 @@ export default function ArwesDecipher({ stage, reducedMotion, paused }: FxProps)
 
       <div className={`${stage ? '' : 'mt-auto'} flex items-center ${stage ? 'gap-3' : 'gap-1.5'}`}>
         <StatusDot tone="warn" pulse />
-        <span className={`font-head uppercase tracking-wider text-jx-warn ${stage ? 'text-sm' : 'text-[0.48rem]'} flex-1 min-w-0`}>
+        <span className={`font-head uppercase tracking-wider text-jx-warn ${stage ? 'text-sm' : 'text-[0.625rem]'} flex-1 min-w-0`}>
           <span ref={setSlot(rows.length * 2 + (stage ? 1 : 0), 'root')} className="relative block truncate">
             <span ref={setSlot(rows.length * 2 + (stage ? 1 : 0), 'content')}>{STATUS}</span>
           </span>
         </span>
-        <span className={`jx-num text-jx-dim ${stage ? 'text-xs' : 'text-[0.45rem]'}`}>
+        <span className={`jx-num text-jx-dim ${stage ? 'text-xs' : 'text-[0.625rem]'}`}>
           {shown.done}/{shown.total}
         </span>
       </div>
@@ -278,11 +283,17 @@ export default function ArwesDecipher({ stage, reducedMotion, paused }: FxProps)
               <Decipher text="Kanały" replayKey={cycle} />
             </h3>
           </div>
-          <ul className="m-0 p-0 list-none flex flex-col gap-2">
+          <ul className="m-0 p-0 list-none flex flex-1 flex-col justify-around gap-2">
             {CHANNELS.map((ch, i) => (
               <li key={ch} className="flex items-center gap-2 border-b border-jx-line/40 pb-1.5">
                 <span className="jx-num text-[0.7rem] text-jx-dim w-7">{String(i + 1).padStart(2, '0')}</span>
-                <Decipher text={ch} replayKey={`${cycle}-${chPulse[i]}`} className="font-head text-sm uppercase tracking-wider text-jx-text flex-1" duration={0.6} />
+                <Decipher text={ch} replayKey={`${cycle}-${chPulse[i]}`} className="font-head text-sm uppercase tracking-wider text-jx-text flex-1 min-w-0" duration={0.6} />
+                {/* scripted signal meter (synthetic level, part of the SCENARIUSZ) */}
+                <span className="flex gap-[2px] h-2.5 items-end" aria-hidden="true">
+                  {Array.from({ length: 8 }, (_, k) => (
+                    <span key={k} className={`w-[3px] ${k < Math.round(SIGNAL[i] * 8) ? 'bg-jx-accent' : 'bg-jx-line/50'}`} style={{ height: `${35 + k * 9}%` }} />
+                  ))}
+                </span>
                 <StatusDot tone={i === 5 ? 'warn' : 'ok'} pulse={i === 5} />
               </li>
             ))}

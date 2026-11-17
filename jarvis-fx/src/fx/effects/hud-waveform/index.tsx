@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { IconMicrophone, IconMicrophoneOff } from '@tabler/icons-react'
+import IconMicrophone from '@tabler/icons-react/icons/IconMicrophone'
+import IconMicrophoneOff from '@tabler/icons-react/icons/IconMicrophoneOff'
 import { HudButton } from '@/hud'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
@@ -191,7 +192,7 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
     trace()
     ctx.restore()
     if (stage) {
-      ctx.font = '500 9px "JetBrains Mono", monospace'
+      ctx.font = '500 10px "JetBrains Mono", monospace'
       ctx.fillStyle = hexA(accent, 0.6)
       ctx.textAlign = 'left'
       ctx.fillText(`${(c.timebase / divX).toFixed(1)} ms/dz`, scope.x + 4, scope.y + 11)
@@ -269,7 +270,7 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
     }
     // frequency axis
     if (stage) {
-      ctx.font = '500 9px "JetBrains Mono", monospace'
+      ctx.font = '500 10px "JetBrains Mono", monospace'
       ctx.fillStyle = hexA(accent, 0.65)
       ctx.textAlign = 'center'
       for (const f of [50, 100, 200, 500, 1000, 2000, 5000, 10000]) {
@@ -305,7 +306,7 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
         stage={stage}
         badges={
           live ? (
-            <span className={`${LBL} inline-flex items-center gap-1.5 text-[0.62rem] text-jx-ok`}>
+            <span className={`${LBL} inline-flex items-center gap-1.5 text-[0.625rem] text-jx-ok`}>
               <span className="jx-dot" data-pulse="true" /> Na żywo · mikrofon
             </span>
           ) : (
@@ -315,17 +316,17 @@ export default function Waveform({ accent, accent2, quality, reducedMotion, stag
         footer={
           stage ? (
             <>
-              <span className={`${LBL} text-[0.62rem]`}>
+              <span className={`${LBL} text-[0.625rem]`}>
                 RMS <span className="jx-num text-jx-accent">{Number.isFinite(stats.rms) ? `${stats.rms.toFixed(1)} dBFS` : '—'}</span>
               </span>
-              <span className={`${LBL} text-[0.62rem]`}>
+              <span className={`${LBL} text-[0.625rem]`}>
                 Szczyt <span className="jx-num text-jx-accent">{stats.peakHz ? `${Math.round(stats.peakHz)} Hz` : '—'}</span>
               </span>
-              <span className={`${LBL} text-[0.62rem]`}>
+              <span className={`${LBL} text-[0.625rem]`}>
                 FFT <span className="jx-num text-jx-accent">{N}</span>
               </span>
               <span className="flex-1" />
-              {micError && <span className={`${LBL} text-[0.62rem] text-jx-danger`} role="alert">{micError}</span>}
+              {micError && <span className={`${LBL} text-[0.625rem] text-jx-danger`} role="alert">{micError}</span>}
               <span className="w-44 shrink-0" />
             </>
           ) : undefined

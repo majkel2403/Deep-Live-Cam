@@ -1,10 +1,33 @@
-import 'material-symbols/outlined.css'
+import '@/styles/material-symbols.css'
 import './matrix.css'
 import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { animate, stagger, type JSAnimation } from 'animejs'
 import { addCollection, Icon } from '@iconify/react/offline'
-import { IconAntenna, IconAtom, IconBolt, IconBrain, IconCpu, IconDrone, IconRadar2, IconRocket, IconSatellite, IconScan, IconShieldBolt, IconTarget, IconTopologyStar3 } from '@tabler/icons-react'
-import { Aperture, Atom, Brain, Broadcast, Cpu, Crosshair, Fingerprint, Graph, Lightning, Planet, ShieldChevron, Waveform } from '@phosphor-icons/react'
+import IconAntenna from '@tabler/icons-react/icons/IconAntenna'
+import IconAtom from '@tabler/icons-react/icons/IconAtom'
+import IconBolt from '@tabler/icons-react/icons/IconBolt'
+import IconBrain from '@tabler/icons-react/icons/IconBrain'
+import IconCpu from '@tabler/icons-react/icons/IconCpu'
+import IconDrone from '@tabler/icons-react/icons/IconDrone'
+import IconRadar2 from '@tabler/icons-react/icons/IconRadar2'
+import IconRocket from '@tabler/icons-react/icons/IconRocket'
+import IconSatellite from '@tabler/icons-react/icons/IconSatellite'
+import IconScan from '@tabler/icons-react/icons/IconScan'
+import IconShieldBolt from '@tabler/icons-react/icons/IconShieldBolt'
+import IconTarget from '@tabler/icons-react/icons/IconTarget'
+import IconTopologyStar3 from '@tabler/icons-react/icons/IconTopologyStar3'
+import { Aperture } from '@phosphor-icons/react/dist/csr/Aperture'
+import { Atom } from '@phosphor-icons/react/dist/csr/Atom'
+import { Brain } from '@phosphor-icons/react/dist/csr/Brain'
+import { Broadcast } from '@phosphor-icons/react/dist/csr/Broadcast'
+import { Cpu } from '@phosphor-icons/react/dist/csr/Cpu'
+import { Crosshair } from '@phosphor-icons/react/dist/csr/Crosshair'
+import { Fingerprint } from '@phosphor-icons/react/dist/csr/Fingerprint'
+import { Graph } from '@phosphor-icons/react/dist/csr/Graph'
+import { Lightning } from '@phosphor-icons/react/dist/csr/Lightning'
+import { Planet } from '@phosphor-icons/react/dist/csr/Planet'
+import { ShieldChevron } from '@phosphor-icons/react/dist/csr/ShieldChevron'
+import { Waveform } from '@phosphor-icons/react/dist/csr/Waveform'
 import { Activity, Brain as LBrain, Cpu as LCpu, Crosshair as LCrosshair, Orbit, Radar, Radio, Satellite, ScanEye, Shield, Zap } from 'lucide-react'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
@@ -90,7 +113,7 @@ const TileView = memo(function TileView({ tile, size, caption }: { tile: Tile; s
           <Glyph tile={tile} size={size} />
         </span>
       </span>
-      {caption && <span className="jx-num absolute bottom-0.5 right-1.5 text-[0.5rem] leading-none text-jx-dim">{fam.short}</span>}
+      {caption && <span className="jx-num absolute bottom-0.5 right-1.5 text-[0.625rem] leading-none text-jx-dim">{fam.short}</span>}
     </div>
   )
 })
@@ -218,12 +241,12 @@ export default function IconMatrix({ reducedMotion, stage, paused }: FxProps) {
           <div className="flex w-full flex-wrap items-center gap-x-3 gap-y-0.5">
             {stage &&
               FAMILIES.map((f) => (
-                <span key={f.id} className={`${LBL} text-[0.6rem]`}>
+                <span key={f.id} className={`${LBL} text-[0.625rem]`}>
                   <span className="jx-num text-jx-accent">{f.short}</span> {f.label} <span className="jx-num">×{counts.get(f.id) ?? 0}</span> <span className="normal-case tracking-normal text-jx-dim/70">({f.license})</span>
                 </span>
               ))}
             <span className="flex-1" />
-            <span className={`pointer-events-auto font-mono text-jx-text/80 ${stage ? 'text-[0.62rem]' : 'text-[0.5rem]'}`}>
+            <span className={`pointer-events-auto font-mono text-jx-text/80 ${stage ? 'text-[0.625rem]' : 'text-[0.625rem]'}`}>
               Ikony GI: game-icons.net (CC BY 3.0)
             </span>
           </div>

@@ -2,7 +2,7 @@
  * GLSL for bg-reactbits-threads – copied verbatim from React Bits "Threads".
  * Source: https://github.com/DavidHDev/react-bits/blob/main/src/ts-tailwind/Backgrounds/Threads/Threads.tsx
  * License: MIT + Commons Clause (c) David Haz – https://github.com/DavidHDev/react-bits/blob/main/LICENSE.md
- * Ported/adapted for JARVIS FX; the component itself may not be resold on its own.
+ * Ported/adapted for JARVIS FX. Commons Clause applies: the software may not be sold as such.
  */
 
 export const LINE_VERTEX = `#version 300 es

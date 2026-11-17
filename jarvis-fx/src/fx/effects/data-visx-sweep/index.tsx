@@ -137,7 +137,7 @@ export default function VisxSweep({ accent, accent2, quality, reducedMotion, sta
             <circle r={innerR - 4} fill="none" stroke={hexA(accent, 0.5)} />
             {stage &&
               ticks.map((t) => (
-                <text key={`l${t}`} x={3} y={-yScale(t) + 10} fill={hexA(accent, 0.55)} fontSize={9} fontFamily="JetBrains Mono, monospace">
+                <text key={`l${t}`} x={3} y={-yScale(t) + 10} fill={hexA(accent, 0.55)} fontSize={10} fontFamily="JetBrains Mono, monospace">
                   {Math.round(t * 100)}
                 </text>
               ))}
@@ -190,7 +190,7 @@ export default function VisxSweep({ accent, accent2, quality, reducedMotion, sta
                       x={Math.sin(a) * r}
                       y={-Math.cos(a) * r}
                       fill={hexA(accent, 0.7)}
-                      fontSize={9}
+                      fontSize={10}
                       fontFamily="JetBrains Mono, monospace"
                       textAnchor="middle"
                       dominantBaseline="middle"
@@ -209,7 +209,7 @@ export default function VisxSweep({ accent, accent2, quality, reducedMotion, sta
           ref={(el) => {
             readRef.current.ch = el
           }}
-          className={`${LBL} ${stage ? 'text-[0.65rem]' : 'text-[0.45rem]'} text-jx-accent`}
+          className={`${LBL} ${stage ? 'text-[0.65rem]' : 'text-[0.625rem]'} text-jx-accent`}
         >
           CH-01
         </span>
@@ -221,7 +221,7 @@ export default function VisxSweep({ accent, accent2, quality, reducedMotion, sta
         >
           —
         </span>
-        {stage && <span className={`${LBL} text-[0.55rem]`}>poziom %</span>}
+        {stage && <span className={`${LBL} text-[0.625rem]`}>poziom %</span>}
       </div>
 
       <HudChrome
@@ -232,11 +232,11 @@ export default function VisxSweep({ accent, accent2, quality, reducedMotion, sta
         footer={
           stage ? (
             <>
-              <span className={`${LBL} text-[0.6rem]`}>
+              <span className={`${LBL} text-[0.625rem]`}>
                 Kanały <span className="jx-num text-jx-accent">{n}</span> · {c.rpm} obr/min
               </span>
               <span className="flex-1" />
-              <span className={`${LBL} text-[0.6rem]`}>
+              <span className={`${LBL} text-[0.625rem]`}>
                 <span style={{ color: accent }}>■</span> &lt;60 <span style={{ color: accent2 }}>■</span> 60–80 <span style={{ color: SEM.warn }}>■</span> 80–92 <span style={{ color: SEM.danger }}>■</span> &gt;92
               </span>
             </>

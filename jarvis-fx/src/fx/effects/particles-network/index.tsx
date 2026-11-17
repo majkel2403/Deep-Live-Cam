@@ -32,12 +32,12 @@ export default function ParticlesNetwork({ accent, accent2, hue, quality, reduce
           value: { min: 0.35, max: 0.95 },
           animation: { enable: !reducedMotion, speed: 0.8, sync: false },
         },
-        size: { value: { min: 1, max: stage ? 2.8 : 2 } },
+        size: { value: { min: 1, max: stage ? 3.2 : 2 } },
         links: {
           enable: true,
           distance: stage ? c.linkDistance : c.linkDistance * 0.4,
           color: accent,
-          opacity: 0.44,
+          opacity: stage ? 0.56 : 0.44,
           width: 1,
           // in a card almost every pair links up and stacked triangles saturate → stage only
           triangles: { enable: c.triangles && stage, color: accent, opacity: 0.05 },

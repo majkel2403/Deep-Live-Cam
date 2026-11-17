@@ -252,7 +252,8 @@ export default function DataTunnel({ accent, accent2, quality, stage, paused, re
     prędkość: { value: 1.2, min: 0, max: 4, step: 0.05 },
     gęstość: { value: 1, min: 0.3, max: 1.6, step: 0.05 },
     skręt: { value: 0.6, min: 0, max: 1.5, step: 0.05 },
-    aberracja: { value: 0.003, min: 0, max: 0.012, step: 0.0005, format: (v: number) => v.toFixed(4) },
+    // slider in thousandths of the frame size (Leva shows 0.00 for raw values this small)
+    aberracja: { value: 3, min: 0, max: 12, step: 0.1 },
     bloom: { value: 1.3, min: 0, max: 3, step: 0.05 },
   })
   const still = paused || reducedMotion
@@ -295,13 +296,13 @@ export default function DataTunnel({ accent, accent2, quality, stage, paused, re
         {stage
           ? [
               <Bloom key="b" intensity={c.bloom} luminanceThreshold={0.12} luminanceSmoothing={0.3} mipmapBlur radius={0.7} />,
-              <ChromaticAberration key="c" offset={new Vector2(c.aberracja, c.aberracja)} radialModulation modulationOffset={0.1} />,
+              <ChromaticAberration key="c" offset={new Vector2(c.aberracja * 0.001, c.aberracja * 0.001)} radialModulation modulationOffset={0.1} />,
               <Noise key="n" opacity={0.04} />,
               <Vignette key="v" eskil={false} offset={0.18} darkness={0.9} />,
             ]
           : [
               <Bloom key="b" intensity={c.bloom * 0.8} luminanceThreshold={0.12} luminanceSmoothing={0.3} mipmapBlur />,
-              <ChromaticAberration key="c" offset={new Vector2(c.aberracja, c.aberracja)} radialModulation modulationOffset={0.1} />,
+              <ChromaticAberration key="c" offset={new Vector2(c.aberracja * 0.001, c.aberracja * 0.001)} radialModulation modulationOffset={0.1} />,
             ]}
       </HudComposer>
     </Canvas>

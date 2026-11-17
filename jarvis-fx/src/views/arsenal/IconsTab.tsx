@@ -1,37 +1,32 @@
-import 'material-symbols/outlined.css'
+import '@/styles/material-symbols.css'
 import { useState, type ReactNode } from 'react'
-import {
-  IconActivityHeartbeat,
-  IconAtom,
-  IconBolt,
-  IconBrain,
-  IconCpu,
-  IconFingerprint,
-  IconRadar2,
-  IconRocket,
-  IconSatellite,
-  IconShieldBolt,
-  IconTarget,
-  IconWifi,
-  type Icon as TablerIcon,
-} from '@tabler/icons-react'
+import IconActivityHeartbeat from '@tabler/icons-react/icons/IconActivityHeartbeat'
+import IconAtom from '@tabler/icons-react/icons/IconAtom'
+import IconBolt from '@tabler/icons-react/icons/IconBolt'
+import IconBrain from '@tabler/icons-react/icons/IconBrain'
+import IconCpu from '@tabler/icons-react/icons/IconCpu'
+import IconFingerprint from '@tabler/icons-react/icons/IconFingerprint'
+import IconRadar2 from '@tabler/icons-react/icons/IconRadar2'
+import IconRocket from '@tabler/icons-react/icons/IconRocket'
+import IconSatellite from '@tabler/icons-react/icons/IconSatellite'
+import IconShieldBolt from '@tabler/icons-react/icons/IconShieldBolt'
+import IconTarget from '@tabler/icons-react/icons/IconTarget'
+import IconWifi from '@tabler/icons-react/icons/IconWifi'
+import { type Icon as TablerIcon } from '@tabler/icons-react'
 import { Activity, Atom as LAtom, BrainCircuit, Cpu as LCpu, Crosshair as LCrosshair, Orbit, Radar, Rocket as LRocket, Satellite, ScanFace, ShieldCheck as LShield, Zap, type LucideIcon } from 'lucide-react'
-import {
-  Atom as PAtom,
-  Brain as PBrain,
-  Broadcast,
-  Cpu as PCpu,
-  Crosshair as PCrosshair,
-  Fingerprint as PFingerprint,
-  Lightning,
-  Planet,
-  Pulse,
-  Rocket as PRocket,
-  ShieldCheck as PShield,
-  Target as PTarget,
-  type IconWeight,
-  type Icon as PhosphorIcon,
-} from '@phosphor-icons/react'
+import { Atom as PAtom } from '@phosphor-icons/react/dist/csr/Atom'
+import { Brain as PBrain } from '@phosphor-icons/react/dist/csr/Brain'
+import { Broadcast } from '@phosphor-icons/react/dist/csr/Broadcast'
+import { Cpu as PCpu } from '@phosphor-icons/react/dist/csr/Cpu'
+import { Crosshair as PCrosshair } from '@phosphor-icons/react/dist/csr/Crosshair'
+import { Fingerprint as PFingerprint } from '@phosphor-icons/react/dist/csr/Fingerprint'
+import { Lightning } from '@phosphor-icons/react/dist/csr/Lightning'
+import { Planet } from '@phosphor-icons/react/dist/csr/Planet'
+import { Pulse } from '@phosphor-icons/react/dist/csr/Pulse'
+import { Rocket as PRocket } from '@phosphor-icons/react/dist/csr/Rocket'
+import { ShieldCheck as PShield } from '@phosphor-icons/react/dist/csr/ShieldCheck'
+import { Target as PTarget } from '@phosphor-icons/react/dist/csr/Target'
+import { type IconWeight, type Icon as PhosphorIcon } from '@phosphor-icons/react'
 import { addCollection, Icon as IconifyIcon } from '@iconify/react/offline'
 import { ARSENAL_GAME_ICONS, ARSENAL_GAME_ICONS_SUBSET } from '@/data/gameIconsArsenal'
 import { HudButton } from '@/hud'
@@ -88,7 +83,7 @@ function Cell({ name, children }: { name: string; children: ReactNode }) {
   return (
     <figure className="group flex flex-col items-center justify-center gap-1 p-2 border border-jx-line/30 hover:border-jx-accent/70 hover:bg-jx-accent/8 transition-colors min-w-0" title={name}>
       <span className="text-jx-accent grid place-items-center drop-shadow-[0_0_6px_hsl(var(--jx-hue)_100%_55%/0.5)]">{children}</span>
-      <figcaption className="jx-num text-[0.55rem] text-jx-dim truncate max-w-full group-hover:text-jx-text">{name}</figcaption>
+      <figcaption className="jx-num text-[0.625rem] leading-tight text-center text-jx-dim line-clamp-2 break-words max-w-full group-hover:text-jx-text">{name}</figcaption>
     </figure>
   )
 }
@@ -99,9 +94,9 @@ function Family({ title, license, pkg, href, note, children }: { title: string; 
       <header className="flex flex-wrap items-center gap-2">
         <h4 className="jx-title text-[0.85rem]">{title}</h4>
         {license}
-        <code className="jx-num text-[0.62rem] text-jx-dim">{pkg}</code>
+        <code className="jx-num text-[0.625rem] text-jx-dim">{pkg}</code>
         <span className="flex-1" />
-        <ExtLink href={href} className="jx-num text-[0.62rem] text-jx-dim">
+        <ExtLink href={href} className="jx-num text-[0.625rem] text-jx-dim">
           {href.replace(/^https?:\/\//, '')}
         </ExtLink>
       </header>
@@ -124,19 +119,19 @@ export function IconsTab() {
     <div className="h-full min-h-0 flex flex-col gap-3">
       <div className="flex flex-wrap items-end gap-4">
         <label className="flex flex-col gap-1 w-44">
-          <span className="jx-label text-[0.62rem]">
+          <span className="jx-label text-[0.625rem]">
             Rozmiar · <span className="jx-num text-jx-accent">{size}px</span>
           </span>
           <input type="range" min={16} max={48} value={size} onChange={(e) => setSize(Number(e.target.value))} className="accent-[var(--jx-accent)]" aria-label="Rozmiar ikon" />
         </label>
         <label className="flex flex-col gap-1 w-44">
-          <span className="jx-label text-[0.62rem]">
+          <span className="jx-label text-[0.625rem]">
             Kreska (Tabler, Lucide) · <span className="jx-num text-jx-accent">{stroke.toFixed(2)}</span>
           </span>
           <input type="range" min={0.75} max={2.5} step={0.25} value={stroke} onChange={(e) => setStroke(Number(e.target.value))} className="accent-[var(--jx-accent)]" aria-label="Grubość kreski" />
         </label>
         <label className="flex flex-col gap-1 w-44">
-          <span className="jx-label text-[0.62rem]">
+          <span className="jx-label text-[0.625rem]">
             Material wght · <span className="jx-num text-jx-accent">{wght}</span>
           </span>
           <input type="range" min={100} max={700} step={100} value={wght} onChange={(e) => setWght(Number(e.target.value))} className="accent-[var(--jx-accent)]" aria-label="Grubość Material Symbols" />
@@ -179,7 +174,7 @@ export function IconsTab() {
                       Ikona
                     </th>
                     {PH_WEIGHTS.map((w) => (
-                      <th key={w} scope="col" className="jx-num text-[0.55rem] text-jx-dim font-normal pb-1">
+                      <th key={w} scope="col" className="jx-num text-[0.625rem] text-jx-dim font-normal pb-1">
                         {w}
                       </th>
                     ))}
@@ -188,7 +183,7 @@ export function IconsTab() {
                 <tbody>
                   {PHOSPHOR.slice(0, 4).map(([n, I]) => (
                     <tr key={n}>
-                      <th scope="row" className="jx-num text-[0.58rem] text-jx-dim font-normal text-left pr-2">
+                      <th scope="row" className="jx-num text-[0.625rem] text-jx-dim font-normal text-left pr-2">
                         {n}
                       </th>
                       {PH_WEIGHTS.map((w) => (

@@ -55,10 +55,17 @@ body {
 
 ::selection { background: color-mix(in srgb, var(--jx-accent) 40%, transparent); color: #fff; }
 
-:focus-visible {
-  outline: 1px solid var(--jx-accent);
-  outline-offset: 2px;
-  box-shadow: var(--jx-glow-sm);
+/*
+ * Focus ring for plain controls. Kept in @layer base: unlayered rules beat every Tailwind utility
+ * (focus-visible:outline-*), so they must stay below utilities. Augmented-ui buttons opt out in hud.css
+ * because their clip-path cuts an outline drawn outside the box.
+ */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--jx-accent);
+    outline-offset: 3px;
+    box-shadow: var(--jx-glow-sm);
+  }
 }
 
 /* thin HUD scrollbars */

@@ -8,7 +8,7 @@ export const meta: FxMeta = {
     'Setki falujących nici rysowanych instancjonowanym WebGL2 z szumem Perlina — przejście barw od akcentu do drugiego akcentu. Kursor rozchyla wiązkę jak pole magnetyczne.',
   tech: ['WebGL2', 'GLSL', 'React Bits'],
   license: 'MIT + Commons Clause',
-  source: { label: 'React Bits · Threads', url: 'https://reactbits.dev/backgrounds/threads' },
+  source: { label: 'React Bits · Threads', url: 'https://github.com/DavidHDev/react-bits/blob/main/src/ts-tailwind/Backgrounds/Threads/Threads.tsx' },
   webgl: true,
   cost: 2,
   order: 20,

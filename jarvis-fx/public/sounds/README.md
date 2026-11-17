@@ -11,6 +11,10 @@ Backend wybierany jest dla każdego bleepa osobno (Laboratorium dźwięku → �
 | 2 | **WAV** (howler) | `synth/*.wav` + `synth/manifest.json` | CC0 1.0 (nasze) | dołączony, ~164 KB |
 | 3 | **Synteza WebAudio** | brak plików — oscylatory w `src/lib/sound/synth.ts` | CC0 1.0 (nasze) | zawsze dostępna, także jako fallback w trakcie ładowania |
 
+Dodatkowo, **ARWES** (`@arwes/bleeps`, MIT) odtwarza te same pliki WAV co backend 2, ale przez własne
+obiekty `createBleep` biblioteki ARWES (`src/lib/sound/arwes.ts`). Nie jest domyślny: wybierany ręcznie
+w silniku dźwięku, ładuje się dopiero wtedy i raportuje tylko pliki, które faktycznie się zdekodowały.
+
 `index.json` to rejestr paczek — aplikacja czyta tylko paczki w nim wymienione (żadnego zgadywania
 ścieżek, więc zero błędów 404 w konsoli). Oba skrypty aktualizują go automatycznie.
 
@@ -77,7 +81,7 @@ naszego autorstwa). Każdy nowy plik z zewnątrz → wpis w tej tabeli + autor/l
 
 ## Polityka dźwięku
 
-- bleepy UI trwają **< 150 ms** (wyjątki: `boot` ≈ 0,7 s, sekwencja rozruchu; `error`/`alert` to podwójne sygnały ≈ 0,2 s — zmierzone na żywo w Laboratorium dźwięku),
+- bleepy UI trwają od ok. 20 ms (`type`) do ok. 260 ms (`error`); najdłuższy jest `boot` (≈ 0,7 s, sekwencja rozruchu). Długości są w `synth/manifest.json` (`durationMs`),
 - domyślna głośność **35%**, szczyty plików 0,03–0,21 FS — dźwięk ma podpowiadać, nie dominować,
 - użytkownik może w każdej chwili **wyciszyć** dźwięk (ikona głośnika w nagłówku, Laboratorium dźwięku) lub zmienić głośność,
 - nic nie gra przed pierwszą interakcją (polityka autoplay przeglądarek), a powtarzane dźwięki są ograniczane (`type` co ≥ 30 ms, `hover` co ≥ 60 ms).

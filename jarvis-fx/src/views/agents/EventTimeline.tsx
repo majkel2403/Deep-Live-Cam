@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { IconTimelineEvent } from '@tabler/icons-react'
+import IconTimelineEvent from '@tabler/icons-react/icons/IconTimelineEvent'
 import { Decipher, HudButton, Panel } from '@/hud'
 import type { Agent, AgentEvent, EventLevel } from '@/lib/agents'
 import { LEVEL_META, fmtTime } from './model'

@@ -256,7 +256,7 @@ export default function EchartsGauges({ accent, accent2, reducedMotion, stage, p
         title="Klaster wskaźników"
         stage={stage}
         badges={<DemoBadge title="Wartości zegarów to syntetyczny błądzący szereg – nie są pomiarem" />}
-        footer={stage ? <span className={`${LBL} text-[0.6rem]`}>ECharts 6 · jedna instancja canvas · serie gauge + halo · odświeżanie co {c.interval.toFixed(1)} s</span> : undefined}
+        footer={stage ? <span className={`${LBL} text-[0.625rem]`}>ECharts 6 · jedna instancja canvas · serie gauge + halo · odświeżanie co {c.interval.toFixed(1)} s</span> : undefined}
       />
     </div>
   )

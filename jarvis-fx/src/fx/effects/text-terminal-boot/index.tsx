@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { IconTerminal2 } from '@tabler/icons-react'
+import IconTerminal2 from '@tabler/icons-react/icons/IconTerminal2'
 import { useFxControls } from '@/fx/controls'
 import type { FxProps } from '@/fx/types'
 import { DemoBadge } from '../motion-kit/kit'
@@ -237,7 +237,7 @@ export default function TerminalBoot({ stage, reducedMotion, paused }: FxProps) 
     if (el) el.scrollTop = el.scrollHeight
   }, [shownRows, showPrompt])
 
-  const fs = stage ? 'text-[clamp(0.9rem,1.25vw,1.2rem)]' : 'text-[0.5rem]'
+  const fs = stage ? 'text-[clamp(0.9rem,1.25vw,1.2rem)]' : 'text-[0.625rem]'
   const typingIdx = !staticRows && (phase === 'type' || phase === 'final') ? rows.length - 1 : -1
   const caretCls = `tb-caret tb-caret--${c.cursor}`
 
@@ -250,9 +250,9 @@ export default function TerminalBoot({ stage, reducedMotion, paused }: FxProps) 
           style={{ ['--aug-tl' as string]: stage ? '10px' : '5px' }}
         >
           <IconTerminal2 size={stage ? 16 : 9} className="text-jx-accent shrink-0" />
-          <span className={`font-term text-jx-accent ${stage ? 'text-sm' : 'text-[0.5rem]'} truncate`}>tty0 · jarvis@stark-core</span>
+          <span className={`font-plex text-jx-accent ${stage ? 'text-sm' : 'text-[0.625rem]'} truncate`}>tty0 · jarvis@stark-core</span>
           <span className="flex-1" />
-          {stage && <span className="jx-label text-[0.62rem]! hidden md:inline">◆ = odczyt z przeglądarki</span>}
+          {stage && <span className="jx-label text-[0.625rem]! hidden md:inline">◆ = odczyt z przeglądarki</span>}
           <DemoBadge label="SYMULACJA" title="Log rozruchu jest symulowany; wiersze z ◆ to prawdziwe odczyty z przeglądarki" className={stage ? '' : 'scale-75 origin-right'} />
         </header>
         <div
@@ -260,7 +260,7 @@ export default function TerminalBoot({ stage, reducedMotion, paused }: FxProps) 
           role="log"
           aria-label="Log rozruchu systemu (symulacja)"
           aria-live="off"
-          className={`relative flex-1 min-h-0 overflow-hidden border-x border-b border-jx-line/50 bg-black/40 ${stage ? 'px-5 py-4' : 'px-1.5 py-1'} font-term ${fs} leading-[1.55]`}
+          className={`relative flex-1 min-h-0 overflow-hidden border-x border-b border-jx-line/50 bg-black/40 ${stage ? 'px-5 py-4' : 'px-1.5 py-1'} font-plex ${fs} leading-[1.55]`}
         >
           {stage && (
             <pre key={boot} className="tb-banner m-0 mb-3 font-mono text-jx-accent tb-glow leading-[1.05] text-[clamp(0.45rem,0.75vw,0.72rem)]" aria-hidden="true">

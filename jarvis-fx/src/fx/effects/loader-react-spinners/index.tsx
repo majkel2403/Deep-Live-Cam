@@ -69,16 +69,16 @@ export default function ReactSpinners({ accent, accent2, reducedMotion, stage, p
             </div>
             {stage && (
               <div className="flex min-w-0 items-baseline gap-2 whitespace-nowrap px-3 pb-2">
-                <span className="jx-num shrink-0 text-[0.6rem] text-jx-accent">{sp.code}</span>
+                <span className="jx-num shrink-0 text-[0.625rem] text-jx-accent">{sp.code}</span>
                 <span className={`${LBL} min-w-0 truncate text-[0.7rem] text-jx-text`}>{sp.name}</span>
                 <span className="flex-1" />
-                <span className="jx-num min-w-0 truncate text-[0.58rem] text-jx-dim" title={`<${sp.lib} />`}>{`<${sp.lib} />`}</span>
+                <span className="jx-num min-w-0 truncate text-[0.625rem] text-jx-dim" title={`<${sp.lib} />`}>{`<${sp.lib} />`}</span>
               </div>
             )}
           </div>
         ))}
       </div>
-      <HudChrome code="LDR-RS · REACT-SPINNERS" title="Osiem wskaźników · MIT" stage={stage} corners={stage} footer={stage ? <span className={`${LBL} text-[0.6rem]`}>Kolor = akcent HUD (zmień odcień w ustawieniach) · mnożnik prędkości {speed.toFixed(2)}×</span> : undefined} />
+      <HudChrome code="LDR-RS · REACT-SPINNERS" title="Osiem wskaźników · MIT" stage={stage} corners={stage} footer={stage ? <span className={`${LBL} text-[0.625rem]`}>{c.twoTone ? 'Kolor = akcent HUD, dwutonowe = akcent 2' : 'Kolor = akcent HUD'} (zmień odcień w ustawieniach) · mnożnik prędkości {speed.toFixed(2)}×</span> : undefined} />
     </div>
   )
 }

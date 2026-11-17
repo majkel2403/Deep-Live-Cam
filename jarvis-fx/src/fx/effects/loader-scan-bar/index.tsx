@@ -176,7 +176,7 @@ export default function ScanBar({ accent, accent2, quality, reducedMotion, stage
         const y = top + ((bottom - top) * i) / 40
         ctx.fillRect(rx - (i % 5 === 0 ? 8 : 4), y, i % 5 === 0 ? 8 : 4, 1)
       }
-      ctx.font = '500 9px "JetBrains Mono", monospace'
+      ctx.font = '500 10px "JetBrains Mono", monospace'
       ctx.textAlign = 'right'
       for (let i = 0; i <= 4; i++) {
         const y = top + ((bottom - top) * i) / 4
@@ -229,15 +229,15 @@ export default function ScanBar({ accent, accent2, quality, reducedMotion, stage
         aria-valuenow={ui.p}
         aria-valuetext={`${ui.msg} – ${ui.p}%`}
       >
-        <span className={`${LBL} ${stage ? 'text-[0.72rem]' : 'text-[0.5rem]'} ${ui.done ? 'text-jx-ok' : 'text-jx-accent'}`}>{ui.msg}</span>
-        <span className={`jx-num ${stage ? 'text-lg' : 'text-[0.6rem]'} ${ui.done ? 'text-jx-ok' : 'text-jx-text'} jx-glow-text`}>{String(ui.p).padStart(3, ' ')}%</span>
+        <span className={`${LBL} bg-jx-bg/75 px-1 ${stage ? 'text-[0.72rem]' : 'text-[0.625rem]'} ${ui.done ? 'text-jx-ok' : 'text-jx-accent'}`}>{ui.msg}</span>
+        <span className={`jx-num ${stage ? 'text-lg' : 'text-[0.625rem]'} ${ui.done ? 'text-jx-ok' : 'text-jx-text'} jx-glow-text`}>{String(ui.p).padStart(3, ' ')}%</span>
       </div>
       <HudChrome
         code="SCN-05 · SKAN"
         title="Rekonstrukcja sylwetki"
         stage={stage}
         badges={<DemoBadge label={stage ? 'DEMO · POSTĘP SYMULOWANY' : 'DEMO'} title="Postęp skanu i sylwetka są generowane proceduralnie – to demonstracja loadera" />}
-        footer={stage ? <span className={`${LBL} text-[0.6rem]`}>Siatka: {mesh.lines.length} polilinii · {mesh.verts.length} węzłów</span> : undefined}
+        footer={stage ? <span className={`${LBL} text-[0.625rem]`}>Siatka: {mesh.lines.length} polilinii · {mesh.verts.length} węzłów</span> : undefined}
       />
     </div>
   )

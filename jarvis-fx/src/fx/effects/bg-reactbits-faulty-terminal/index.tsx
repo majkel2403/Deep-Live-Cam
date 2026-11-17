@@ -2,7 +2,8 @@
  * bg-reactbits-faulty-terminal – ported/adapted from React Bits "FaultyTerminal" by David Haz.
  * Source: https://github.com/DavidHDev/react-bits/blob/main/src/ts-tailwind/Backgrounds/FaultyTerminal/FaultyTerminal.tsx
  * License: MIT + Commons Clause – https://github.com/DavidHDev/react-bits/blob/main/LICENSE.md
- *   (free to use inside an application; the component itself may not be sold or redistributed alone).
+ *   Commons Clause: the software may not be sold, i.e. offered for a fee as a product or service whose value
+ *   derives substantially from it. Use inside this free application is permitted.
  * Adaptations: FxProps (tint = runtime accent, quality → DPR cap, reducedMotion/paused from the app
  * instead of matchMedia/visibility), Leva controls, HUD overlay, WebGL2-missing fallback, StrictMode-safe
  * context release.

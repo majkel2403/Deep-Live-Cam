@@ -1,14 +1,21 @@
-import { useEffect, useState, type KeyboardEvent, type ReactNode } from 'react'
-import { IconIcons, IconLicense, IconPalette, IconShape, IconTypography } from '@tabler/icons-react'
+import { lazy, Suspense, useEffect, useState, type ComponentType, type KeyboardEvent, type ReactNode } from 'react'
+import IconIcons from '@tabler/icons-react/icons/IconIcons'
+import IconLicense from '@tabler/icons-react/icons/IconLicense'
+import IconPalette from '@tabler/icons-react/icons/IconPalette'
+import IconShape from '@tabler/icons-react/icons/IconShape'
+import IconTypography from '@tabler/icons-react/icons/IconTypography'
 import { Decipher, HudButton, StatusDot } from '@/hud'
 import { FX } from '@/fx/registry'
 import { RESOURCES } from '@/data/resources'
 import { playBleep } from '@/lib/sound'
-import { LedgerTab } from './LedgerTab'
-import { TypeTab } from './TypeTab'
-import { IconsTab } from './IconsTab'
-import { ShapesTab } from './ShapesTab'
-import { PaletteTab } from './PaletteTab'
+
+// Every tab is its own chunk: the header and tablist render as soon as this module evaluates, and
+// heavy tab dependencies (IconsTab: lucide, Material Symbols CSS, Iconify offline) load only when opened.
+const LedgerTab = lazy(() => import('./LedgerTab').then((m) => ({ default: m.LedgerTab })))
+const TypeTab = lazy(() => import('./TypeTab').then((m) => ({ default: m.TypeTab })))
+const IconsTab = lazy(() => import('./IconsTab').then((m) => ({ default: m.IconsTab })))
+const ShapesTab = lazy(() => import('./ShapesTab').then((m) => ({ default: m.ShapesTab })))
+const PaletteTab = lazy(() => import('./PaletteTab').then((m) => ({ default: m.PaletteTab })))
 
 /**
  * Arsenał – the "use everything" ledger: every resource from the research report with its licence,
@@ -17,7 +24,7 @@ import { PaletteTab } from './PaletteTab'
  */
 type TabId = 'rejestr' | 'typografia' | 'ikony' | 'ksztalty' | 'paleta'
 
-const TABS: { id: TabId; label: string; icon: ReactNode; Comp: () => ReactNode }[] = [
+const TABS: { id: TabId; label: string; icon: ReactNode; Comp: ComponentType }[] = [
   { id: 'rejestr', label: 'Rejestr', icon: <IconLicense />, Comp: LedgerTab },
   { id: 'typografia', label: 'Typografia', icon: <IconTypography />, Comp: TypeTab },
   { id: 'ikony', label: 'Ikony', icon: <IconIcons />, Comp: IconsTab },
@@ -88,14 +95,25 @@ export default function ArsenalView() {
             </HudButton>
           ))}
         </div>
-        <span className="hidden xl:flex items-center gap-1.5 jx-label text-[0.6rem]" title="Licencje sprawdzone w kodzie i package.json">
+        <span className="hidden xl:flex items-center gap-1.5 jx-label text-[0.625rem]" title="Licencje sprawdzone w kodzie i package.json">
           <StatusDot tone="ok" /> rejestr zweryfikowany
         </span>
       </div>
 
       <div role="tabpanel" id={`arsenal-panel-${tab}`} aria-labelledby={`arsenal-tab-${tab}`} className="flex-1 min-h-0" tabIndex={-1}>
-        <Active />
+        <Suspense fallback={<TabLoading />}>
+          <Active />
+        </Suspense>
       </div>
+    </div>
+  )
+}
+
+function TabLoading() {
+  return (
+    <div role="status" className="flex items-center gap-2 p-6 jx-label">
+      <StatusDot tone="accent" pulse />
+      <span className="jx-caret">Ładowanie zakładki</span>
     </div>
   )
 }

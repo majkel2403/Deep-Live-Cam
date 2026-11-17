@@ -1,0 +1,20 @@
+/* motion-arwes-animated: decorative arcs. Rotation pauses with the rest of the effect (data-paused on the root). */
+.ma-spin {
+  transform-box: view-box;
+  transform-origin: 500px 320px;
+  animation: ma-spin 28s linear infinite;
+}
+.ma-spin--rev {
+  animation-name: ma-spin-rev;
+  animation-duration: 44s;
+}
+@keyframes ma-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes ma-spin-rev {
+  to { transform: rotate(-360deg); }
+}
+[data-paused="true"] .ma-spin,
+[data-paused="true"] .ma-spin--rev {
+  animation-play-state: paused;
+}

@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from 'react'
-import { IconPlayerPlay } from '@tabler/icons-react'
+import IconPlayerPlay from '@tabler/icons-react/icons/IconPlayerPlay'
 import { FRAME_KINDS, Frame, HudButton, type FrameKind } from '@/hud'
 import { playBleep } from '@/lib/sound'
 import { SectionHead, Tag } from './common'
@@ -66,9 +66,9 @@ export function ShapesTab() {
                 s.aug.startsWith('all-') ? ALL_SHAPE_STYLE : CLIP_SHAPE_STYLE
               }
             >
-              <span className={`jx-label text-[0.62rem] text-jx-accent ${s.aug.startsWith('all-triangle') ? 'pt-8' : ''}`}>{s.label}</span>
+              <span className={`jx-label text-[0.625rem] text-jx-accent ${s.aug.startsWith('all-triangle') ? 'pt-8' : ''}`}>{s.label}</span>
             </div>
-            <figcaption className="jx-num text-[0.6rem] text-jx-dim break-words leading-snug">{s.aug}</figcaption>
+            <figcaption className="jx-num text-[0.625rem] text-jx-dim break-words leading-snug">{s.aug}</figcaption>
           </figure>
         ))}
       </div>

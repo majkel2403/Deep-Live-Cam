@@ -70,7 +70,7 @@ function Brackets({ color, thick = 1.5, len = '28%' }: { color: string; thick?: 
   )
 }
 
-function Target({ tr, locked, accent, stage, stiffness, reduced, minPx, maxPx }: { tr: Track; locked: boolean; accent: string; stage: boolean; stiffness: number; reduced: boolean; minPx: number; maxPx: number }) {
+function Target({ tr, locked, below, accent, stage, stiffness, reduced, minPx, maxPx }: { tr: Track; locked: boolean; below: boolean; accent: string; stage: boolean; stiffness: number; reduced: boolean; minPx: number; maxPx: number }) {
   const spring = reduced ? { stiffness: 900, damping: 80 } : { stiffness, damping: 14, mass: 0.6 }
   const sx = useSpring(tr.x, spring)
   const sy = useSpring(tr.y, spring)
@@ -94,11 +94,12 @@ function Target({ tr, locked, accent, stage, stiffness, reduced, minPx, maxPx }:
       <motion.div className="absolute left-0 top-0" style={{ x: left, y: top, width: size, height: size }}>
         <Brackets color={col} thick={locked ? 2 : 1.5} />
         <span className="absolute left-1/2 top-1/2 h-1 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: col, boxShadow: `0 0 6px ${col}` }} />
-        <div className="absolute -top-5 left-0 flex items-baseline gap-1.5 whitespace-nowrap">
-          <span className={`${LBL} ${stage ? 'text-[0.68rem]' : 'text-[0.5rem]'}`} style={{ color: col }}>
+        {/* labels alternate above / below the box so neighbouring tracks rarely collide; the plate keeps overlaps legible */}
+        <div className={`absolute left-0 flex items-baseline gap-1.5 whitespace-nowrap bg-jx-bg/70 px-1 ${below ? 'top-full mt-1' : '-top-5'}`}>
+          <span className={`${LBL} ${stage ? 'text-[0.68rem]' : 'text-[0.625rem]'}`} style={{ color: col }}>
             {tr.id}
           </span>
-          {stage && <motion.span className="jx-num text-[0.62rem] text-jx-text/80">{dist}</motion.span>}
+          {stage && <motion.span className="jx-num text-[0.625rem] text-jx-text/80">{dist}</motion.span>}
         </div>
         <AnimatePresence>
           {locked && (
@@ -129,8 +130,9 @@ function Target({ tr, locked, accent, stage, stiffness, reduced, minPx, maxPx }:
                 ))}
               </svg>
               <motion.span
-                className={`${LBL} absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap ${stage ? 'text-[0.66rem]' : 'text-[0.5rem]'}`}
-                style={{ color: SEM.danger, textShadow: `0 0 8px ${SEM.danger}` }}
+                className={`${LBL} absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap ${stage ? 'text-[0.66rem]' : 'text-[0.625rem]'}`}
+                // card tiles are too narrow for the caption; the lock ring alone carries the state there
+                style={{ color: SEM.danger, textShadow: `0 0 8px ${SEM.danger}`, display: stage ? undefined : 'none' }}
                 initial={{ opacity: 0 }}
                 animate={reduced ? { opacity: 1 } : { opacity: [0, 1, 0.35, 1] }}
                 transition={{ delay: reduced ? 0 : 0.7, duration: 0.6 }}
@@ -276,7 +278,7 @@ export default function Targeting({ accent, accent2, reducedMotion, stage, pause
       {lt && size.width > 0 && <LockLine key={lt.id} tr={lt} cx={size.width / 2} cy={size.height / 2} />}
 
       {tracks.map((tr, i) => (
-        <Target key={tr.id} tr={tr} locked={i === lockedIdx} accent={accent} stage={stage} stiffness={c.stiffness} reduced={reducedMotion} minPx={minPx} maxPx={maxPx} />
+        <Target key={tr.id} tr={tr} locked={i === lockedIdx} below={i % 2 === 1} accent={accent} stage={stage} stiffness={c.stiffness} reduced={reducedMotion} minPx={minPx} maxPx={maxPx} />
       ))}
 
       {stage && size.width > 0 && <Tapes clock={clock} accent={accent} accent2={accent2} h={size.height} />}
@@ -290,16 +292,16 @@ export default function Targeting({ accent, accent2, reducedMotion, stage, pause
         footer={
           stage ? (
             <>
-              <span className={`${LBL} text-[0.62rem]`}>
+              <span className={`${LBL} text-[0.625rem]`}>
                 Śledzone <span className="jx-num text-jx-accent">{tracks.length}</span>
               </span>
-              <span className={`${LBL} text-[0.62rem]`}>
+              <span className={`${LBL} text-[0.625rem]`}>
                 Cel <span className="jx-num text-jx-danger">{lt?.id ?? '—'}</span>
               </span>
-              <span className={`${LBL} text-[0.62rem]`}>
+              <span className={`${LBL} text-[0.625rem]`}>
                 Odległość <span className="jx-num text-jx-accent">{lockInfo.d ? `${Math.round(lockInfo.d)} m` : '—'}</span>
               </span>
-              <span className={`${LBL} text-[0.62rem]`}>
+              <span className={`${LBL} text-[0.625rem]`}>
                 Namiar <span className="jx-num text-jx-accent">{String(Math.round(lockInfo.brg) % 360).padStart(3, '0')}°</span>
               </span>
             </>
@@ -368,16 +370,19 @@ function Tapes({ clock, accent, accent2, h }: { clock: MotionValue<number>; acce
           { side: 'right-8', y: altY, text: altText, label: 'WYS. m', step: 80 },
         ] as const
       ).map((tp) => (
-        <div key={tp.side} className={`absolute ${tp.side} top-1/2 w-16 -translate-y-1/2 overflow-hidden`} style={{ height: tapeH }}>
-          <motion.div className="absolute inset-x-0 -top-10 -bottom-10" style={{ y: tp.y }}>
-            {Array.from({ length: Math.ceil((tapeH + 80) / 8) }, (_, i) => (
-              <span key={i} className="absolute h-px" style={{ top: i * 8, width: i % 5 === 0 ? 18 : 8, background: accent, opacity: i % 5 === 0 ? 0.8 : 0.35, [tp.side.startsWith('left') ? 'right' : 'left']: 0 }} />
-            ))}
-          </motion.div>
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border bg-black/60 py-0.5 text-center jx-num text-[0.75rem]" style={{ borderColor: accent2, color: accent2 }}>
-            <motion.span>{tp.text}</motion.span>
+        // caption sits above the scrolling tape (outside its clip box) so ticks never run through it
+        <div key={tp.side} className={`absolute ${tp.side} top-1/2 w-24 -translate-y-1/2`} style={{ height: tapeH + 22 }}>
+          <span className={`${LBL} absolute inset-x-0 top-0 whitespace-nowrap text-center text-[0.625rem]`}>{tp.label}</span>
+          <div className="absolute inset-x-0 bottom-0 overflow-hidden" style={{ height: tapeH }}>
+            <motion.div className="absolute inset-x-0 -top-10 -bottom-10" style={{ y: tp.y }}>
+              {Array.from({ length: Math.ceil((tapeH + 80) / 8) }, (_, i) => (
+                <span key={i} className="absolute h-px" style={{ top: i * 8, width: i % 5 === 0 ? 18 : 8, background: accent, opacity: i % 5 === 0 ? 0.8 : 0.35, [tp.side.startsWith('left') ? 'right' : 'left']: 0 }} />
+              ))}
+            </motion.div>
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border bg-black/60 py-0.5 text-center jx-num text-[0.75rem]" style={{ borderColor: accent2, color: accent2 }}>
+              <motion.span>{tp.text}</motion.span>
+            </div>
           </div>
-          <span className={`${LBL} absolute inset-x-0 top-0 text-center text-[0.55rem]`}>{tp.label}</span>
         </div>
       ))}
     </div>

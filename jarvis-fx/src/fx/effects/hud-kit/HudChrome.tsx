@@ -9,7 +9,7 @@ export function DemoBadge({ label = 'DEMO', title = 'Dane syntetyczne – genero
       title={title}
       aria-label={`${label}: ${title}`}
       data-augmented-ui="tl-clip br-clip border"
-      className="jx-aug jx-num pointer-events-auto inline-flex items-center px-1.5 py-px text-[0.58rem] font-bold tracking-[0.25em] text-jx-warn [--aug-border-bg:var(--jx-warn)] [--aug-tl:5px] [--aug-br:5px]"
+      className="jx-aug jx-num pointer-events-auto inline-flex items-center px-1.5 py-px text-[0.625rem] font-bold tracking-[0.25em] text-jx-warn [--aug-border-bg:var(--jx-warn)] [--aug-tl:5px] [--aug-br:5px]"
     >
       {label}
     </span>
@@ -57,8 +57,8 @@ export function HudChrome({
         </>
       )}
       <div className={`absolute flex items-center gap-2 ${stage ? 'left-5 top-4' : 'left-3 top-2.5'}`}>
-        <span className={`${LBL} text-jx-accent jx-glow-text ${stage ? 'text-[0.7rem]' : 'text-[0.55rem]'}`}>{code}</span>
-        {stage && title && <span className={`${LBL} text-[0.62rem] text-jx-dim`}>{title}</span>}
+        <span className={`${LBL} text-jx-accent jx-glow-text ${stage ? 'text-[0.7rem]' : 'text-[0.625rem]'}`}>{code}</span>
+        {stage && title && <span className={`${LBL} text-[0.625rem] text-jx-dim`}>{title}</span>}
       </div>
       {badges && <div className={`absolute flex items-center gap-1.5 ${stage ? 'right-5 top-3.5' : 'right-3 top-2'}`}>{badges}</div>}
       {footer && <div className={`absolute ${stage ? 'left-5 bottom-3.5 right-5' : 'left-3 bottom-2 right-3'} flex items-center gap-3`}>{footer}</div>}

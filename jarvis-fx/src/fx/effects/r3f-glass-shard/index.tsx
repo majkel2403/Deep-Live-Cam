@@ -251,7 +251,7 @@ export default function GlassShard({ accent, accent2, quality, stage, paused, re
     ior: { value: 1.55, min: 1, max: 2.4, step: 0.01, label: 'IOR' },
     grubość: { value: 1.4, min: 0, max: 4, step: 0.05 },
     dyspersja: { value: 0.35, min: 0, max: 1, step: 0.01 },
-    zniekształcenie: { value: 0.12, min: 0, max: 1, step: 0.01 },
+    falowanie: { value: 0.12, min: 0, max: 1, step: 0.01 },
     obrót: { value: 1, min: 0, max: 3, step: 0.05 },
     bloom: { value: 1.1, min: 0, max: 3, step: 0.05 },
   })
@@ -282,7 +282,7 @@ export default function GlassShard({ accent, accent2, quality, stage, paused, re
       </Environment>
       <Backdrop accent={accent} count={stage ? 96 : 56} still={still} />
       <LightRings accent={accent} accent2={accent2} speed={c.obrót} still={still} />
-      <Crystal accent={accent} ior={c.ior} thickness={c.grubość} chroma={c.dyspersja} distortion={c.zniekształcenie} speed={c.obrót} still={still} samples={samples} resolution={resolution} backside={hq} />
+      <Crystal accent={accent} ior={c.ior} thickness={c.grubość} chroma={c.dyspersja} distortion={c.falowanie} speed={c.obrót} still={still} samples={samples} resolution={resolution} backside={hq} />
       <Satellites accent={accent} count={stage ? 7 : 4} still={still} />
       <Sparkles count={stage ? 60 : 20} scale={[6, 4, 4]} size={1.4} speed={still ? 0 : 0.25} color={accent} opacity={0.5} />
       <HudComposer>

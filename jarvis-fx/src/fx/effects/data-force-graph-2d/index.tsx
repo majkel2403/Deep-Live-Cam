@@ -195,7 +195,8 @@ export default function ForceGraphFx({ accent, accent2, quality, reducedMotion, 
     }
 
     if (labels && big && (n.kind !== 'leaf' || scale > 1.6 || hot)) {
-      const fs = Math.max(3, (n.kind === 'leaf' ? 9 : 11) / scale)
+      // on-screen size stays at 10 px (leaves) / 12 px (hubs) at any zoom; the clamp keeps graph units sane
+      const fs = Math.max(3, (n.kind === 'leaf' ? 10 : 12) / scale)
       ctx.font = `600 ${fs}px Rajdhani, "Chakra Petch", sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'top'
@@ -269,11 +270,11 @@ export default function ForceGraphFx({ accent, accent2, quality, reducedMotion, 
         footer={
           stage ? (
             <>
-              <span className={`${LBL} text-[0.6rem]`}>
+              <span className={`${LBL} text-[0.625rem]`}>
                 Węzły <span className="jx-num text-jx-accent">{data.nodes.length}</span> · łącza <span className="jx-num text-jx-accent">{data.links.length}</span>
               </span>
               <span className="flex-1" />
-              <span className={`${LBL} text-[0.6rem]`}>Przeciągnij węzeł · kółko = zoom</span>
+              <span className={`${LBL} text-[0.625rem]`}>Przeciągnij węzeł · kółko = zoom</span>
             </>
           ) : undefined
         }

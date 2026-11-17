@@ -4,7 +4,9 @@
  */
 import { useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react'
 import useSound from 'use-sound'
-import { IconStairsUp, IconRadar2, IconCircleCheck } from '@tabler/icons-react'
+import IconStairsUp from '@tabler/icons-react/icons/IconStairsUp'
+import IconRadar2 from '@tabler/icons-react/icons/IconRadar2'
+import IconCircleCheck from '@tabler/icons-react/icons/IconCircleCheck'
 import { useSettings } from '@/lib/store'
 import { soundUrl } from '@/lib/sound'
 import { wakeScope } from './scopeBus'
@@ -78,7 +80,7 @@ export function UseSoundDemo() {
         {'\n'}
         {'}'})
       </pre>
-      {!enabled && <p className="jx-label text-[0.6rem] text-jx-warn">Dźwięk wyciszony — przyciski demo są nieaktywne.</p>}
+      {!enabled && <p className="jx-label text-[0.625rem] text-jx-warn">Dźwięk wyciszony — przyciski demo są nieaktywne.</p>}
     </div>
   )
 }

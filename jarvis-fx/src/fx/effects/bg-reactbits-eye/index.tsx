@@ -2,7 +2,8 @@
  * bg-reactbits-eye – ported/adapted from React Bits "Evil Eye" by David Haz (OGL build).
  * Source: https://github.com/DavidHDev/react-bits/blob/main/src/ts-default/Backgrounds/EvilEye/EvilEye.tsx
  * License of the component: MIT + Commons Clause – https://github.com/DavidHDev/react-bits/blob/main/LICENSE.md
- *   (free to use inside an application; the component itself may not be sold or redistributed alone).
+ *   Commons Clause: the software may not be sold, i.e. offered for a fee as a product or service whose value
+ *   derives substantially from it. Use inside this free application is permitted.
  * Rendering library: OGL – https://github.com/oframe/ogl (Unlicense): Renderer, Program, Mesh, Triangle, Texture.
  * Adaptations: eye colour = FxProps.accent and backdrop tinted by the runtime hue (no fixed palette), Leva
  * controls, pause and reduced motion driven by the app (no loop while paused; a single still frame when

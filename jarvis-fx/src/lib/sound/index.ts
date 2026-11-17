@@ -2,17 +2,19 @@
  * UI sound API ("bleeps", ARWES naming). STABLE CONTRACT – other modules only use:
  *   playBleep(name)   BLEEPS   type BleepName   registerBleepPlayer(player)
  *
- * Backends (chosen per bleep, see files.ts → resolveBackend):
+ * Backends (chosen per bleep, see files.ts → resolveBackend; the user picks the preference):
  *   1. Kenney CC0 packs  – if /sounds/index.json lists a "kenney" pack (scripts/fetch-kenney.mjs)
  *   2. our CC0 WAVs      – /sounds/synth/*.wav played via howler (scripts/render-sounds.mjs)
- *   3. WebAudio synth    – procedural, always available, also the fallback while files load
+ *   3. ARWES bleeps      – the same WAVs through @arwes/bleeps (MIT), only when explicitly selected (./arwes.ts)
+ *   4. WebAudio synth    – procedural, always available, also the fallback while files load
  * Respects the global sound settings (soundOn, volume). Sounds are short (<150 ms) and quiet.
  */
 import { useSettings } from '../store'
 import type { BleepName } from './names'
 import { getAudio } from './engine'
 import { scheduleSynth } from './synth'
-import { filePlayer, initFileBackends, resolveBackend, type Backend } from './files'
+import { filePlayer, initFileBackends, resolveBackend, useSoundEngine, type Backend } from './files'
+import { arwesPlay, initArwes } from './arwes'
 
 export { BLEEPS, type BleepName, isBleepName } from './names'
 export { RECIPES, synthDuration, scheduleSynth, type Voice } from './synth'
@@ -98,7 +100,7 @@ export function auditionBleep(name: BleepName, backend: Backend): Backend | null
   const { soundOn, volume } = useSettings.getState()
   if (!soundOn || volume <= 0) return null
   if (backend !== 'synth' && resolveBackend(name, backend) === backend) {
-    const r = filePlayer(name, volume, backend)
+    const r = playFileBackend(name, volume, backend)
     if (r) {
       emit(name, r)
       return r
@@ -109,18 +111,36 @@ export function auditionBleep(name: BleepName, backend: Backend): Backend | null
   return 'synth'
 }
 
+/** Plays through the backend `backend` names; returns the backend label, or false → synth. */
+function playFileBackend(name: BleepName, volume: number, backend: Backend): Backend | false {
+  if (backend === 'synth') return false
+  if (backend === 'arwes') return arwesPlay(name, volume) ? 'arwes' : false
+  return filePlayer(name, volume, backend)
+}
+
+/** Loads the engines a sound-on user needs: file packs always, ARWES only when it is the chosen preference. */
+function wakeEngines() {
+  if (!useSettings.getState().soundOn) return
+  void initFileBackends()
+  if (useSoundEngine.getState().pref === 'arwes') void initArwes().catch(() => undefined)
+}
+
 // file backends register themselves once loaded; deferred so they never compete with first paint
-registerBleepPlayer((name, volume) => filePlayer(name, volume))
+registerBleepPlayer((name, volume) => playFileBackend(name, volume, resolveBackend(name)))
 if (typeof window !== 'undefined') {
+  // choosing ARWES in the engine panel (or turning sound on afterwards) starts that engine
+  useSoundEngine.subscribe((s, prev) => {
+    if (s.pref !== prev.pref && s.pref === 'arwes') wakeEngines()
+  })
   const start = () => {
     if (useSettings.getState().soundOn) {
-      void initFileBackends()
+      wakeEngines()
       return
     }
     const unsub = useSettings.subscribe((s) => {
       if (s.soundOn) {
         unsub()
-        void initFileBackends()
+        wakeEngines()
       }
     })
   }

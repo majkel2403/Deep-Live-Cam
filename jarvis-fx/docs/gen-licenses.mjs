@@ -8,8 +8,15 @@
  * For every entry in package.json (dependencies + devDependencies) it reads the INSTALLED
  * node_modules/<name>/package.json and reports: real package name (npm aliases such as
  * "three-vanta" → three@0.134), installed version, the "license" field (or legacy "licenses"),
- * and whether a LICENSE file ships with the package. It also lists packages that src/ imports
- * directly but that are only present transitively. No dependencies; Node ≥ 18.
+ * and whether a LICENSE file ships with the package.
+ *
+ * Import scan: every module specifier in src/ and vite.config.ts is collected with ES import
+ * syntax only (statements, re-exports, side-effect imports, CSS @import, dynamic import()).
+ * Comments and string literals such as `from "demand"` in prose are not picked up.
+ *  - declared in package.json but not imported anywhere → "Deklarowane bez importu" (build tools,
+ *    code generators, aliases resolved by vite.config.ts);
+ *  - imported in src/ but not declared → "Importowane bez deklaracji" (should be empty).
+ * No dependencies; Node ≥ 20.19 (the Vite 8 requirement).
  */
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
@@ -42,38 +49,64 @@ function readInstalled(name) {
 
 function row(name, spec, kind) {
   const i = readInstalled(name)
-  if (!i) return `| \`${name}\` | ${spec} | — | **nie zainstalowany** | — | ${kind} |`
+  if (!i) return `| \`${name}\` | ${spec} | — | **nie zainstalowany** | — | ${kind} | ${used.has(name) ? 'tak' : 'nie'} |`
   const alias = i.realName !== name ? ` (alias \`${i.realName}\`)` : ''
   const flag = /^(MIT|ISC|Apache-2\.0|BSD-[23]-Clause|0BSD|Zlib|Unlicense|CC0-1\.0|OFL-1\.1|BlueOak-1\.0\.0)( \(tekst w pliku LICENSE\))?$/.test(i.license) ? '' : ' ⚠'
-  return `| \`${name}\`${alias} | ${i.version} | ${i.license}${flag} | ${i.hasFile ? 'tak' : 'nie'} | ${i.home ? `<${i.home}>` : '—'} | ${kind} |`
+  // "tak" = an import in src/ or vite.config.ts (a direct dependency of the bundle); "nie" = tooling or a transitive package
+  const direct = used.has(name) ? 'tak' : 'nie'
+  return `| \`${name}\`${alias} | ${i.version} | ${i.license}${flag} | ${i.hasFile ? 'tak' : 'nie'} | ${i.home ? `<${i.home}>` : '—'} | ${kind} | ${direct} |`
 }
 
-/** bare specifiers imported from src/ that are not declared in package.json */
-function undeclaredImports() {
-  const declared = new Set([...Object.keys(pkg.dependencies ?? {}), ...Object.keys(pkg.devDependencies ?? {})])
-  const found = new Set()
+/** ES import syntax only – no comments, no prose, no string literals outside import statements */
+const IMPORT_PATTERNS = [
+  // import x from 'y' · import { a, b } from 'y' · export { a } from 'y' — the clause between the keyword and
+  // `from` may contain only identifiers, braces, commas and whitespace, so a `(`, `=` or quote stops the match
+  /^\s*(?:import|export)\s+(?:type\s+)?[\w*\s{},$]*?\s*\bfrom\s+['"]([^'"]+)['"]/gm,
+  /^\s*\}\s*from\s+['"]([^'"]+)['"]/gm, // closing line of a multi-line import
+  /^\s*import\s+['"]([^'"]+)['"]/gm, // import 'y' (side effect)
+  /^\s*@import\s+['"]([^'"]+)['"]/gm, // CSS @import
+  /\bimport\(\s*['"]([^'"]+)['"]\s*\)/g, // dynamic import()
+]
+
+/** package name of a bare specifier, or null for relative / alias / node: specifiers */
+function packageOf(spec) {
+  if (spec.startsWith('.') || spec.startsWith('/') || spec.startsWith('@/') || spec.startsWith('node:')) return null
+  return spec.startsWith('@') ? spec.split('/').slice(0, 2).join('/') : spec.split('/')[0]
+}
+
+function collectImports() {
+  const used = new Map() // package name → number of importing files
+  const scan = (file) => {
+    const src = readFileSync(file, 'utf8')
+    const names = new Set()
+    for (const re of IMPORT_PATTERNS) {
+      for (const m of src.matchAll(re)) {
+        const name = packageOf(m[1])
+        if (name) names.add(name)
+      }
+    }
+    for (const n of names) used.set(n, (used.get(n) ?? 0) + 1)
+  }
   const walk = (dir) => {
     for (const f of readdirSync(dir)) {
       const p = path.join(dir, f)
       if (statSync(p).isDirectory()) walk(p)
-      else if (/\.(tsx?|css)$/.test(f)) {
-        const src = readFileSync(p, 'utf8')
-        for (const m of src.matchAll(/(?:from\s+|import\s+|@import\s+)['"]([^'"./][^'"]*)['"]/g)) {
-          const spec = m[1]
-          if (spec.startsWith('@/') || spec.startsWith('node:')) continue
-          const name = spec.startsWith('@') ? spec.split('/').slice(0, 2).join('/') : spec.split('/')[0]
-          if (!declared.has(name)) found.add(name)
-        }
-      }
+      else if (/\.(tsx?|css)$/.test(f)) scan(p)
     }
   }
   walk(path.join(root, 'src'))
-  return [...found].sort()
+  const vite = path.join(root, 'vite.config.ts')
+  if (existsSync(vite)) scan(vite)
+  return used
 }
 
+const declaredRuntime = Object.keys(pkg.dependencies ?? {})
+const declaredDev = Object.keys(pkg.devDependencies ?? {})
+const declared = new Set([...declaredRuntime, ...declaredDev])
+const used = collectImports()
 const deps = Object.entries(pkg.dependencies ?? {}).sort(([a], [b]) => a.localeCompare(b))
 const dev = Object.entries(pkg.devDependencies ?? {}).sort(([a], [b]) => a.localeCompare(b))
-const head = '| Pakiet | Wersja | Licencja (pole `license`) | Plik LICENSE | Strona / repozytorium | Typ |\n|---|---|---|---|---|---|'
+const head = '| Pakiet | Wersja | Licencja (pole `license`) | Plik LICENSE | Strona / repozytorium | Typ | Import w `src/` |\n|---|---|---|---|---|---|---|'
 
 const counts = new Map()
 for (const [n] of [...deps, ...dev]) {
@@ -81,7 +114,9 @@ for (const [n] of [...deps, ...dev]) {
   counts.set(l, (counts.get(l) ?? 0) + 1)
 }
 const summary = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([l, c]) => `${l} × ${c}`).join(' · ')
-const transitive = undeclaredImports()
+const undeclared = [...used.keys()].filter((n) => !declared.has(n)).sort()
+const unused = [...declared].filter((n) => !used.has(n)).sort((a, b) => a.localeCompare(b))
+const unusedRows = unused.map((n) => row(n, pkg.dependencies?.[n] ?? pkg.devDependencies?.[n], declaredRuntime.includes(n) ? 'runtime' : 'dev'))
 
 const md = [
   `Wygenerowano z \`node_modules\` (${deps.length} zależności + ${dev.length} deweloperskich). Podsumowanie: ${summary}.`,
@@ -97,11 +132,17 @@ const md = [
   head,
   ...dev.map(([n, s]) => row(n, s, 'dev')),
   '',
-  '### Importowane bezpośrednio, obecne tylko przechodnio',
+  '### Importowane bez deklaracji w package.json',
   '',
-  transitive.length
-    ? [head, ...transitive.map((n) => row(n, '', 'przechodnia'))].join('\n')
-    : '_Brak – każdy import z `src/` jest zadeklarowany w package.json._',
+  undeclared.length
+    ? [head, ...undeclared.map((n) => row(n, '', 'NIEZADEKLAROWANA'))].join('\n')
+    : '_Brak – każdy import z `src/` i `vite.config.ts` jest zadeklarowany w package.json._',
+  '',
+  '### Zadeklarowane bez importu w `src/` i `vite.config.ts`',
+  '',
+  unused.length
+    ? [head, ...unusedRows].join('\n') + '\n\nTe pakiety nie trafiają do paczki aplikacji bezpośrednio: są narzędziami (typy, lint, build), generatorem (`@iconify-json/game-icons` – źródło podzbioru ikon, patrz `docs/ARCHITECTURE.md` §11; `material-symbols` – źródło podzbioru czcionki, `scripts/subset-material-symbols.py`) albo aliasem przeładowanym w `vite.config.ts` (`motion-v10`).'
+    : '_Brak._',
 ].join('\n')
 
 if (process.argv.includes('--print')) {
@@ -115,5 +156,5 @@ if (process.argv.includes('--print')) {
   const b = doc.indexOf(end)
   if (a < 0 || b < 0) throw new Error('LICENSES.md: AUTO markers not found')
   writeFileSync(file, `${doc.slice(0, a + start.length)}\n${md}\n${doc.slice(b)}`)
-  console.log(`LICENSES.md: ${deps.length + dev.length} packages, ${transitive.length} transitive direct imports`)
+  console.log(`LICENSES.md: ${deps.length + dev.length} packages, ${undeclared.length} undeclared imports, ${unused.length} declared without import`)
 }

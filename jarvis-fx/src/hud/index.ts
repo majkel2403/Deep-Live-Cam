@@ -1,4 +1,5 @@
-export { Frame, FrameBox, FRAME_KINDS, type FrameKind, type FrameProps } from './Frame'
+export { Frame, FrameBox, type FrameKind, type FrameProps } from './Frame'
+export { FRAME_KINDS } from './frameKinds'
 export { Panel, type PanelProps } from './Panel'
 export { Decipher } from './Decipher'
 export { Glitch } from './Glitch'

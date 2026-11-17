@@ -8,7 +8,7 @@ export const meta: FxMeta = {
     'Ekran CRT z siatką migoczących glifów: szum fbm, linie skanowania, krzywizna kineskopu, aberracja i poświata luminoforu w kolorze akcentu. Kliknięcie wywołuje zakłócenie lub rozmagnesowanie.',
   tech: ['WebGL2', 'GLSL', 'MRT', 'React Bits'],
   license: 'MIT + Commons Clause',
-  source: { label: 'React Bits · Faulty Terminal', url: 'https://reactbits.dev/backgrounds/faulty-terminal' },
+  source: { label: 'React Bits · Faulty Terminal', url: 'https://github.com/DavidHDev/react-bits/blob/main/src/ts-tailwind/Backgrounds/FaultyTerminal/FaultyTerminal.tsx' },
   webgl: true,
   cost: 3,
   order: 21,

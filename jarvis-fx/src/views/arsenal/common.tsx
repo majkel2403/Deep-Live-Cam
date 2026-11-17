@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react'
-import { IconCode, IconExternalLink, IconLayoutGrid, IconSparkles } from '@tabler/icons-react'
+import IconCode from '@tabler/icons-react/icons/IconCode'
+import IconExternalLink from '@tabler/icons-react/icons/IconExternalLink'
+import IconLayoutGrid from '@tabler/icons-react/icons/IconLayoutGrid'
+import IconSparkles from '@tabler/icons-react/icons/IconSparkles'
 import { FX_BY_ID } from '@/fx/registry'
 import type { FxEntry } from '@/fx/types'
 import { navigate } from '@/lib/router'
@@ -10,7 +13,7 @@ import { FLAG_INFO, USAGE_INFO, VIEW_LABELS, type LicenseFlag, type Resource, ty
 /** Small bordered tag (licence flag, usage, category). */
 export function Tag({ children, className = '', title }: { children: ReactNode; className?: string; title?: string }) {
   return (
-    <span title={title} className={`inline-flex items-center gap-1 border px-1.5 py-px jx-num text-[0.6rem] leading-[1.35] tracking-wider uppercase whitespace-nowrap ${className}`}>
+    <span title={title} className={`inline-flex items-center gap-1 border px-1.5 py-px jx-num text-[0.625rem] leading-[1.35] tracking-wider uppercase whitespace-nowrap ${className}`}>
       {children}
     </span>
   )
@@ -68,14 +71,14 @@ export function WhereChips({ r, effects, compact = false }: { r: Resource; effec
       {compact && effects.length > fxShown.length && <span className="jx-num text-[0.65rem] text-jx-dim self-center">+{effects.length - fxShown.length} FX</span>}
       {!compact &&
         code.map((c) => (
-          <span key={c} className="inline-flex items-center gap-1 border border-dashed border-jx-line/60 px-1.5 py-px jx-num text-[0.62rem] text-jx-dim">
+          <span key={c} className="inline-flex items-center gap-1 border border-dashed border-jx-line/60 px-1.5 py-px jx-num text-[0.625rem] text-jx-dim">
             <IconCode className="size-3" aria-hidden="true" />
             {c}
           </span>
         ))}
       {!compact &&
         missingFx.map((id) => (
-          <span key={id} className="inline-flex items-center gap-1 border border-dashed border-jx-warn/50 px-1.5 py-px jx-num text-[0.62rem] text-jx-warn" title="Efekt wymieniony w rejestrze, ale nie ma go w galerii">
+          <span key={id} className="inline-flex items-center gap-1 border border-dashed border-jx-warn/50 px-1.5 py-px jx-num text-[0.625rem] text-jx-warn" title="Efekt wymieniony w rejestrze, ale nie ma go w galerii">
             {id} · brak
           </span>
         ))}
@@ -100,7 +103,7 @@ export function SectionHead({ children, meta, id }: { children: ReactNode; meta?
         {children}
       </h3>
       <span className="flex-1 h-px bg-gradient-to-r from-jx-line to-transparent" />
-      {meta && <span className="jx-num text-[0.62rem] text-jx-dim whitespace-nowrap truncate min-w-0 shrink">{meta}</span>}
+      {meta && <span className="jx-num text-[0.625rem] text-jx-dim whitespace-nowrap truncate min-w-0 shrink">{meta}</span>}
     </div>
   )
 }

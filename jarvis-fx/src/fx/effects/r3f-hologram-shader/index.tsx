@@ -1,13 +1,61 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Bloom, Glitch, Noise, Scanline, Vignette } from '@react-three/postprocessing'
-import { BlendFunction, GlitchMode } from 'postprocessing'
-import { AdditiveBlending, BufferAttribute, BufferGeometry, Color, DoubleSide, FrontSide, TorusKnotGeometry, Vector2, type Group } from 'three'
+import { Bloom, Noise, Scanline, Vignette, wrapEffect } from '@react-three/postprocessing'
+import { BlendFunction, Effect } from 'postprocessing'
+import { AdditiveBlending, BufferAttribute, BufferGeometry, Color, DoubleSide, FrontSide, TorusKnotGeometry, Uniform, type Group, type WebGLRenderer, type WebGLRenderTarget } from 'three'
 import { HudComposer } from '@/fx/three/HudComposer'
 import { useFxControls } from '@/fx/controls'
 import { Redraw, uniformArgs } from '../r3f-kit/util'
 import type { FxProps } from '@/fx/types'
 import { makeHead, makeShoulders } from './bust'
+
+/* ---------- screen-space tearing (stage only) ---------- */
+/*
+ * The built-in postprocessing Glitch mirrors the UVs and then samples outside [0, 1]. The sampler clamps to the
+ * edge, and the near-black border turns that into flat black bars across a dark scene. Here the torn rows wrap
+ * around the edge instead, so the picture is shifted but never blanked. Original code, written for this effect.
+ */
+const tearFrag = /* glsl */ `
+  uniform float uTime;
+  uniform float uAmount;
+  float tearHash(float n) { return fract(sin(n) * 43758.5453); }
+  void mainUv(inout vec2 uv) {
+    float window = floor(uTime * 0.6);                                              // a new roll about every 1.7 s
+    float burst = step(0.8, tearHash(window * 3.7)) * step(fract(uTime * 0.6), 0.14); // rare, short bursts only
+    float slice = floor(uTime * 24.0);                                              // rows jitter while a burst lasts
+    float band = floor(uv.y * 26.0);
+    float on = burst * step(0.72, tearHash(band * 1.731 + slice * 7.31));
+    float dir = tearHash(band * 0.913 + slice * 0.37) - 0.5;
+    uv.x = fract(uv.x + on * dir * 0.16 * uAmount);
+  }
+`
+
+class TearEffect extends Effect {
+  constructor(options: { amount?: number } = {}) {
+    super('TearEffect', tearFrag, {
+      blendFunction: BlendFunction.NORMAL,
+      uniforms: new Map<string, Uniform>([
+        ['uTime', new Uniform(0)],
+        ['uAmount', new Uniform(options.amount ?? 0)],
+      ]),
+    })
+  }
+  /** Advances the tear clock once per rendered frame, so it stops with the rest of the scene. */
+  update(_renderer: WebGLRenderer, _inputBuffer: WebGLRenderTarget, deltaTime = 0) {
+    const t = this.uniforms.get('uTime')
+    if (t) t.value += Math.min(deltaTime, 0.05)
+  }
+  /** 0 = off, 1 = full strength. JSX sets it through this setter. */
+  set amount(v: number) {
+    const u = this.uniforms.get('uAmount')
+    if (u) u.value = v
+  }
+  get amount(): number {
+    return (this.uniforms.get('uAmount')?.value as number | undefined) ?? 0
+  }
+}
+
+const TearPass = wrapEffect(TearEffect)
 
 /* ---------- original hologram material ---------- */
 const holoVert = /* glsl */ `
@@ -282,15 +330,7 @@ export default function HologramShader({ accent, accent2, quality, stage, paused
           {stage
             ? [
                 <Bloom key="b" intensity={c.bloom} luminanceThreshold={0.18} luminanceSmoothing={0.3} mipmapBlur />,
-                <Glitch
-                  key="g"
-                  active={glitchOn}
-                  mode={GlitchMode.SPORADIC}
-                  delay={new Vector2(2.2, 5)}
-                  duration={new Vector2(0.08, 0.3)}
-                  strength={new Vector2(0.04 * c.glitch, 0.14 * c.glitch)}
-                  ratio={0.9}
-                />,
+                <TearPass key="g" args={[]} amount={glitchOn ? c.glitch * 0.9 : 0} />,
                 <Scanline key="s" density={1.4} opacity={0.12} blendFunction={BlendFunction.OVERLAY} />,
                 <Noise key="n" opacity={0.05} />,
                 <Vignette key="v" eskil={false} offset={0.22} darkness={0.85} />,

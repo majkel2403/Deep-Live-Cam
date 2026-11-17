@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
-import { IconCpu, IconHierarchy2, IconStack2 } from '@tabler/icons-react'
+import IconCpu from '@tabler/icons-react/icons/IconCpu'
+import IconHierarchy2 from '@tabler/icons-react/icons/IconHierarchy2'
+import IconStack2 from '@tabler/icons-react/icons/IconStack2'
 import { Decipher, Panel, SegBar, StatusDot } from '@/hud'
 import type { Agent, OrchestrationSnapshot, SkillAxis } from '@/lib/agents'
 import { SEMANTIC, STATUS_META, TASK_STATE, fmtInt, fmtPct, fmtPct1, statusHex } from '../model'

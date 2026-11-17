@@ -26,6 +26,13 @@
   text-transform: uppercase;
 }
 
+/* ASCII-only wordmark (J.A.R.V.I.S). Never use for Polish text. */
+.jx-logo {
+  font-family: var(--jx-font-logo);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
 .jx-num {
   font-family: var(--jx-font-mono);
   font-variant-numeric: tabular-nums;
@@ -67,6 +74,20 @@
   --aug-border-bg: var(--jx-accent);
 }
 .jx-aug-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/*
+ * Keyboard focus on augmented-ui clipped boxes: clip-path cuts off any outline drawn outside the box,
+ * so focus is shown as a bright accent border plus a tint instead.
+ */
+.jx-aug:focus-visible,
+.jx-aug-btn:focus-visible,
+[data-augmented-ui]:focus-visible {
+  outline: none;
+  --aug-border-bg: var(--jx-accent);
+}
+.jx-aug-btn:focus-visible {
+  background: hsl(var(--jx-hue) 100% 50% / 0.3);
+  color: #fff;
+}
 
 /* scanline + vignette overlay */
 .jx-scanlines {

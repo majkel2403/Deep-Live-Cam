@@ -7,7 +7,7 @@ export const meta: FxMeta = {
   description:
     'Celownik HUD rysowany przez DrawSVGPlugin, którego rdzeń przechodzi MorphSVGPlugin kwadrat → okrąg → romb, a cała sekwencja GSAP skanuje, goni i blokuje poruszający się obiekt (symulacja).',
   tech: ['GSAP 3', 'DrawSVGPlugin', 'MorphSVGPlugin', 'gsap.ticker', 'SVG'],
-  license: 'GSAP Standard License (bezpłatna)',
+  license: 'GSAP Standard "no charge" License (Webflow, bezpłatna)',
   source: { label: 'gsap.com/docs – MorphSVG', url: 'https://gsap.com/docs/v3/Plugins/MorphSVGPlugin/' },
   cost: 1,
   order: 1,

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { IconPlayerPlayFilled } from '@tabler/icons-react'
+import IconPlayerPlayFilled from '@tabler/icons-react/icons/IconPlayerPlayFilled'
 import { onBleep, playBleep, resolveBackend, useSoundEngine, type BleepName } from '@/lib/sound'
 import { BACKEND_INFO, BLEEP_INFO, fmtDb } from './labels'
 import { loadWave, type Wave } from './wave'
@@ -68,31 +68,31 @@ export function BleepCard({ name, index, accent, reduced }: { name: BleepName; i
           {info.icon}
         </span>
         <span className="font-head font-semibold uppercase tracking-wider text-[0.78rem] leading-tight truncate">{info.label}</span>
-        <span className="jx-num text-[0.62rem] text-jx-dim">{name}</span>
+        <span className="jx-num text-[0.625rem] text-jx-dim">{name}</span>
         <span className="flex-1" />
-        <span className="jx-num text-[0.58rem] text-jx-dim">{String(index + 1).padStart(2, '0')}</span>
+        <span className="jx-num text-[0.625rem] text-jx-dim">{String(index + 1).padStart(2, '0')}</span>
       </header>
-      <p className="px-2.5 text-[0.7rem] leading-snug text-jx-dim truncate" title={info.desc}>
+      <p className="px-2.5 min-h-[2.4em] text-[0.7rem] leading-snug text-jx-dim line-clamp-2" title={info.desc}>
         {info.desc}
       </p>
       <div className="relative mx-2.5 mt-1.5 h-14 border border-jx-line/40 bg-black/25 overflow-hidden">
         <WaveCanvas wave={wave} windowMs={windowMs} accent={accent} />
         <div ref={headRef} className="absolute top-0 bottom-0 w-px bg-white shadow-[0_0_6px_white] opacity-0 pointer-events-none" style={{ left: 0 }} />
-        <span className="absolute right-1 top-0.5 jx-num text-[0.55rem] text-jx-dim">{windowMs} ms</span>
+        <span className="absolute right-1 top-0.5 jx-num text-[0.625rem] text-jx-dim">{windowMs} ms</span>
       </div>
       <footer className="flex items-center gap-2 px-2.5 pt-1.5 pb-2">
-        <dl className="flex gap-3 min-w-0 text-[0.62rem] leading-tight">
+        <dl className="flex gap-3 min-w-0 text-[0.625rem] leading-tight">
           <div>
-            <dt className="jx-label text-[0.55rem]">Czas</dt>
+            <dt className="jx-label text-[0.625rem]">Czas</dt>
             <dd className={`jx-num ${over ? 'text-jx-warn' : 'text-jx-text'}`}>{wave ? `${Math.round(dur)} ms` : '…'}</dd>
           </div>
           <div>
-            <dt className="jx-label text-[0.55rem]">Szczyt</dt>
+            <dt className="jx-label text-[0.625rem]">Szczyt</dt>
             <dd className="jx-num text-jx-text">{wave ? fmtDb(wave.peak) : '…'}</dd>
           </div>
         </dl>
         <span className="flex-1" />
-        <span className={`jx-num text-[0.55rem] px-1 border ${BACKEND_INFO[backend].tone}`} title={BACKEND_INFO[backend].label}>
+        <span className={`jx-num text-[0.625rem] px-1 border ${BACKEND_INFO[backend].tone}`} title={BACKEND_INFO[backend].label}>
           {BACKEND_INFO[backend].short}
         </span>
         <button

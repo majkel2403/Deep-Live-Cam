@@ -1,5 +1,6 @@
 import { memo, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { IconArrowBarToDown, IconTerminal2 } from '@tabler/icons-react'
+import IconArrowBarToDown from '@tabler/icons-react/icons/IconArrowBarToDown'
+import IconTerminal2 from '@tabler/icons-react/icons/IconTerminal2'
 import { Decipher, Glitch, HudButton, Panel } from '@/hud'
 import type { Agent, AgentEvent, EventLevel } from '@/lib/agents'
 import { LEVEL_META, TEXT_TONE, fmtClock } from './model'

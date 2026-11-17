@@ -9,6 +9,7 @@
  *
  * target:  fx:<id>        → ?fx=<id> (single effect, full screen)
  *          view:<name>    → #/<name>  (bridge | gallery | agents | sound | arsenal | boot)
+ *          view:boot-overlay → the first-run boot sequence over the bridge (navigator.webdriver is cleared)
  *          fx:all         → every effect in the registry (reads src/fx/effects/*)
  *          <anything else>→ treated as a path/hash appended to base
  *
@@ -24,7 +25,13 @@ let playwright
 try {
   playwright = require('playwright')
 } catch {
-  playwright = require('/opt/node-tools/node_modules/playwright')
+  // Not installed in this checkout: install it (npm i -D playwright && npx playwright install chromium)
+  // or point PLAYWRIGHT_MODULE at an existing playwright package directory.
+  if (!process.env.PLAYWRIGHT_MODULE) {
+    console.error('Playwright not found. Install: npm i -D playwright && npx playwright install chromium (or set PLAYWRIGHT_MODULE).')
+    process.exit(2)
+  }
+  playwright = require(process.env.PLAYWRIGHT_MODULE)
 }
 
 const args = process.argv.slice(2)
@@ -68,6 +75,8 @@ for (const t of expanded) {
       localStorage.setItem('jx-settings', JSON.stringify({ state: st, version: 1 }))
     }
   }, state)
+  // App skips the boot overlay when navigator.webdriver is set (automation); the overlay target clears it.
+  if (t === 'view:boot-overlay') await ctx.addInitScript(() => Object.defineProperty(Navigator.prototype, 'webdriver', { get: () => false, configurable: true }))
   const page = await ctx.newPage()
   const errors = []
   let warnings = 0
@@ -78,7 +87,9 @@ for (const t of expanded) {
   page.on('pageerror', (e) => errors.push(`pageerror: ${String(e.message).slice(0, 400)}`))
   let url
   if (t.startsWith('fx:')) url = `${opt.base}/?fx=${encodeURIComponent(t.slice(3))}`
-  else if (t.startsWith('view:')) url = `${opt.base}/#/${t.slice(5).replace('-overlay', '')}`
+  // the boot overlay is shown on top of any view while bootSeen is false: capture it over the bridge
+  else if (t === 'view:boot-overlay') url = `${opt.base}/#/bridge`
+  else if (t.startsWith('view:')) url = `${opt.base}/#/${t.slice(5)}`
   else url = `${opt.base}${t.startsWith('/') || t.startsWith('#') || t.startsWith('?') ? '' : '/'}${t}`
   const ext = opt.jpeg ? 'jpg' : 'png'
   const file = path.join(opt.out, `${t.replace(/[^a-z0-9_-]+/gi, '_')}${opt.suffix}.${ext}`)

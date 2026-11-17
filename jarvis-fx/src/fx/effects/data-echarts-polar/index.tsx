@@ -90,7 +90,7 @@ export default function EchartsPolar({ accent, accent2, reducedMotion, stage, pa
         interval: 2,
         axisLine: { show: false },
         axisTick: { show: false },
-        axisLabel: { show: !small, color: hexA(accent, 0.55), fontFamily: mono, fontSize: 9, formatter: (v: number) => (v ? `${v}` : '') },
+        axisLabel: { show: !small, color: hexA(accent, 0.55), fontFamily: mono, fontSize: 10, formatter: (v: number) => (v ? `${v}` : '') },
         splitLine: { show: true, lineStyle: { color: hexA(accent, 0.22) } },
       },
       series: [
@@ -206,10 +206,10 @@ export default function EchartsPolar({ accent, accent2, reducedMotion, stage, pa
         footer={
           stage ? (
             <>
-              <span className={`${LBL} text-[0.6rem]`}>Promień: j.a. (umowne)</span>
-              <span className={`${LBL} text-[0.6rem]`}>Kąt: 0–360°</span>
+              <span className={`${LBL} text-[0.625rem]`}>Promień: j.a. (umowne)</span>
+              <span className={`${LBL} text-[0.625rem]`}>Kąt: 0–360°</span>
               <span className="flex-1" />
-              <span className={`${LBL} text-[0.6rem]`}>
+              <span className={`${LBL} text-[0.625rem]`}>
                 Satelity <span className="jx-num text-jx-accent">{sats.length}</span> · rozeta k=<span className="jx-num text-jx-accent">{c.petals}</span>
               </span>
             </>

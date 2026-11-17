@@ -151,6 +151,8 @@ function HudPanel({ accent, accent2, alpha, still, compact, reduced }: PanelProp
   const budget = (m.ms / (1000 / 60)) * 100
   const up = `${String(Math.floor(m.uptime / 60)).padStart(2, '0')}:${String(Math.floor(m.uptime % 60)).padStart(2, '0')}`
   const maxFps = Math.max(60, ...m.history)
+  // frozen panels say why the numbers are not moving (no measurement runs without frames)
+  const frozen = still ? (reduced ? 'pomiar wyłączony' : 'pomiar wstrzymany') : null
   return (
     <Container
       sizeX={5.6}
@@ -195,8 +197,8 @@ function HudPanel({ accent, accent2, alpha, still, compact, reduced }: PanelProp
 
       {/* tiles */}
       <Container flexDirection="row" gap={10}>
-        <Tile label="KLATKI / S" value={m.fps ? m.fps.toFixed(0) : '—'} unit="pomiar tej sceny" accent={accent} ink={ink} big={compact} />
-        <Tile label="CZAS KLATKI" value={m.ms ? m.ms.toFixed(1) : '—'} unit="ms · średnia z 60" accent={accent} ink={ink} big={compact} />
+        <Tile label="KLATKI / S" value={m.fps ? m.fps.toFixed(0) : '—'} unit={frozen ?? 'pomiar tej sceny'} accent={accent} ink={ink} big={compact} />
+        <Tile label="CZAS KLATKI" value={m.ms ? m.ms.toFixed(1) : '—'} unit={frozen ?? 'ms · średnia z 60'} accent={accent} ink={ink} big={compact} />
         {!compact && <Tile label="BUFOR RYSOWANIA" value={m.w ? `${m.w}×${m.h}` : '—'} unit="piksele płótna" accent={accent} ink={ink} big={compact} />}
       </Container>
 

@@ -430,7 +430,7 @@ function Timeline({ tick }: { tick: { set: (fn: ((p: number) => void) | null) =>
     return () => tick.set(null)
   }, [tick])
   return (
-    <div className="pointer-events-none absolute left-3 top-3 flex w-64 flex-col gap-1 whitespace-nowrap border-l-2 border-jx-accent/70 bg-jx-bg/60 px-2.5 py-2">
+    <div className="pointer-events-none absolute left-3 top-3 flex w-72 max-w-[calc(100%-1.5rem)] flex-col gap-1 whitespace-nowrap border-l-2 border-jx-accent/70 bg-jx-bg/60 px-2.5 py-2">
       <span className="jx-label text-jx-accent">Sekwencja Theatre.js · kamera</span>
       <div className="flex items-center justify-between gap-3">
         <span className="jx-label text-[0.65rem] text-jx-dim">klatki kluczowe w kodzie</span>

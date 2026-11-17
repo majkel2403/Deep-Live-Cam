@@ -23,7 +23,6 @@ export type FrameKind =
   | 'nero'
   | 'circle'
 
-export const FRAME_KINDS: FrameKind[] = ['octagon', 'corners', 'lines', 'underline', 'nefrex', 'kranox', 'header', 'nero', 'circle']
 
 function settingsFor(kind: FrameKind, opts: { padding?: number; size?: number; stroke?: number }) {
   const common = { styled: true, animated: false, padding: opts.padding ?? 0 }

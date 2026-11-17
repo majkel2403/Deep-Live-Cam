@@ -9,7 +9,7 @@ export function DemoBadge({ label = 'DEMO', title = 'Dane syntetyczne – pokaz 
     <span
       title={title}
       aria-label={`${label}: ${title}`}
-      className={`jx-num inline-flex items-center gap-1 text-[0.58rem] font-bold tracking-[0.22em] px-1.5 py-px border border-jx-warn/70 text-jx-warn bg-jx-warn/10 leading-none ${className}`}
+      className={`jx-num inline-flex items-center gap-1 text-[0.625rem] font-bold tracking-[0.22em] px-1.5 py-px border border-jx-warn/70 text-jx-warn bg-jx-warn/10 leading-none ${className}`}
     >
       <span className="inline-block size-1 bg-jx-warn" />
       {label}
@@ -23,7 +23,7 @@ export function LiveBadge({ label = 'NA ŻYWO', title = 'Prawdziwy odczyt z prze
     <span
       title={title}
       aria-label={`${label}: ${title}`}
-      className={`jx-num inline-flex items-center gap-1 text-[0.58rem] font-bold tracking-[0.22em] px-1.5 py-px border border-jx-ok/70 text-jx-ok bg-jx-ok/10 leading-none ${className}`}
+      className={`jx-num inline-flex items-center gap-1 text-[0.625rem] font-bold tracking-[0.22em] px-1.5 py-px border border-jx-ok/70 text-jx-ok bg-jx-ok/10 leading-none ${className}`}
     >
       <span className="jx-dot size-1!" />
       {label}

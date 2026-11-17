@@ -1,7 +1,8 @@
 /**
- * File-backed bleep backends played through howler (MIT):
- *   'wav'    – our own CC0 WAVs rendered by scripts/render-sounds.mjs  → /sounds/synth/*.wav
- *   'kenney' – optional CC0 Kenney packs fetched by scripts/fetch-kenney.mjs → /sounds/kenney/**
+ * File-backed bleep backends:
+ *   'wav'    – our own CC0 WAVs rendered by scripts/render-sounds.mjs  → /sounds/synth/*.wav, via howler (MIT)
+ *   'kenney' – optional CC0 Kenney packs fetched by scripts/fetch-kenney.mjs → /sounds/kenney/**, via howler
+ *   'arwes'  – the same WAV files played through @arwes/bleeps (MIT), see ./arwes.ts
  *
  * Packs are discovered through /sounds/index.json (written by both scripts) so the app never
  * probes for files that may not exist (no 404 noise). Howler is loaded lazily in its own chunk.
@@ -12,9 +13,11 @@ import type { Howl as HowlInstance } from 'howler'
 import { isBleepName, type BleepName } from './names'
 import { adoptHowler } from './engine'
 
-export type Backend = 'synth' | 'wav' | 'kenney'
+/** Packs that play through howler. */
+export type HowlPackId = 'wav' | 'kenney'
+export type FilePackId = HowlPackId | 'arwes'
+export type Backend = 'synth' | FilePackId
 export type BackendPref = 'auto' | Backend
-export type FilePackId = 'wav' | 'kenney'
 export type PackStatus = 'idle' | 'loading' | 'ready' | 'partial' | 'error' | 'absent'
 
 export interface PackBleep {
@@ -52,18 +55,18 @@ export const useSoundEngine = create<EngineState>()(
     (set) => ({
       pref: 'auto',
       howler: 'idle',
-      packs: { wav: emptyPack('wav'), kenney: emptyPack('kenney') },
+      packs: { wav: emptyPack('wav'), kenney: emptyPack('kenney'), arwes: emptyPack('arwes') },
       setPref: (pref) => set({ pref }),
     }),
     { name: 'jx-sound', version: 1, partialize: (s) => ({ pref: s.pref }) },
   ),
 )
 
-function patchPack(id: FilePackId, patch: Partial<PackInfo>) {
+export function patchPack(id: FilePackId, patch: Partial<PackInfo>) {
   useSoundEngine.setState((s) => ({ packs: { ...s.packs, [id]: { ...s.packs[id], ...patch } } }))
 }
 
-function patchPackBleep(id: FilePackId, name: BleepName, patch: Partial<PackBleep>) {
+export function patchPackBleep(id: FilePackId, name: BleepName, patch: Partial<PackBleep>) {
   useSoundEngine.setState((s) => {
     const pack = s.packs[id]
     const prev = pack.bleeps[name]
@@ -101,17 +104,17 @@ export function ensureHowler(): Promise<HowlerModule | null> {
   return howlerPromise
 }
 
-const howls: Record<FilePackId, Partial<Record<BleepName, HowlInstance[]>>> = { wav: {}, kenney: {} }
+const howls: Record<HowlPackId, Partial<Record<BleepName, HowlInstance[]>>> = { wav: {}, kenney: {} }
 const lastVariant = new Map<string, number>()
 
-interface ManifestBleep {
+export interface ManifestBleep {
   files?: string[]
   file?: string
   gain?: number
   durationMs?: number
   bytes?: number
 }
-interface Manifest {
+export interface Manifest {
   title?: string
   author?: string
   license?: string
@@ -123,7 +126,7 @@ interface PackIndex {
   packs?: { id?: string; manifest?: string }[]
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
+export async function fetchJson<T>(url: string): Promise<T> {
   const res = await fetch(url, { cache: 'no-cache' })
   const type = res.headers.get('content-type') ?? ''
   // the dev server answers unknown paths with index.html — treat that as "absent"
@@ -131,18 +134,13 @@ async function fetchJson<T>(url: string): Promise<T> {
   return (await res.json()) as T
 }
 
+/** Directory part of a manifest path ("synth/manifest.json" → "synth/"), used to resolve file names. */
+export const manifestDir = (manifestPath: string) => (manifestPath.includes('/') ? manifestPath.slice(0, manifestPath.lastIndexOf('/') + 1) : '')
+
 const MAX_VARIANTS = 4
 
-async function loadPack(id: FilePackId, manifestPath: string, mod: HowlerModule) {
-  patchPack(id, { status: 'loading' })
-  let manifest: Manifest
-  try {
-    manifest = await fetchJson<Manifest>(soundUrl(manifestPath))
-  } catch (e) {
-    patchPack(id, { status: String(e).includes('absent') ? 'absent' : 'error', error: String(e) })
-    return
-  }
-  const dir = manifestPath.includes('/') ? manifestPath.slice(0, manifestPath.lastIndexOf('/') + 1) : ''
+/** Turns a manifest's bleep entries into pack bleeds (absolute URLs, variant files, gain). Pure. */
+export function parseBleeps(manifest: Manifest, dir: string): Partial<Record<BleepName, PackBleep>> {
   const bleeps: Partial<Record<BleepName, PackBleep>> = {}
   for (const [name, entry] of Object.entries(manifest.bleeps ?? {})) {
     if (!isBleepName(name) || !entry) continue
@@ -157,6 +155,34 @@ async function loadPack(id: FilePackId, manifestPath: string, mod: HowlerModule)
       failed: 0,
     }
   }
+  return bleeps
+}
+
+/** Manifest paths of the packs listed in /sounds/index.json (falls back to the built-in WAV pack). */
+export async function discoverPackManifests(): Promise<Partial<Record<HowlPackId, string>>> {
+  let index: PackIndex
+  try {
+    index = await fetchJson<PackIndex>(soundUrl('index.json'))
+  } catch {
+    index = { packs: [{ id: 'wav', manifest: 'synth/manifest.json' }] }
+  }
+  const listed: Partial<Record<HowlPackId, string>> = {}
+  for (const p of index.packs ?? []) {
+    if ((p.id === 'wav' || p.id === 'kenney') && typeof p.manifest === 'string') listed[p.id] = p.manifest
+  }
+  return listed
+}
+
+async function loadPack(id: HowlPackId, manifestPath: string, mod: HowlerModule) {
+  patchPack(id, { status: 'loading' })
+  let manifest: Manifest
+  try {
+    manifest = await fetchJson<Manifest>(soundUrl(manifestPath))
+  } catch (e) {
+    patchPack(id, { status: String(e).includes('absent') ? 'absent' : 'error', error: String(e) })
+    return
+  }
+  const bleeps = parseBleeps(manifest, manifestDir(manifestPath))
   patchPack(id, {
     title: manifest.title,
     author: manifest.author,
@@ -206,19 +232,10 @@ export function initFileBackends(): Promise<void> {
     initPromise = (async () => {
       const mod = await ensureHowler()
       if (!mod) return
-      let index: PackIndex
-      try {
-        index = await fetchJson<PackIndex>(soundUrl('index.json'))
-      } catch {
-        index = { packs: [{ id: 'wav', manifest: 'synth/manifest.json' }] }
-      }
-      const listed = new Map<FilePackId, string>()
-      for (const p of index.packs ?? []) {
-        if ((p.id === 'wav' || p.id === 'kenney') && typeof p.manifest === 'string') listed.set(p.id, p.manifest)
-      }
-      if (!listed.has('kenney')) patchPack('kenney', { status: 'absent' })
-      if (!listed.has('wav')) patchPack('wav', { status: 'absent' })
-      await Promise.all([...listed].map(([id, m]) => loadPack(id, m, mod)))
+      const listed = await discoverPackManifests()
+      if (!listed.kenney) patchPack('kenney', { status: 'absent' })
+      if (!listed.wav) patchPack('wav', { status: 'absent' })
+      await Promise.all((Object.entries(listed) as [HowlPackId, string][]).map(([id, m]) => loadPack(id, m, mod)))
     })()
   }
   return initPromise
@@ -232,16 +249,19 @@ function hasLoaded(id: FilePackId, name: BleepName): boolean {
 /** Which backend will play `name` right now, given the preference and what has loaded. */
 export function resolveBackend(name: BleepName, pref: BackendPref = useSoundEngine.getState().pref): Backend {
   if (pref === 'synth') return 'synth'
-  // 'auto' and 'kenney' prefer Kenney; every file preference falls back to our WAVs, then the synth
+  if (pref === 'arwes') {
+    // ARWES plays the WAV files through its own bleep objects; until those decode, the same files go through howler
+    if (hasLoaded('arwes', name)) return 'arwes'
+    return hasLoaded('wav', name) ? 'wav' : 'synth'
+  }
+  // 'auto' and 'kenney' prefer Kenney; 'wav' stays on howler
   if (pref !== 'wav' && hasLoaded('kenney', name)) return 'kenney'
   if (hasLoaded('wav', name)) return 'wav'
   return 'synth'
 }
 
-/** Player registered through registerBleepPlayer: returns the backend label or false (→ synth). */
-export function filePlayer(name: BleepName, volume: number, force?: Backend): Backend | false {
-  const backend = force ?? resolveBackend(name)
-  if (backend === 'synth') return false
+/** Plays a howler-backed pack ('wav' | 'kenney'). Returns the pack id, or false when nothing is loaded for `name`. */
+export function filePlayer(name: BleepName, volume: number, backend: HowlPackId): HowlPackId | false {
   const list = howls[backend][name]?.filter((h) => h.state() === 'loaded')
   if (!list?.length) return false
   const key = `${backend}:${name}`
@@ -258,4 +278,3 @@ export function filePlayer(name: BleepName, volume: number, force?: Backend): Ba
 export function howlerReady(): boolean {
   return !!howlerMod
 }
-

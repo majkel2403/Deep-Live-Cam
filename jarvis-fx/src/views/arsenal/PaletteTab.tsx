@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
-import { IconCopy, IconRotate } from '@tabler/icons-react'
+import IconCopy from '@tabler/icons-react/icons/IconCopy'
+import IconRotate from '@tabler/icons-react/icons/IconRotate'
 import { HudButton, SegBar, StatusDot } from '@/hud'
 import { DEFAULT_SETTINGS, useAccent, useSettings } from '@/lib/store'
 import { playBleep } from '@/lib/sound'
@@ -94,7 +95,7 @@ function ContrastRow({ label, fg, bg }: { label: string; fg?: RGBA | null; bg?: 
     <div className="grid grid-cols-[1fr_auto_auto] items-center gap-3 text-[0.76rem] py-1 border-b border-jx-line/25">
       <span className="text-jx-text/90">{label}</span>
       <span className="jx-num text-jx-accent">{r.toFixed(2)}:1</span>
-      <span className={`flex items-center gap-1.5 jx-num text-[0.62rem] uppercase ${tone === 'ok' ? 'text-jx-ok' : tone === 'warn' ? 'text-jx-warn' : 'text-jx-danger'}`}>
+      <span className={`flex items-center gap-1.5 jx-num text-[0.625rem] uppercase ${tone === 'ok' ? 'text-jx-ok' : tone === 'warn' ? 'text-jx-warn' : 'text-jx-danger'}`}>
         <StatusDot tone={tone} />
         {grade}
       </span>
@@ -172,7 +173,7 @@ export function PaletteTab() {
               <button key={c.k} type="button" onClick={() => copy(c.v)} className="flex items-center gap-2 border border-jx-line/50 p-1.5 hover:border-jx-accent cursor-pointer text-left min-w-0" aria-label={`Kopiuj ${c.v}`}>
                 <span className="size-6 shrink-0 border border-white/20" style={{ background: c.v, boxShadow: `0 0 10px ${c.v}` }} />
                 <span className="min-w-0">
-                  <span className="block jx-num text-[0.58rem] text-jx-dim truncate">{c.k}</span>
+                  <span className="block jx-num text-[0.625rem] text-jx-dim truncate">{c.k}</span>
                   <span className="block jx-num text-[0.72rem] text-jx-text">{copied === c.v ? 'skopiowano' : c.v}</span>
                 </span>
               </button>
@@ -200,19 +201,19 @@ export function PaletteTab() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
             <div className="border border-jx-line/50 p-2 grid place-items-center gap-1">
               <span className="jx-display text-jx-accent jx-glow-text text-sm">GLOW</span>
-              <span className="jx-num text-[0.55rem] text-jx-dim">.jx-glow-text</span>
+              <span className="jx-num text-[0.625rem] text-jx-dim">.jx-glow-text</span>
             </div>
             <div className="border border-jx-line/50 p-2 grid place-items-center gap-1">
               <span className="size-5 rounded-full bg-jx-accent shadow-[var(--jx-glow)]" />
-              <span className="jx-num text-[0.55rem] text-jx-dim">--jx-glow</span>
+              <span className="jx-num text-[0.625rem] text-jx-dim">--jx-glow</span>
             </div>
             <div className="border border-jx-line/50 p-2 grid place-items-center gap-1 jx-grid-bg">
-              <span className="jx-label text-[0.6rem] text-jx-accent">siatka</span>
-              <span className="jx-num text-[0.55rem] text-jx-dim">.jx-grid-bg</span>
+              <span className="jx-label text-[0.625rem] text-jx-accent">siatka</span>
+              <span className="jx-num text-[0.625rem] text-jx-dim">.jx-grid-bg</span>
             </div>
             <div className="border border-jx-line/50 p-2 flex flex-col justify-center gap-1">
               <SegBar value={0.62} segments={12} />
-              <span className="jx-num text-[0.55rem] text-jx-dim text-center">SegBar</span>
+              <span className="jx-num text-[0.625rem] text-jx-dim text-center">SegBar</span>
             </div>
           </div>
         </section>
@@ -245,7 +246,7 @@ export function PaletteTab() {
                       <IconCopy className="size-3 text-jx-dim opacity-0 group-hover:opacity-100 shrink-0" aria-hidden="true" />
                     </span>
                     <span className="block text-[0.7rem] text-jx-text/85 truncate">{copied === `var(${t.v})` ? 'skopiowano do schowka' : t.desc}</span>
-                    <span className="block jx-num text-[0.6rem] text-jx-dim truncate">
+                    <span className="block jx-num text-[0.625rem] text-jx-dim truncate">
                       {hex}
                       {alpha}
                       {t.tw && <span className="text-jx-accent/70"> · {t.tw}</span>}

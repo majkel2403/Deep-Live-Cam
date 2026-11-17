@@ -145,7 +145,7 @@ svg.jxb-layer {
 .jxb-sub {
   margin: 0;
   font-family: var(--jx-font-cmd);
-  font-size: clamp(8px, 1.45cqmin, 13px);
+  font-size: clamp(10px, 1.45cqmin, 13px);
   letter-spacing: 0.42em;
   padding-left: 0.42em;
   color: var(--jx-text-dim);
@@ -272,7 +272,8 @@ svg.jxb-layer {
   .jxb-top { white-space: nowrap; }
   .jxb-log { display: none; }
   .jxb-reactor { width: 62cqmin; height: 62cqmin; }
-  .jxb-sub { letter-spacing: 0.16em; padding-left: 0.16em; font-size: 7.5px; }
+  /* phone stage: the tagline wraps inside the stage instead of running past its edges */
+  .jxb-sub { letter-spacing: 0.08em; padding-left: 0.08em; font-size: 10px; line-height: 1.35; white-space: normal; max-width: 92cqw; text-align: center; }
   .jxb-tag { letter-spacing: 0.2em; }
 }
 /* tall narrow screens (phone overlay): the log fits below the title */

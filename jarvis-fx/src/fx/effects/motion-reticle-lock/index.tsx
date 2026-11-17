@@ -232,9 +232,13 @@ export default function ReticleLock({ stage, reducedMotion, paused }: FxProps) {
             <circle r={R * 0.16} fill="none" stroke="var(--jx-warn)" strokeWidth={1} className="rl-ping" style={{ animationPlayState: paused || reducedMotion ? 'paused' : undefined }} />
             <path d={`M0,${-R * 0.11} L${R * 0.1},${R * 0.08} L${-R * 0.1},${R * 0.08} Z`} fill="var(--jx-warn)" style={{ filter: 'drop-shadow(0 0 4px var(--jx-warn))' }} />
             {big && (
-              <text x={R * 0.22} y={-R * 0.18} className="jx-num" fontSize={11} fill="var(--jx-warn)">
-                OBIEKT-07
-              </text>
+              <>
+                {/* leader line out past the reticle rings, so the label never sits on the crosshair */}
+                <polyline points={`${R * 0.14},${-R * 0.14} ${R * 1.42},${-R * 1.42} ${R * 1.52},${-R * 1.42}`} fill="none" stroke="var(--jx-warn)" strokeOpacity={0.7} strokeWidth={1} />
+                <text x={R * 1.56} y={-R * 1.42} dominantBaseline="middle" className="jx-num" fontSize={11} fill="var(--jx-warn)">
+                  OBIEKT-07
+                </text>
+              </>
             )}
           </g>
 
@@ -273,7 +277,7 @@ export default function ReticleLock({ stage, reducedMotion, paused }: FxProps) {
           <div data-tape className="absolute left-1/2 top-0 h-full flex items-end gap-0 whitespace-nowrap will-change-transform" style={{ width: '200%' }}>
             {Array.from({ length: 73 }, (_, i) => (
               <span key={i} className="relative shrink-0 w-[2.5%] h-full flex flex-col items-start justify-end">
-                {i % 3 === 0 && <span className="jx-num text-[0.58rem] text-jx-dim -translate-x-1/2">{String((i * 5 + 300) % 360).padStart(3, '0')}</span>}
+                {i % 3 === 0 && <span className="jx-num text-[0.625rem] text-jx-dim -translate-x-1/2">{String((i * 5 + 300) % 360).padStart(3, '0')}</span>}
                 <span className={`w-px ${i % 3 === 0 ? 'h-3 bg-jx-accent' : 'h-1.5 bg-jx-line'}`} />
               </span>
             ))}
@@ -287,11 +291,11 @@ export default function ReticleLock({ stage, reducedMotion, paused }: FxProps) {
       <div className={`absolute ${stage ? 'left-6 bottom-6' : 'left-1.5 bottom-1.5'}`}>
       <div className={`${stage ? 'gap-2 p-4 min-w-60' : 'gap-0.5 p-1.5'} flex flex-col jx-aug`} data-augmented-ui="tl-clip br-clip border">
         <div className="flex items-center gap-2">
-          <span className={`jx-label ${stage ? '' : 'text-[0.42rem]! tracking-[0.08em]!'}`}>Celownik</span>
+          <span className={`jx-label ${stage ? '' : 'text-[0.625rem]! tracking-[0.08em]!'}`}>Celownik</span>
           <span className="flex-1" />
           {stage && <DemoBadge label="SYMULACJA" title="Obiekt i odległość są symulowane na potrzeby efektu" />}
         </div>
-        <div className={`font-head uppercase tracking-[0.18em] ${stage ? 'text-lg' : 'text-[0.55rem]'}`} style={{ color: rc, textShadow: '0 0 8px currentColor' }} aria-live="polite">
+        <div className={`font-head uppercase tracking-[0.18em] ${stage ? 'text-lg' : 'text-[0.625rem]'}`} style={{ color: rc, textShadow: '0 0 8px currentColor' }} aria-live="polite">
           {PHASE_PL[phase]}
         </div>
         {stage && (

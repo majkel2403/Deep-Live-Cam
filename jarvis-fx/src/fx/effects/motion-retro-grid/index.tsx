@@ -135,7 +135,8 @@ export default function RetroGrid({ stage, reducedMotion, paused, quality, hue }
           <h2 className="m-0 rg-chrome text-[clamp(2.2rem,6vw,5.2rem)] leading-none" style={{ fontFamily: 'var(--jx-font-audiowide)', letterSpacing: 'inherit' }}>
             J.A.R.V.I.S.
           </h2>
-          <span className="jx-label mt-3 tracking-[0.5em]! text-white! bg-black/60 border border-jx-line px-3 py-1 backdrop-blur-sm">Neonowy horyzont</span>
+          {/* opaque dark chip: a translucent one turned muddy over the yellow sun */}
+          <span className="jx-label mt-3 tracking-[0.5em]! text-white! bg-jx-bg/90 border border-jx-accent/60 px-3 py-1">Neonowy horyzont</span>
         </motion.div>
       )}
 

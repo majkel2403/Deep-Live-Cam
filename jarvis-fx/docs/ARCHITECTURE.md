@@ -1,14 +1,14 @@
 # Architektura — JARVIS FX · Mission Control
 
 Dokument dla osób rozwijających projekt. Skrót jest w [README](../README.md); licencje w
-[LICENSES.md](../LICENSES.md).
+[LICENSES.md](../LICENSES.md), pełne teksty licencji w [docs/licenses/](licenses/).
 
 ## 1. Zasady projektu
 
 | Zasada | Jak egzekwujemy |
 |---|---|
 | **Uczciwość danych** | Dane syntetyczne mają flagę `synthetic` i plakietkę **DEMO**. Telemetria przeglądarki jest prawdziwa; niedostępne API pokazujemy jako „n/d”, nigdy nie zmyślamy wartości. |
-| **Licencje** | Tylko kod i zasoby permisywne. Porty mają nagłówek ze źródłem, licencją i „ported/adapted”. Rejestr zasobów: `src/data/resources.ts` (widok Arsenał). |
+| **Licencje** | Tylko kod i zasoby permisywne. Porty mają nagłówek ze źródłem, licencją i „ported/adapted”; ten sam wpis trafia do `meta.ts` (`license`, `source`) i do `src/data/resources.ts`. Pełne noty: `LICENSES.md`, `docs/licenses/`. |
 | **Wydajność** | Każdy efekt sprząta wszystko przy odmontowaniu (rAF, interwały, obserwatory, konteksty WebGL, `vanta.destroy()`, tsParticles, `echarts.dispose()`), respektuje `paused` i `quality`. Karty WebGL działają w puli slotów. |
 | **Dostępność** | Kontrolki osiągalne z klawiatury, `aria-label` po polsku, Radix dla okien i podpowiedzi, `prefers-reduced-motion` + przełącznik ruchu. |
 | **Akcent** | Kolor akcentu zawsze pochodzi z odcienia `--jx-hue` (CSS), `useAccent()` (hex dla bibliotek) albo `FxProps.accent` — nigdy na sztywno. |
@@ -23,6 +23,9 @@ Dokument dla osób rozwijających projekt. Skrót jest w [README](../README.md);
 │   ├─ hud/          prymitywy wizualne: Panel, Frame, Decipher, Glitch, HudButton, Readout, Backdrop
 │   └─ lib/          store · router · sound · agents · telemetry
 └─ styles/           tokens.css → hud.css (@layer components) → global.css (Tailwind + @theme)
+public/              sounds/ (WAV, index.json) · posters/ (plakaty galerii) · fonty ładuje Fontsource (npm)
+scripts/             shoot.mjs · posters.mjs · render-sounds.mjs · fetch-kenney.mjs · check-text-floor.mjs · agents-example-server.mjs
+docs/                ARCHITECTURE.md · gen-licenses.mjs · licenses/ · screens/ (zrzuty do README)
 ```
 
 ## 3. Stan, ustawienia i routing
@@ -33,9 +36,11 @@ Dokument dla osób rozwijających projekt. Skrót jest w [README](../README.md);
   - `useAccent()` → `{ hue, hex, hex2, dim }` dla three.js, ECharts i kanw.
   - `useReducedMotion()` łączy preferencję systemową z przełącznikiem.
   - `resolveQuality('auto')` zgaduje jakość z liczby rdzeni, pamięci i typu wskaźnika.
-- **`lib/router.ts`** — router na hashu: `#/bridge`, `#/gallery/<fxId>`, `#/agents`, `#/sound`,
-  `#/arsenal`, `#/boot`. Tryb solo `?fx=<id>` renderuje jeden efekt bez powłoki (zrzuty, osadzanie).
-  Arsenał trzyma zakładkę w drugim segmencie (`#/arsenal/paleta`) przez `history.replaceState`.
+- **`lib/router.ts`** — router na hashu: `#/bridge`, `#/gallery` (lub `#/gallery/<fxId>`), `#/agents`,
+  `#/sound`, `#/arsenal`, `#/boot`. Nieznany widok wraca na Mostek. Tryb solo `?fx=<id>` renderuje jeden efekt
+  bez powłoki (zrzuty, osadzanie). Arsenał trzyma zakładkę w drugim segmencie (`#/arsenal/paleta`) przez
+  `history.replaceState`; zakładki: `rejestr` (domyślna), `typografia`, `ikony`, `ksztalty`, `paleta`.
+- Skróty: `Alt+1…6` przełącza widoki w kolejności Mostek · Galeria FX · Agenci · Dźwięk · Arsenał · Rozruch.
 
 ## 4. System wizualny
 
@@ -47,12 +52,17 @@ Dokument dla osób rozwijających projekt. Skrót jest w [README](../README.md);
   narzędzia Tailwind (`utilities`) zawsze wygrywają — `!important` nie jest potrzebny.
 - **Klasy semantyczne**: `jx-aug` (panel augmented-ui), `jx-aug-btn`, `jx-label`, `jx-title`, `jx-num`,
   `jx-display`, `jx-glow-text`, `jx-grid-bg`, `jx-dot`, `jx-caret`, `jx-frame-host`.
-- **Fonty**: 12 krojów OFL z Fontsource (`styles/fonts.ts`, `FONT_ROLES`). Orbitron i Share Tech Mono nie
-  mają polskich znaków — tekst z diakrytykami składamy Michromą, Oxanium, Chakra Petch albo JetBrains Mono.
+- **Fonty**: 12 krojów OFL z Fontsource (`styles/fonts.ts`, `FONT_ROLES`). `--jx-font-display` to Michroma
+  (Orbitron ma tylko podzbiór latin, więc nie nadaje się do polskiego tekstu); Orbitron zostaje wyłącznie w klasie
+  `.jx-logo` dla znaku J.A.R.V.I.S. Share Tech Mono też nie ma polskich znaków — tekst z diakrytykami składamy
+  Michromą, Oxanium, Chakra Petch albo JetBrains Mono.
 - **Wydajność renderowania**: duże panele `jx-aug` mają `backdrop-filter: blur()`; nie animuj ich co klatkę
   (SwiftShader i słabsze GPU odmalowują je kosztownie). `will-change: transform` pomaga przy kafelkach.
 
 ## 5. Efekty
+
+Aktualnie **49 efektów** (folderów z `meta.ts`). Obok nich są foldery współdzielonego kodu bez `meta.ts`:
+`bg-kit`, `particles-kit`, `motion-kit`, `r3f-kit`, `hud-kit`.
 
 ### 5.1 Rejestr i kontrakt
 
@@ -65,13 +75,27 @@ const loaders = import.meta.glob<{ default: FxComponent }>('./effects/*/index.ts
 `meta.id` musi równać się nazwie folderu (ostrzeżenie w konsoli w przeciwnym razie). Kolejność: kategoria
 (`FX_CATEGORIES`), potem `order`, potem tytuł (`localeCompare('pl')`).
 
+`FxMeta` (`fx/types.ts`): `id`, `title`, `category`, `description`, `tech[]`, `license`, opcjonalnie `source`
+(`{ label, url }`), `webgl`, `cost` (1–3), `tags[]`, `order`.
+
+Kategorie (`category`): `webgl` (Sceny 3D), `background` (Tła), `particles` (Cząsteczki), `hud` (Elementy HUD),
+`loader` (Loadery), `text` (Tekst), `data` (Dane), `motion` (Choreografia). Prefiks identyfikatora zwykle
+odpowiada kategorii, ale **kategoria decyduje**: `r3f-*` → `webgl` (10 efektów), `bg-*` → `background` (11),
+`particles-*` → `particles` (3), `hud-*` → `hud` (6), `loader-*` → `loader` (4), `text-*` → `text` (4),
+`data-*` → `data` (4), `motion-*` → `motion` (7).
+
 `FxProps`: `accent`, `accent2`, `hue`, `quality`, `reducedMotion`, `stage`, `paused`. W kartach galerii
-`quality` jest zawsze `'low'`, a `stage = false` (~260 × 160 px) — efekt powinien renderować lżej.
+`quality` jest zawsze `'low'`, a `stage = false` — karta galerii (zmierzone: ok. 271 × 251 px przy szerokości 1440 px,
+obszar podglądu 16:10 = 271 × 169 px; na telefonie ok. 362 × 285 px). Efekt powinien renderować lżej.
 
 ### 5.2 FxHost
 
 Montuje komponent w `Suspense` + `ErrorBoundary`, podaje wspólne propsy z ustawień i ustawia
 `paused = true`, gdy karta jest poza ekranem lub karta przeglądarki jest ukryta (`visibilitychange`).
+
+`FxStage` (`fx/FxStage.tsx`) to scena pojedynczego efektu: okno dialogowe z galerii albo tryb `?fx=<id>`. Leży
+w `src/fx`, a nie w widoku galerii, żeby `App.tsx` mógł importować go statycznie, nie ciągnąc widoku do głównego
+chunka (widok pozostaje leniwy).
 
 ### 5.3 Parametry na żywo
 
@@ -81,9 +105,9 @@ jest widoczny, w kartach — nie, więc efekt dostaje wartości domyślne schema
 ### 5.4 Pula kontekstów WebGL (`fx/slots.ts`)
 
 Przeglądarki ograniczają liczbę żywych kontekstów WebGL (~16). Karta z `meta.webgl = true` wywołuje
-`useWebglSlot(webgl, visible)`; sloty przydzielane są w kolejności FIFO, limit ustawia galeria
-(`setWebglSlotLimit`: 3/4/6 zależnie od jakości, 1 gdy otwarta jest scena). Najechanie kursorem na kartę bez
-slotu wymusza przejęcie najstarszego. Karty bez WebGL zawsze dostają `true`.
+`useWebglSlot(webgl, visible)`; sloty przydzielane są w kolejności FIFO. Limit ustawia galeria
+(`setWebglSlotLimit`): 3 / 4 / 6 dla jakości low / med / high, a **1 gdy otwarta jest scena** (`fxId`).
+Najechanie kursorem na kartę bez slotu wymusza przejęcie najstarszego. Karty bez WebGL zawsze dostają `true`.
 
 ### 5.5 HudComposer (`fx/three/HudComposer.tsx`)
 
@@ -100,6 +124,9 @@ Vanta nie działa z three 0.187. `package.json` instaluje drugą kopię pod alia
 Adapter steruje własną pętlą Vanty (brak API pauzy), aktualizuje opcje przez `setOptions()` i przy
 odmontowaniu zwalnia render targety, geometrie, materiały, renderer i kontekst. Typy: `src/types/vanta.d.ts`.
 
+Dwie kopie three.js to znany koszt: na stronach, na których działa R3F i Vanta, konsola pokazuje ostrzeżenie
+„Multiple instances of Three.js”. Nie znika bez zmiany wersji Vanty.
+
 ### 5.7 tsParticles 4
 
 `@tsparticles/react` v4 zastąpił `initParticlesEngine()` komponentem `<ParticlesProvider init>`, którego
@@ -107,11 +134,28 @@ odmontowaniu zwalnia render targety, geometrie, materiały, renderer i kontekst.
 `fx/effects/particles-kit/engine.ts` (ładuje pakiet slim i rejestruje kształt `jx-glyph`) — każdy nowy
 moduł z cząsteczkami musi jej używać.
 
+### 5.8 Porty i zgodność metadanych
+
+Kod przeniesiony z innego projektu ma **cztery miejsca z tą samą informacją**; przy zmianie licencji lub
+źródła trzeba zaktualizować wszystkie:
+
+1. nagłówek pliku (źródło, licencja, autor, opis zmian),
+2. `meta.ts` (`license`, `source`),
+3. wpis w `src/data/resources.ts` (`license`, `usage`, `where`, `verified`),
+4. jeśli licencja wymaga pełnej noty (MIT, Apache-2.0) — plik w `docs/licenses/` i wpis w `LICENSES.md`.
+
 ## 6. ARWES (pakiety vanilla) i alias motion@10
 
 ARWES jest nieutrzymywany, a jego pakiety React wspierają tylko React 18. Używamy wyłącznie pakietów
-vanilla: `@arwes/frames` (ramki SVG — `hud/Frame.tsx`), `@arwes/text` (deszyfracja — `hud/Decipher.tsx`),
-`@arwes/bgs` + `@arwes/animator` (tła — `hud/Backdrop.tsx` z własnym „animator shim”).
+vanilla, każdy w innym miejscu:
+
+| Pakiet | Gdzie | Do czego |
+|---|---|---|
+| `@arwes/frames` | `hud/Frame.tsx` | ramki SVG w panelach |
+| `@arwes/text` | `hud/Decipher.tsx`, `text-arwes-decipher` | deszyfracja tekstu |
+| `@arwes/bgs` + `@arwes/animator` | `hud/Backdrop.tsx`, `bg-arwes-layers` | tła; własny „animator shim” w `hud/arwes.ts` |
+| `@arwes/animated` | `motion-arwes-animated` | `createAnimatedElement` + `createAnimatorShim` — sekwencja montaż / podtrzymanie / demontaż |
+| `@arwes/bleeps` | `lib/sound/arwes.ts` | backend dźwięku „ARWES” (patrz §9) |
 
 Pakiety te importują `motion` i oczekują API Motion 10 (`timeline`, `glide`), a aplikacja używa Motion 14.
 Rozwiązanie w `vite.config.ts`:
@@ -141,11 +185,14 @@ interface AgentSource {
 }
 ```
 
-- Źródło emituje **pełne migawki** (`agents`, `links`, `events` — najnowsze na końcu, ~200, `tasks`); widoki
-  ich nie mutują.
-- `createDemoSource()` — symulator (synthetic = true). `createRemoteSource(url)` — `ws(s)://` → WebSocket,
-  `http(s)://` → EventSource; jedna migawka JSON na wiadomość / `data:`; ponowne łączenie z opóźnieniem
-  wykładniczym (0,5 s → maks. 15 s); błędny JSON → status `error` z opisem.
+- Źródło emituje **pełne migawki** `OrchestrationSnapshot`: `ts`, `agents`, `links`, `events` (najnowsze na
+  końcu, ~200), `tasks`. Widoki ich nie mutują.
+- `Agent`: `id`, `name`, `role`, `model`, `status`, `load` (0–1), `latencyMs`, `tokensPerMin`, `successRate`
+  (0–1), `queue`, opcjonalnie `parentId`, `skills` (sześć osi: plan, code, search, memory, voice, vision),
+  `history` (próbki obciążenia), `uptime` (`true` = zdrowy tick, `false` = incydent).
+- `createDemoSource()` (`demo.ts`) — symulator (`synthetic = true`). `createRemoteSource(url)` (`remote.ts`)
+  — `ws(s)://` → WebSocket, `http(s)://` → EventSource; jedna migawka JSON na wiadomość / zdarzenie `data:`;
+  ponowne łączenie z opóźnieniem wykładniczym (0,5 s → maks. 15 s); błędny JSON → status `error` z opisem.
 - `useAgents()` (`lib/agents/index.ts`) to magazyn zustand z licznikiem referencji: pierwszy konsument
   otwiera źródło, ostatni je zamyka; zmiana `settings.agentSource` przełącza źródło.
 - Własne źródło (np. orkiestrator LLM): wystaw endpoint WS/SSE wysyłający `OrchestrationSnapshot` albo
@@ -159,20 +206,24 @@ długie zadania (`PerformanceObserver('longtask')`). Nieobsługiwane API → `nu
 
 ## 9. Dźwięk
 
-Jedno API: `playBleep(name)` (`lib/sound`), 11 nazw w konwencji ARWES (`click`, `hover`, `open`, `close`,
+API: `playBleep(name)` (`lib/sound`), 11 nazw w konwencji ARWES (`click`, `hover`, `open`, `close`,
 `type`, `success`, `error`, `alert`, `scan`, `boot`, `toggle`). Szanuje wyciszenie i głośność, ogranicza
-częstotliwość (np. `type` co ≥ 30 ms, `hover` co ≥ 60 ms).
+częstotliwość (np. `type` co ≥ 30 ms, `hover` co ≥ 60 ms). `onBleep()` emituje zdarzenia dla wizualizacji
+w laboratorium dźwięku.
 
-| Priorytet | Backend | Źródło | Licencja |
-|---|---|---|---|
-| 1 | Kenney (opcjonalny) | `public/sounds/kenney/**` z `scripts/fetch-kenney.mjs` | CC0 |
-| 2 | WAV przez howler | `public/sounds/synth/*.wav` z `scripts/render-sounds.mjs` | CC0 (własne) |
-| 3 | Synteza WebAudio | `lib/sound/synth.ts` | CC0 (własna) |
+Preferencja w silniku dźwięku (widok **Dźwięk → Silnik**) decyduje o backendzie:
+
+| Preferencja | Co gra | Źródło | Licencja | Uwagi |
+|---|---|---|---|---|
+| **Auto** (domyślna) | Kenney, jeśli zainstalowany → WAV → syntezator | różne | różne | kolejność dla każdego bleepa osobno |
+| **Kenney** | paczki Kenney | `public/sounds/kenney/**` (`scripts/fetch-kenney.mjs`) | CC0 1.0 | opcjonalne, nie w repozytorium |
+| **WAV** | nasze pliki przez howler | `public/sounds/synth/*.wav` (`scripts/render-sounds.mjs`) | CC0 1.0 (własne) | w repozytorium, ~164 KB |
+| **ARWES** | te same WAV-y przez `createBleep` z `@arwes/bleeps` | `src/lib/sound/arwes.ts` | MIT | tylko po wyborze; biblioteka ładuje się leniwie; raportuje tylko zdekodowane pliki |
+| **Synteza** | oscylatory WebAudio | `lib/sound/synth.ts` | CC0 1.0 (własna) | zawsze dostępna; także fallback podczas ładowania plików |
 
 `public/sounds/index.json` wylicza paczki (aplikacja nie zgaduje ścieżek → zero błędów 404). Backendy
 plikowe ładują się w czasie bezczynności (`requestIdleCallback`) dopiero, gdy dźwięk jest włączony.
-`onBleep()` emituje zdarzenia dla wizualizacji w laboratorium dźwięku. Szczegóły formatu:
-`public/sounds/README.md`.
+Szczegóły formatu manifestu i zasady licencyjne: `public/sounds/README.md`.
 
 ## 10. Powłoka
 
@@ -183,6 +234,8 @@ plikowe ładują się w czasie bezczynności (`requestIdleCallback`) dopiero, gd
   `tags`, kategoria, licencja. Bleepy: `open`/`close`, `type` przy pisaniu, `click`/`toggle`/`success` po
   wyborze. Ponowny rozruch: `set({ bootSeen: false })` i przeładowanie strony.
 - **Ustawienia** (`shell/SettingsMenu.tsx`) — Radix Dialog jako panel HUD.
+- **Galeria** — karta pokazuje plakat z `public/posters/<id>.jpg`, gdy efekt nie działa (poza ekranem, bez
+  slotu WebGL, w ładowaniu); plakat ma fallback na stary placeholder przy 404.
 
 ## 11. Arsenał i rejestr zasobów
 
@@ -201,38 +254,89 @@ interface Resource {
 }
 ```
 
-Widok (`views/arsenal/`) liczy statystyki na żywo z rejestru i z `FX` — nowy efekt, którego `meta.tech`
-wspomina np. „GSAP”, sam pojawi się przy zasobie GSAP. Zakładki: Rejestr (filtry, liczniki, legenda,
-szczegóły), Typografia, Ikony (podzbiór game-icons w `src/data/gameIconsArsenal.ts`), Kształty, Paleta
-(odcień na żywo, wartości tokenów i kontrast WCAG liczony z wyliczonych kolorów).
+- `where` to miejsca użycia: `view:<widok>`, `fx:<id efektu>` (istniejący folder w `src/fx/effects/`),
+  `code:<ścieżka pod src/>` (lub pod katalogiem projektu dla skryptów, np. `code:scripts/fetch-kenney.mjs`).
+  Wartości są sprawdzane ręcznie przy zmianie; po zmianie efektów warto je przejrzeć.
+- `pkg` — pakiety npm, przez które zasób wchodzi do paczki; `verified` — jak sprawdzono licencję (adres pliku
+  LICENSE i stan w dniu weryfikacji).
+- `fxMatch` linkuje efekty galerii po ich metadanych — nowy efekt, którego `meta.tech` wspomina np. „GSAP”,
+  sam pojawi się przy zasobie GSAP.
 
-Podzbiór game-icons regeneruje się jednym poleceniem (lista nazw w pliku):
+Widok (`views/arsenal/`) liczy statystyki na żywo z rejestru i z `FX`. Zakładki: Rejestr (filtry, liczniki,
+legenda, szczegóły), Typografia, Ikony (podzbiór game-icons w `src/data/gameIconsArsenal.ts`), Kształty,
+Paleta (odcień na żywo, wartości tokenów i kontrast WCAG liczony z wyliczonych kolorów).
+
+Podzbiór game-icons (12 ikon w `ARSENAL_GAME_ICONS`) regeneruje się z listy nazw zapisanej w tym pliku:
 
 ```bash
-node -e 'const j=require("./node_modules/@iconify-json/game-icons/icons.json");const n=["cpu","holosphere"];console.log(JSON.stringify({prefix:j.prefix,width:j.width,height:j.height,icons:Object.fromEntries(n.map(k=>[k,j.icons[k]]))}))'
+node -e 'const fs=require("fs");const src=fs.readFileSync("src/data/gameIconsArsenal.ts","utf8");const names=JSON.parse(src.match(/ARSENAL_GAME_ICONS: string\[\] = (\[.*?\])/)[1]);const j=require("./node_modules/@iconify-json/game-icons/icons.json");console.log(JSON.stringify({prefix:j.prefix,width:j.width,height:j.height,icons:Object.fromEntries(names.map(k=>[k,j.icons[k]]))}))'
 ```
 
-`docs/gen-licenses.mjs` przepisuje tabele zależności w `LICENSES.md` z `node_modules` (pole `license`,
-w razie braku — rozpoznanie tekstu pliku LICENSE) i wykrywa importy z `src/`, które są tylko zależnościami
-przechodnimi.
+Wynik wkleja się jako `ARSENAL_GAME_ICONS_SUBSET`.
 
-## 12. Weryfikacja
+Czcionka Material Symbols jest w aplikacji podzbiorem (16 ligatur z list `MATERIAL` w `IconsTab.tsx` i `hud-icon-matrix`,
+`src/styles/fonts/material-symbols-outlined.subset.woff2`, ok. 35 KB zamiast 4 MB). Przebudowa po zmianie list:
+`python3 scripts/subset-material-symbols.py` (fonttools + brotli). Podzbiór efektu „Matryca ikon” (`hud-icon-matrix/gameIcons.ts`, 20 ikon, lista `GAME_ICON_NAMES`) regeneruje się tak samo, z jego listy nazw, a wynik trafia do `GAME_ICONS_SUBSET`.
+
+`docs/gen-licenses.mjs` przepisuje tabele zależności w `LICENSES.md` z `node_modules` (pole `license`, kolumna „Import w `src/`”
+mówi, które pakiety są bezpośrednio importowane przez aplikację,
+w razie braku — rozpoznanie tekstu pliku LICENSE). Skanuje importy ES w `src/` i `vite.config.ts` (bez komentarzy
+i tekstu w cudzysłowach) i zgłasza dwie listy: importy bez deklaracji w `package.json` (powinna być pusta)
+oraz pakiety zadeklarowane, ale nieimportowane (narzędzia, generator podzbioru ikon, alias `motion-v10`).
+
+## 12. Weryfikacja i narzędzia
 
 ```bash
 npx tsc -p tsconfig.app.json --noEmit         # typy
-npx oxlint src                                # lint
+npx oxlint src                                # lint (npm run lint)
+npm run build                                 # tsc -b + vite build → dist/
+node docs/gen-licenses.mjs                    # odśwież tabele w LICENSES.md
+node scripts/check-text-floor.mjs             # żaden rozmiar tekstu poniżej 10 px (--fix podnosi)
 node scripts/shoot.mjs --wait 6000 fx:<id> view:gallery view:arsenal/paleta   # zrzuty → shots/*.png
+PLAYWRIGHT_MODULE=/ścieżka/do/playwright node scripts/shoot.mjs ...   # gdy playwright nie jest w projekcie
 ```
 
-`shoot.mjs` (Playwright + Chromium z SwiftShader) wypisuje JSON z błędami konsoli i `pageerror` dla
-każdego celu; obsługuje `--hue`, `--motion`, `--quality`, `--click`, `--w/--h`, `--dsf`, `--jpeg`.
-Cele WebGL potrzebują `--wait 6000+` (renderer programowy jest wolny). Równoległe serwery deweloperskie
-mogą używać osobnych katalogów cache: `VITE_CACHE_DIR=node_modules/.vite-<nazwa> npx vite --port 518x`.
+`scripts/shoot.mjs` (Playwright + Chromium z SwiftShader) wypisuje JSON z błędami konsoli i `pageerror` dla
+każdego celu; obsługuje `--hue`, `--motion`, `--quality`, `--click`, `--w/--h`, `--dsf`, `--jpeg`, `--suffix`.
+Nazwa pliku to cel z zamienionymi znakami (`view:bridge` → `view_bridge.png`). Cele WebGL potrzebują
+`--wait 6000+` (renderer programowy jest wolny). Równoległe serwery deweloperskie mogą używać osobnych katalogów
+cache: `VITE_CACHE_DIR=node_modules/.vite-<nazwa> npx vite --port 518x`.
+
+**Plakaty galerii** — `scripts/posters.mjs` renderuje każdy efekt (`?fx=<id>`, 640 × 400) do
+`public/posters/<id>.jpg`:
+
+```bash
+node scripts/posters.mjs --base http://127.0.0.1:5173               # wszystkie (ok. 8 min pod SwiftShader)
+node scripts/posters.mjs --base http://127.0.0.1:5173 --only hud-radar-sweep,r3f-holo-globe
+```
+
+Uruchom ponownie po zmianie wyglądu efektu. Plakat ma tonację akcentu tylko przybliżoną (`hue-rotate`), więc
+na żywo widać prawdziwy kolor.
 
 ## 13. Znane ograniczenia
 
-- Dwie kopie three.js (0.187 i 0.134 dla Vanty) zwiększają paczkę; efekty Vanta są leniwe.
-- `@arwes/bleeps`, `@arwes/animated` i `ogl` są zainstalowane, ale nieimportowane bezpośrednio (kandydaci
-  do usunięcia z `package.json`, jeśli nie będą potrzebne). `three-stdlib` i `powerglitch` są importowane
-  bezpośrednio, a zadeklarowane tylko przechodnio (przez drei i react-powerglitch).
+- Dwie kopie three.js (0.187 i 0.134 dla Vanty) zwiększają paczkę i powodują ostrzeżenie „Multiple instances
+  of Three.js”; efekty Vanta są leniwe (§5.6).
+- R3F 9 tworzy wewnętrzny `THREE.Clock` i zgłasza jego deprecation na każdym montażu `<Canvas>`. Nie jest to
+  kod aplikacji; zniknie po przejściu R3F na `THREE.Timer` (lista aktualizacji zależności).
+- `@iconify-json/game-icons` nie jest importowany w runtime — służy tylko do wygenerowania podzbiorów ikon (§11).
+  `motion-v10` i `three-vanta` to aliasy npm, a nie zwykłe importy.
+- Pakiety `@arwes/*` używane w aplikacji: frames, text, bgs, animator, animated, bleeps (§6).
 - Fonty Orbitron i Share Tech Mono nie mają polskich znaków (fallback na następny font ze stosu).
+- Rozmiary tekstu: nic nie schodzi poniżej 10 px (0,625 rem); egzekwuje to `scripts/check-text-floor.mjs`.
+- `lib/sound` tworzy współdzielony `AudioContext` dopiero po pierwszym geście użytkownika
+  (`navigator.userActivation`), więc Chrome nie zgłasza „AudioContext was not allowed to start”. Biblioteka howler
+  tworzy własny kontekst przy załadowaniu, w stanie zawieszonym (bez ostrzeżenia); adopcja do wspólnego busa
+  następuje przy pierwszym dźwięku.
+- Radar (`hud-radar-sweep`) na renderze programowym: liczba klatek rAF spada z ok. 120 do ok. 25–45 na 2 s po
+  kilku–kilkunastu sekundach, mimo że czas callbacku JS jest stały (0,3–0,9 ms). Stan rysowania nie rośnie
+  (statyczna warstwa, wstęp klina i poświaty są w buforach poza pętlą). Spadek jest po stronie rasteryzacji
+  SwiftShadera, podobnie jak w innych efektach canvas. Nie sprawdzono tego na sprzętowym GPU.
+- Karty galerii są przyciskami (`<button>`): efekt nie może renderować w trybie karty interaktywnych elementów
+  (zagnieżdżone przyciski); tam, gdzie są potrzebne, rysuj wizualne odpowiedniki (jak `hud-cyber-elements`).
+- Do zrobienia przy aktualizacji zależności: R3F 9 przejdzie na `THREE.Timer` (dziś `THREE.Clock`); zmiana Vanty
+  na nowszy three usunie drugą kopię three.js (§5.6).
+- Nieobsłużone: brak pliku `LICENSE` w katalogu projektu; zestaw UI Audio Kenneya nie jest pobierany przez
+  `fetch-kenney.mjs` (wymaga sieci do kenney.nl); brak automatycznego axe-core i testu klawiatury (wymaga decyzji o zależności).
+- Pakiet Theatre: każde zamontowanie `r3f-theatre-flythrough` dodaje arkusz do wspólnego projektu, którego API nie
+  pozwala usunąć — przy wielokrotnym montowaniu projekt rośnie nieznacznie.

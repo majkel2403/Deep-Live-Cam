@@ -1,4 +1,4 @@
-import { IconTopologyStar3 } from '@tabler/icons-react'
+import IconTopologyStar3 from '@tabler/icons-react/icons/IconTopologyStar3'
 import { Decipher, Readout } from '@/hud'
 import type { OrchestrationSnapshot } from '@/lib/agents'
 import { fmtInt, summarize } from './model'

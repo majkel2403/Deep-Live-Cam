@@ -4,8 +4,12 @@
  * pack status comes from howler load results.
  */
 import { useEffect, useState } from 'react'
-import { IconHistory, IconLicense, IconMusic, IconShieldCheck, IconWaveSine } from '@tabler/icons-react'
-import { Waveform } from '@phosphor-icons/react'
+import IconHistory from '@tabler/icons-react/icons/IconHistory'
+import IconLicense from '@tabler/icons-react/icons/IconLicense'
+import IconMusic from '@tabler/icons-react/icons/IconMusic'
+import IconShieldCheck from '@tabler/icons-react/icons/IconShieldCheck'
+import IconWaveSine from '@tabler/icons-react/icons/IconWaveSine'
+import { Waveform } from '@phosphor-icons/react/dist/csr/Waveform'
 import { HudButton, Panel } from '@/hud'
 import { useAccent, useReducedMotion, useSettings } from '@/lib/store'
 import { BLEEPS, initFileBackends, onBleep, type BleepEvent } from '@/lib/sound'
@@ -111,7 +115,7 @@ function RecentEvents() {
             <span className="truncate">
               {BLEEP_INFO[e.name].label} <span className="jx-num text-jx-dim text-[0.64rem]">{e.name}</span>
             </span>
-            <span className={`jx-num text-[0.58rem] px-1 border ${e.backend === 'external' ? 'text-jx-dim border-jx-line' : BACKEND_INFO[e.backend].tone}`}>
+            <span className={`jx-num text-[0.625rem] px-1 border ${e.backend === 'external' ? 'text-jx-dim border-jx-line' : BACKEND_INFO[e.backend].tone}`}>
               {e.backend === 'external' ? 'ZEWN.' : BACKEND_INFO[e.backend].short}
             </span>
           </li>

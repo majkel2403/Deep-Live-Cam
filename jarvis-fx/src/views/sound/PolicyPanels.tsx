@@ -3,9 +3,10 @@
  * every sound source the app uses or documents.
  */
 import { useEffect, useState, type ReactNode } from 'react'
-import { IconCheck, IconAlertTriangle } from '@tabler/icons-react'
+import IconCheck from '@tabler/icons-react/icons/IconCheck'
+import IconAlertTriangle from '@tabler/icons-react/icons/IconAlertTriangle'
 import { DEFAULT_SETTINGS, useSettings } from '@/lib/store'
-import { BLEEPS, audioState, resolveBackend, useSoundEngine, type BleepName } from '@/lib/sound'
+import { BLEEPS, audioState, resolveBackend, useSoundEngine, type BleepName, type PackStatus } from '@/lib/sound'
 import { BLEEP_INFO, CTX_STATE_PL, fmtDb } from './labels'
 import { loadWave, type Wave } from './wave'
 import { POLICY_MS } from './WaveCanvas'
@@ -115,11 +116,22 @@ export function PolicyPanel() {
 
 type Row = { source: string; href?: string; license: string; licenseHref?: string; terms: string; status: ReactNode }
 
+const ARWES_STATUS_PL: Record<PackStatus, string> = {
+  idle: 'dostępna — ładuje się po wyborze ARWES',
+  loading: 'ładowanie',
+  ready: 'gotowa — odtwarza pliki WAV',
+  partial: 'częściowo zdekodowana',
+  error: 'błąd ładowania',
+  absent: 'brak plików WAV',
+}
+
 export function LicenseTable() {
   const packs = useSoundEngine((s) => s.packs)
   const wavBytes = Object.values(packs.wav.bleeps).reduce((n, b) => n + (b?.bytes ?? 0), 0)
   const wavFiles = Object.values(packs.wav.bleeps).reduce((n, b) => n + (b?.urls.length ?? 0), 0)
   const kenney = packs.kenney.status
+  const arwesStatus = packs.arwes.status
+  const arwesTone = arwesStatus === 'ready' ? 'text-jx-ok' : arwesStatus === 'error' ? 'text-jx-danger' : ''
   const rows: Row[] = [
     { source: 'Synteza WebAudio (src/lib/sound/synth.ts)', license: 'CC0 1.0 — własne', licenseHref: 'https://creativecommons.org/publicdomain/zero/1.0/', terms: 'brak wymogów', status: <span className="text-jx-ok">zawsze dostępna</span> },
     {
@@ -141,6 +153,13 @@ export function LicenseTable() {
     { source: 'Freesound', href: 'https://freesound.org', license: 'per plik: CC0 / CC BY 4.0 / CC BY-NC 4.0', terms: 'CC BY → atrybucja; CC BY-NC → tylko niekomercyjnie (unikamy)', status: 'nieużywane' },
     { source: 'ZapSplat', href: 'https://www.zapsplat.com', license: 'ZapSplat Standard License', licenseHref: 'https://www.zapsplat.com/license-type/standard-license/', terms: 'wymagana atrybucja: „Sound effects obtained from https://www.zapsplat.com”', status: 'nieużywane' },
     { source: 'howler.js', href: 'https://github.com/goldfire/howler.js', license: 'MIT', terms: 'zachować notę licencyjną', status: 'biblioteka' },
+    {
+      source: '@arwes/bleeps',
+      href: 'https://arwes.dev',
+      license: 'MIT',
+      terms: 'zachować notę licencyjną',
+      status: <span className={arwesTone}>{ARWES_STATUS_PL[arwesStatus]}</span>,
+    },
     { source: 'use-sound', href: 'https://github.com/joshwcomeau/use-sound', license: 'MIT', terms: 'zachować notę licencyjną', status: 'biblioteka' },
   ]
   const link = (text: string, href?: string) =>

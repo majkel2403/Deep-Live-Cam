@@ -3,18 +3,20 @@
  * AudioContext figures, volume / mute (global useSettings, persisted).
  */
 import { useEffect, useRef, useState } from 'react'
-import { SpeakerHigh, SpeakerSlash } from '@phosphor-icons/react'
-import { IconPlaylist } from '@tabler/icons-react'
+import { SpeakerHigh } from '@phosphor-icons/react/dist/csr/SpeakerHigh'
+import { SpeakerSlash } from '@phosphor-icons/react/dist/csr/SpeakerSlash'
+import IconPlaylist from '@tabler/icons-react/icons/IconPlaylist'
 import { HudButton, Readout, StatusDot } from '@/hud'
 import { useSettings } from '@/lib/store'
 import { BLEEPS, getAudio, playBleep, resolveBackend, useSoundEngine, type BackendPref, type PackInfo, type PackStatus } from '@/lib/sound'
 import { BACKEND_INFO, CTX_STATE_PL } from './labels'
 
-const PREFS: { id: BackendPref; label: string }[] = [
-  { id: 'auto', label: 'Auto' },
-  { id: 'synth', label: 'Synteza' },
-  { id: 'wav', label: 'WAV' },
-  { id: 'kenney', label: 'Kenney' },
+const PREFS: { id: BackendPref; label: string; hint: string }[] = [
+  { id: 'auto', label: 'Auto', hint: 'Kenney, jeśli zainstalowany; w przeciwnym razie WAV; na końcu synteza' },
+  { id: 'synth', label: 'Synteza', hint: 'Wyłącznie oscylatory WebAudio' },
+  { id: 'wav', label: 'WAV', hint: 'Pliki WAV przez howler' },
+  { id: 'arwes', label: 'ARWES', hint: 'Te same pliki WAV przez @arwes/bleeps (MIT); biblioteka ładuje się po wyborze' },
+  { id: 'kenney', label: 'Kenney', hint: 'Paczka Kenney (CC0), jeśli zainstalowana' },
 ]
 
 const STATUS_PL: Record<PackStatus, { text: string; tone: 'ok' | 'warn' | 'danger' | 'dim' | 'accent' }> = {
@@ -86,7 +88,7 @@ export function EnginePanel() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <span className="jx-label text-[0.62rem]" id="jxs-pref-label">
+        <span className="jx-label text-[0.625rem]" id="jxs-pref-label">
           Preferowane źródło
         </span>
         <div
@@ -116,7 +118,7 @@ export function EnginePanel() {
                 tabIndex={pref === p.id ? 0 : -1}
                 aria-checked={pref === p.id}
                 aria-disabled={disabled || undefined}
-                title={disabled ? 'Paczki Kenney nie są zainstalowane — uruchom node scripts/fetch-kenney.mjs' : undefined}
+                title={disabled ? 'Paczki Kenney nie są zainstalowane — uruchom node scripts/fetch-kenney.mjs' : p.hint}
                 onClick={() => {
                   if (disabled) return
                   setPref(p.id)
@@ -131,7 +133,7 @@ export function EnginePanel() {
       </div>
 
       <ul className="flex flex-col gap-1.5 text-[0.74rem]" aria-label="Paczki dźwięków">
-        {(['kenney', 'wav'] as const).map((id) => {
+        {(['kenney', 'wav', 'arwes'] as const).map((id) => {
           const p = packs[id]
           const st = STATUS_PL[p.status]
           const c = packCounts(p)
@@ -141,12 +143,14 @@ export function EnginePanel() {
               <div className="min-w-0 flex-1 -mt-0.5">
                 <div className="flex items-baseline gap-2">
                   <span className="font-head font-semibold uppercase tracking-wider text-[0.74rem]">{BACKEND_INFO[id].label}</span>
-                  <span className={`jx-label text-[0.58rem] ${st.tone === 'ok' ? 'text-jx-ok' : st.tone === 'warn' ? 'text-jx-warn' : st.tone === 'danger' ? 'text-jx-danger' : ''}`}>{st.text}</span>
+                  <span className={`jx-label text-[0.625rem] ${st.tone === 'ok' ? 'text-jx-ok' : st.tone === 'warn' ? 'text-jx-warn' : st.tone === 'danger' ? 'text-jx-danger' : ''}`}>{st.text}</span>
                 </div>
                 {p.status === 'absent' && id === 'kenney' ? (
                   <p className="text-jx-dim leading-snug">
                     Opcjonalne paczki CC0. Lokalnie: <code className="jx-num text-jx-accent text-[0.68rem]">node scripts/fetch-kenney.mjs</code>
                   </p>
+                ) : id === 'arwes' && p.status === 'idle' ? (
+                  <p className="text-jx-dim leading-snug">Biblioteka ładuje się dopiero po wybraniu „ARWES” (i włączeniu dźwięku) — odtwarza te same pliki WAV.</p>
                 ) : (
                   <p className="text-jx-dim leading-snug jx-num text-[0.66rem]">
                     {c.loaded}/{c.files} plików · {c.bleeps}/{BLEEPS.length} bleepów{c.bytes ? ` · ${(c.bytes / 1024).toFixed(0)} KB` : ''}
@@ -162,7 +166,7 @@ export function EnginePanel() {
           <div className="min-w-0 flex-1 -mt-0.5">
             <div className="flex items-baseline gap-2">
               <span className="font-head font-semibold uppercase tracking-wider text-[0.74rem]">{BACKEND_INFO.synth.label}</span>
-              <span className="jx-label text-[0.58rem] text-jx-ok">zawsze</span>
+              <span className="jx-label text-[0.625rem] text-jx-ok">zawsze</span>
             </div>
             <p className="text-jx-dim leading-snug jx-num text-[0.66rem]">oscylatory + obwiednie · fallback · howler: {howler === 'ready' ? 'wczytany' : howler === 'loading' ? 'ładowanie' : howler === 'error' ? 'błąd' : 'nieaktywny'}</p>
           </div>
@@ -171,7 +175,7 @@ export function EnginePanel() {
 
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
-          <label htmlFor="jxs-volume" className="jx-label text-[0.62rem]">
+          <label htmlFor="jxs-volume" className="jx-label text-[0.625rem]">
             Głośność
           </label>
           <span className="flex-1" />

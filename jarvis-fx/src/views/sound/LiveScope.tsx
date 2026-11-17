@@ -200,20 +200,20 @@ export function LiveScope({ accent, muted, reduced }: { accent: string; muted: b
     <div className="relative h-full min-h-[140px]">
       <canvas ref={ref} className="absolute inset-0 w-full h-full" role="img" aria-label="Oscyloskop i widmo sygnału wyjściowego" />
       <div className="absolute left-2 top-1.5 flex items-center gap-2 pointer-events-none">
-        <span className="jx-label text-[0.6rem]">
+        <span className="jx-label text-[0.625rem]">
           Oscyloskop ×4<span className="hidden sm:inline"> · ślad: najsilniejsza ramka</span>
         </span>
       </div>
-      <div className="absolute left-2 bottom-1 pointer-events-none jx-label text-[0.58rem]">Widmo · skala log. od 40 Hz{hasAnalyser ? '' : ' · analizator nieaktywny'}</div>
+      <div className="absolute left-2 bottom-1 pointer-events-none jx-label text-[0.625rem]">Widmo · skala log. od 40 Hz{hasAnalyser ? '' : ' · analizator nieaktywny'}</div>
       <div className="absolute right-2 top-1.5 text-right pointer-events-none" aria-live="polite">
         {muted ? (
-          <span className="jx-label text-[0.62rem] text-jx-warn">Dźwięk wyciszony</span>
+          <span className="jx-label text-[0.625rem] text-jx-warn">Dźwięk wyciszony</span>
         ) : last ? (
           <span className="jx-num text-[0.68rem] text-jx-text">
             {BLEEP_INFO[last.name].label} <span className="text-jx-dim">·</span> <span className="text-jx-accent">{last.backend === 'external' ? 'zewn.' : BACKEND_INFO[last.backend].short}</span>
           </span>
         ) : (
-          <span className="jx-label text-[0.6rem]">Oczekiwanie na sygnał — zagraj dowolny bleep</span>
+          <span className="jx-label text-[0.625rem]">Oczekiwanie na sygnał — zagraj dowolny bleep</span>
         )}
       </div>
     </div>

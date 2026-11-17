@@ -92,6 +92,29 @@ function orbitPoint(o: Orbit, th: number, rot: Euler, out: Vector3) {
   return out.set(Math.cos(th) * r, 0, Math.sin(th) * r).applyEuler(rot)
 }
 
+/**
+ * Still frames (paused / reduced motion): drei Trail only grows while frames run, so the tail would vanish and leave
+ * bare dots. Draw the same arc behind the nucleus as a fixed, fading polyline instead.
+ */
+function StaticTail({ o, rot, span }: { o: Orbit; rot: Euler; span: number }) {
+  const { pts, cols } = useMemo(() => {
+    const n = 48
+    const v = new Vector3()
+    const base = new Color(o.color)
+    const p: [number, number, number][] = []
+    const c: [number, number, number][] = []
+    for (let i = 0; i <= n; i++) {
+      const t = i / n
+      orbitPoint(o, o.phase - span * (1 - t), rot, v)
+      p.push([v.x, v.y, v.z])
+      const k = t * t // brightest at the nucleus, fading into the tail
+      c.push([base.r * k, base.g * k, base.b * k])
+    }
+    return { pts: p, cols: c }
+  }, [o, rot, span])
+  return <Line points={pts} vertexColors={cols} lineWidth={2} transparent blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
+}
+
 function Comet({ o, speed, length, width, still, halo }: { o: Orbit; speed: number; length: number; width: number; still: boolean; halo: Texture }) {
   const head = useRef<Mesh>(null)
   const th = useRef(o.phase)
@@ -105,16 +128,27 @@ function Comet({ o, speed, length, width, still, halo }: { o: Orbit; speed: numb
     th.current += Math.min(dt, 0.05) * speed * o.speed * Math.min((p / r) ** 2, 6) * (0.9 / Math.sqrt(o.a))
     orbitPoint(o, th.current, rot, head.current.position)
   })
+  const nucleus = (
+    <mesh ref={head} position={start}>
+      <sphereGeometry args={[0.05, 16, 16]} />
+      <meshBasicMaterial color="#ffffff" toneMapped={false} />
+      {/* coma: soft additive halo (billboard sprite) around the nucleus */}
+      <sprite scale={0.44}>
+        <spriteMaterial map={halo} color={o.color} transparent blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
+      </sprite>
+    </mesh>
+  )
+  if (still) {
+    return (
+      <group>
+        <StaticTail o={o} rot={rot} span={0.25 + length * 0.07} />
+        {nucleus}
+      </group>
+    )
+  }
   return (
     <Trail width={width} length={length} color={o.color} attenuation={(t) => t * t} decay={1}>
-      <mesh ref={head} position={start}>
-        <sphereGeometry args={[0.05, 16, 16]} />
-        <meshBasicMaterial color="#ffffff" toneMapped={false} />
-        {/* coma: soft additive halo (billboard sprite) around the nucleus */}
-        <sprite scale={0.44}>
-          <spriteMaterial map={halo} color={o.color} transparent blending={AdditiveBlending} depthWrite={false} toneMapped={false} />
-        </sprite>
-      </mesh>
+      {nucleus}
     </Trail>
   )
 }
@@ -152,6 +186,7 @@ function Scene({ accent, accent2, count, speed, length, still, stage, guides }: 
   useEffect(() => () => halo.dispose(), [halo])
   // camera height matches the <Canvas camera> prop (lower on cards, where the orbits fill less of the frame)
   const camY = stage ? 3.4 : 2.9
+  // (cards sit further back so the outer orbits stay inside the small frame)
   useFrame((state, dt) => {
     // pointer parallax moves the camera (not the scene) so world-space trails stay consistent
     const cam = state.camera
@@ -178,7 +213,8 @@ export default function CometTrails({ accent, accent2, quality, stage, paused, r
     komety: { value: 9, min: 3, max: 14, step: 1 },
     prędkość: { value: 1, min: 0.1, max: 3, step: 0.05 },
     ogon: { value: 7, min: 2, max: 14, step: 0.5 },
-    aberracja: { value: 0.0025, min: 0, max: 0.012, step: 0.0005, format: (v: number) => v.toFixed(4) },
+    // slider in thousandths of the frame size (Leva shows 0.00 for raw values this small)
+    aberracja: { value: 2.5, min: 0, max: 12, step: 0.1 },
     bloom: { value: 1.4, min: 0, max: 3, step: 0.05 },
   })
   const still = paused || reducedMotion
@@ -186,7 +222,7 @@ export default function CometTrails({ accent, accent2, quality, stage, paused, r
   return (
     <Canvas
       dpr={dpr}
-      camera={{ position: [0, stage ? 3.4 : 2.9, stage ? 8.6 : 6.1], fov: 45 }}
+      camera={{ position: [0, stage ? 3.4 : 2.9, stage ? 8.6 : 7.7], fov: 45 }}
       frameloop={still ? 'demand' : 'always'}
       gl={{ antialias: false, powerPreference: 'high-performance' }}
       role="img"
@@ -194,20 +230,20 @@ export default function CometTrails({ accent, accent2, quality, stage, paused, r
     >
       <color attach="background" args={['#02060c']} />
       <Redraw on={[c, accent, accent2]} still={still} />
-      <Scene accent={accent} accent2={accent2} count={stage ? c.komety : 6} speed={c.prędkość} length={c.ogon} still={still} stage={stage} guides={stage || reducedMotion} />
+      <Scene accent={accent} accent2={accent2} count={stage ? c.komety : 8} speed={c.prędkość} length={c.ogon} still={still} stage={stage} guides={stage || reducedMotion} />
       <Sparkles count={stage ? 160 : 50} scale={[11, 6, 11]} size={1.8} speed={still ? 0 : 0.35} color={accent} opacity={0.7} />
       <Stars radius={60} depth={30} count={stage ? 2200 : 400} factor={stage ? 3 : 2} fade speed={still ? 0 : 0.5} />
       <HudComposer>
         {stage
           ? [
               <Bloom key="b" intensity={c.bloom} luminanceThreshold={0.12} luminanceSmoothing={0.3} mipmapBlur />,
-              <ChromaticAberration key="c" offset={new Vector2(c.aberracja, c.aberracja * 0.6)} radialModulation modulationOffset={0.15} />,
+              <ChromaticAberration key="c" offset={new Vector2(c.aberracja * 0.001, c.aberracja * 0.0006)} radialModulation modulationOffset={0.15} />,
               <Noise key="n" opacity={0.04} />,
               <Vignette key="v" eskil={false} offset={0.2} darkness={0.85} />,
             ]
           : [
               <Bloom key="b" intensity={c.bloom * 0.8} luminanceThreshold={0.12} luminanceSmoothing={0.3} mipmapBlur />,
-              <ChromaticAberration key="c" offset={new Vector2(c.aberracja, c.aberracja * 0.6)} radialModulation modulationOffset={0.15} />,
+              <ChromaticAberration key="c" offset={new Vector2(c.aberracja * 0.001, c.aberracja * 0.0006)} radialModulation modulationOffset={0.15} />,
             ]}
       </HudComposer>
     </Canvas>

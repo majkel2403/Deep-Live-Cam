@@ -35,8 +35,8 @@ function Core({ accent, accent2, speed, paused }: { accent: string; accent2: str
   const orb = useRef<Mesh>(null)
   const shell = useMemo(() => ({ uColor: { value: new Color() } }), [])
   shell.uColor.value.set(accent)
-  // white-hot centre, tinted by the accent so the hue reads even inside the bloom
-  const hot = useMemo(() => tint(accent, 0.82), [accent])
+  // hot centre, kept mostly accent so the hue still reads inside the bloom (a near-white core washes out)
+  const hot = useMemo(() => tint(accent, 0.5), [accent])
   useFrame((state, dt) => {
     if (paused) return
     const d = Math.min(dt, 0.05)
@@ -94,6 +94,7 @@ function Dial({ accent, accent2, speed, paused }: { accent: string; accent2: str
     return g
   }, [])
   useEffect(() => () => ticks.dispose(), [ticks])
+  const mark = useMemo(() => tint(accent, 0.6), [accent])
   useFrame((_, dt) => {
     if (paused) return
     const d = Math.min(dt, 0.05)
@@ -120,8 +121,8 @@ function Dial({ accent, accent2, speed, paused }: { accent: string; accent2: str
         ))}
         {[0, 1, 2].map((i) => (
           <mesh key={`m${i}`} rotation-z={(i * Math.PI * 2) / 3 + Math.PI * 0.21} position-z={0.001}>
-            <ringGeometry args={[2.5, 2.62, 3, 1, 0, 0.035]} />
-            <meshBasicMaterial color="#ffffff" toneMapped={false} />
+            <ringGeometry args={[2.5, 2.56, 12, 1, 0, 0.06]} />
+            <meshBasicMaterial color={mark} toneMapped={false} />
           </mesh>
         ))}
       </group>
@@ -133,7 +134,8 @@ export default function HoloCore({ accent, accent2, quality, stage, paused, redu
   const c = useFxControls({
     speed: { value: 1, min: 0, max: 4, step: 0.1, label: 'prędkość' },
     bloom: { value: 1.5, min: 0, max: 4, step: 0.1 },
-    aberration: { value: 0.0015, min: 0, max: 0.01, step: 0.0005, label: 'aberracja', format: (v: number) => v.toFixed(4) },
+    // slider in thousandths of the frame size (Leva shows 0.00 for raw values this small)
+    aberration: { value: 1.5, min: 0, max: 10, step: 0.1, label: 'aberracja' },
     scanlines: { value: 0.25, min: 0, max: 1, step: 0.05, label: 'skanlinie' },
     sparkles: { value: true, label: 'iskry' },
   })
@@ -158,7 +160,7 @@ export default function HoloCore({ accent, accent2, quality, stage, paused, redu
         {stage
           ? [
               <Bloom key="b" intensity={c.bloom} luminanceThreshold={0.22} luminanceSmoothing={0.3} mipmapBlur />,
-              <ChromaticAberration key="c" offset={new Vector2(c.aberration, c.aberration)} radialModulation={false} modulationOffset={0} />,
+              <ChromaticAberration key="c" offset={new Vector2(c.aberration * 0.001, c.aberration * 0.001)} radialModulation={false} modulationOffset={0} />,
               <Scanline key="s" density={1.6} opacity={c.scanlines} blendFunction={BlendFunction.OVERLAY} />,
               <Noise key="n" opacity={0.04} />,
               <Vignette key="v" eskil={false} offset={0.2} darkness={0.85} />,
