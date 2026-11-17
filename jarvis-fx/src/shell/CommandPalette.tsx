@@ -190,7 +190,7 @@ function PaletteBody({ close }: { close: () => void }) {
           }}
           placeholder="Widok, efekt, technologia lub polecenie…"
           aria-label="Szukaj polecenia"
-          className="flex-1 min-w-0 bg-transparent outline-none text-[0.95rem] font-ui text-jx-text placeholder:text-jx-dim/80"
+          className="flex-1 min-w-0 bg-transparent text-[0.95rem] font-ui text-jx-text placeholder:text-jx-dim/80"
         />
         <kbd className="jx-num text-[0.625rem] text-jx-dim border border-jx-line/70 px-1.5 py-0.5">ESC</kbd>
       </div>
