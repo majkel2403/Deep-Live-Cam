@@ -19,11 +19,11 @@ export function StatusDot({ tone = 'ok', pulse = false }: { tone?: 'ok' | 'warn'
 }
 
 /** Thin segmented bar (0..1) */
-export function SegBar({ value, segments = 20, tone = 'accent' }: { value: number; segments?: number; tone?: 'accent' | 'ok' | 'warn' | 'danger' }) {
+export function SegBar({ value, segments = 20, tone = 'accent', label = 'poziom' }: { value: number; segments?: number; tone?: 'accent' | 'ok' | 'warn' | 'danger'; label?: string }) {
   const on = Math.round(Math.max(0, Math.min(1, value)) * segments)
   const color = { accent: 'bg-jx-accent', ok: 'bg-jx-ok', warn: 'bg-jx-warn', danger: 'bg-jx-danger' }[tone]
   return (
-    <div className="flex gap-[2px] h-2" role="meter" aria-valuemin={0} aria-valuemax={1} aria-valuenow={value}>
+    <div className="flex gap-[2px] h-2" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={1} aria-valuenow={value}>
       {Array.from({ length: segments }, (_, i) => (
         <span key={i} className={`flex-1 ${i < on ? `${color} shadow-[0_0_4px_currentColor]` : 'bg-jx-accent-dim/30'}`} />
       ))}

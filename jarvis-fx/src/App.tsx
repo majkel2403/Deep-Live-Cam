@@ -106,8 +106,8 @@ export default function App() {
       <Backdrop />
       {scanlines && <div className="jx-scanlines" aria-hidden="true" />}
 
-      <header className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 h-14 shrink-0 min-w-0 border-b border-jx-line/50 bg-jx-bg/60 backdrop-blur">
-        <button className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => navigate('bridge')} aria-label="J.A.R.V.I.S — strona główna">
+      <header className="flex items-center gap-1 min-[360px]:gap-2 sm:gap-3 px-1 min-[360px]:px-2 sm:px-4 h-14 shrink-0 min-w-0 border-b border-jx-line/50 bg-jx-bg/60 backdrop-blur">
+        <button className="flex items-center gap-2 cursor-pointer shrink-0" onClick={() => navigate('bridge')} title="Strona główna">
           <span className="size-7 rounded-full border border-jx-accent shadow-[var(--jx-glow)] grid place-items-center">
             <span className="size-2.5 rounded-full bg-jx-accent shadow-[var(--jx-glow)]" />
           </span>
@@ -119,7 +119,7 @@ export default function App() {
           <span className="jx-label hidden md:inline">Mission Control · FX</span>
         </button>
 
-        <nav className="flex items-center gap-1 ml-1 sm:ml-4 min-w-0 overflow-x-auto" aria-label="Widoki">
+        <nav className="flex items-center gap-0.5 min-[360px]:gap-1 ml-1 sm:ml-4 min-w-0 overflow-x-auto" aria-label="Widoki">
           {(Object.keys(VIEWS) as ViewId[]).map((id, i) => (
             <HudButton
               key={id}
@@ -139,7 +139,7 @@ export default function App() {
 
         <span className="flex-1 min-w-0" />
         <span className="hidden sm:inline-flex">
-          <HudButton size="sm" aria-label="Paleta poleceń" onClick={() => setPaletteOpen(true)} icon={<IconCommand />} title="Paleta poleceń (Ctrl+K)">
+          <HudButton size="sm" aria-label="Paleta poleceń (Ctrl K)" onClick={() => setPaletteOpen(true)} icon={<IconCommand />} title="Paleta poleceń (Ctrl+K)">
             <span className="hidden md:inline jx-num">Ctrl K</span>
           </HudButton>
         </span>

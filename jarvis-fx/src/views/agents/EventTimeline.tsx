@@ -97,7 +97,7 @@ export function EventTimeline({ events, agents, selected, reduced, className = '
         })}
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1" role="log" aria-live="polite" aria-relevant="additions" aria-label="Zdarzenia agentów">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1" tabIndex={0} role="log" aria-live="polite" aria-relevant="additions" aria-label="Zdarzenia agentów">
         {rows.length === 0 ? (
           <p className="jx-label text-[0.625rem] py-4 text-center">
             {events.length ? 'Brak zdarzeń dla bieżącego filtru' : 'Strumień zdarzeń pusty'}

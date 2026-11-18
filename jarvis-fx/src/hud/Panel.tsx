@@ -33,11 +33,15 @@ export function Panel({ title, code, icon, actions, children, className = '', bo
     </header>
   )
 
+  // a scrolling body must be reachable from the keyboard and have a name
+  const scrollable = bodyClassName.includes('overflow-y-auto')
+  const bodyProps = scrollable ? { tabIndex: 0, role: 'region', 'aria-label': typeof title === 'string' ? title : undefined } : {}
+
   if (skin === 'aug') {
     return (
       <section data-augmented-ui={aug} className={`jx-aug flex flex-col min-h-0 ${className}`} style={style}>
         {header}
-        <div className={`flex-1 min-h-0 ${bodyClassName}`}>{children}</div>
+        <div className={`flex-1 min-h-0 ${bodyClassName}`} {...bodyProps}>{children}</div>
       </section>
     )
   }
@@ -45,7 +49,7 @@ export function Panel({ title, code, icon, actions, children, className = '', bo
     <section className={`jx-frame-host flex flex-col min-h-0 ${className}`} style={style}>
       <Frame kind={skin} />
       {header}
-      <div className={`flex-1 min-h-0 ${bodyClassName}`}>{children}</div>
+      <div className={`flex-1 min-h-0 ${bodyClassName}`} {...bodyProps}>{children}</div>
     </section>
   )
 }

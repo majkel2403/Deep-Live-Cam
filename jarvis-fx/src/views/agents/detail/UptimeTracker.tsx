@@ -20,7 +20,7 @@ const Block = memo(function Block({ ok, tooltip }: { ok: boolean; tooltip: strin
   return (
     <Tooltip.Root delayDuration={0} disableHoverableContent>
       <Tooltip.Trigger asChild>
-        <span className="ag-track-cell" tabIndex={-1} aria-label={tooltip}>
+        <span className="ag-track-cell" tabIndex={-1} role="img" aria-label={tooltip}>
           <span className="ag-track-block" data-ok={ok ? 'true' : 'false'} />
         </span>
       </Tooltip.Trigger>

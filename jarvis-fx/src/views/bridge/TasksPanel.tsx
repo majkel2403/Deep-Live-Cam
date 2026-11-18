@@ -60,7 +60,7 @@ export function TasksPanel({
         </div>
         <span className="jx-num text-[0.66rem] text-jx-accent">{Math.round(overall * 100)}%</span>
       </div>
-      <ul className="bx-fade-b relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-0 p-0 pb-2 list-none flex flex-col gap-1" aria-label="Lista zadań">
+      <ul className="bx-fade-b relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden m-0 p-0 pb-2 list-none flex flex-col gap-1" tabIndex={0} aria-label="Lista zadań">
         {sorted.length === 0 && (
           <li className="jx-label py-2 jx-caret">{noData ? (status === 'error' ? 'Brak danych – błąd łącza ze źródłem' : 'Łączenie ze źródłem') : 'Brak zadań – rdzeń czuwa'}</li>
         )}

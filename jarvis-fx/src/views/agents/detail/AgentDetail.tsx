@@ -97,7 +97,7 @@ export function AgentDetail({ agent, snapshot, team, accent, accent2, reduced, c
             </span>
             <span className="text-[0.78rem] truncate flex-1">{task.title}</span>
             <span className="w-24 shrink-0">
-              <SegBar value={task.progress} segments={16} tone={task.state === 'failed' ? 'danger' : task.state === 'done' ? 'ok' : 'accent'} />
+              <SegBar label="postęp zadania" value={task.progress} segments={16} tone={task.state === 'failed' ? 'danger' : task.state === 'done' ? 'ok' : 'accent'} />
             </span>
             <span className="jx-num text-[0.7rem] w-9 text-right">{fmtPct(task.progress)}</span>
           </>
@@ -155,7 +155,7 @@ export function AgentDetail({ agent, snapshot, team, accent, accent2, reduced, c
             <div className="ag-subframe px-2 py-1.5 flex flex-col gap-1 min-w-0">
               <span className="jx-label text-[0.625rem] truncate">Skuteczność</span>
               <span className={`jx-num text-base leading-none jx-glow-text ${TONE_TEXT[succTone]}`}>{fmtPct1(agent.successRate)}</span>
-              <SegBar value={agent.successRate} segments={16} tone={succTone} />
+              <SegBar label="skuteczność" value={agent.successRate} segments={16} tone={succTone} />
             </div>
             <div className="ag-subframe px-2 py-1.5 flex flex-col gap-1 min-w-0">
               <span className="jx-label text-[0.625rem] truncate">Kolejka zadań</span>

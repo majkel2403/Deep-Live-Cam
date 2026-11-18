@@ -28,7 +28,7 @@ export function DemoBadge({
           <span className="text-jx-dim">Źródło:</span> <span className="text-jx-text normal-case tracking-wider font-mono">{label}</span>
         </span>
       )}
-      <span className="inline-flex items-center gap-1" aria-label={`Status źródła: ${statusText}`}>
+      <span className="inline-flex items-center gap-1" role="img" aria-label={`Status źródła: ${statusText}`}>
         <StatusDot tone={tone} pulse={status !== 'live'} />
         {!compact && <span className="jx-label text-[0.625rem]">{statusText}</span>}
       </span>

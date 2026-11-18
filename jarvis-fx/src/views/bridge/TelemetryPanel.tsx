@@ -37,7 +37,7 @@ function Section({ title, icon, children, aside }: { title: string; icon: ReactN
         <span className="flex-1 h-px bg-gradient-to-r from-[var(--jx-line)] to-transparent" />
         {aside}
       </h3>
-      <dl className="grid grid-cols-2 gap-x-3">{children}</dl>
+      <div className="grid grid-cols-2 gap-x-3">{children}</div>
     </section>
   )
 }
