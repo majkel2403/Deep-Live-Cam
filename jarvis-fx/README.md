@@ -33,6 +33,21 @@ Wymagania: **Node 20.19+ lub 22.12+** (wymóg Vite 8), przeglądarka z WebGL2. W
 nie pobiera zasobów z CDN: fonty, ikony i dźwięki są lokalne. Jedyne połączenia sieciowe to opcjonalne źródło
 agentów (WebSocket/SSE, patrz niżej).
 
+### Gotowa aplikacja bez serwera deweloperskiego
+
+Zbuduj wersję ze ścieżkami względnymi i podaj folder `dist/` dowolnemu statycznemu serwerowi:
+
+```bash
+VITE_BASE=./ npm run build                        # macOS / Linux
+# Windows PowerShell:  $env:VITE_BASE='./'; npm run build
+cd dist && python3 -m http.server 8080            # albo: npx serve dist
+# otwórz http://localhost:8080
+```
+
+Nie otwieraj `index.html` z dysku (`file://`): przeglądarka blokuje moduły ES. Routing jest po haszu (`#/…`),
+więc nie wymaga żadnej konfiguracji serwera, a aplikacja działa też z podfolderu. Test klawiatury na gotowym
+buildzie: `node scripts/smoke-keyboard.mjs --base http://localhost:8080`.
+
 | Skrót | Działanie |
 |---|---|
 | `Ctrl/⌘ + K` | Paleta poleceń: widoki, wszystkie efekty (wyszukiwanie rozmyte, bez polskich znaków też działa), dźwięk, linie skanowania, odcień, jakość, ruch, ponowny rozruch |
