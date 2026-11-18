@@ -19,7 +19,8 @@ export function DemoBadge({
   /** repeated badges (panel footers) stay out of the Tab order – the status strip one is the keyboard stop */
   focusable?: boolean
 }) {
-  const statusText = status === 'live' ? 'na żywo' : status === 'connecting' ? 'łączenie' : 'błąd łącza'
+  // a synthetic source is never "na żywo": that would read as real data next to the DEMO badge
+  const statusText = status === 'live' ? (synthetic ? 'symulacja aktywna' : 'na żywo') : status === 'connecting' ? 'łączenie' : 'błąd łącza'
   const tone = status === 'live' ? 'ok' : status === 'connecting' ? 'warn' : 'danger'
   return (
     <span className="inline-flex items-center gap-2 min-w-0">
