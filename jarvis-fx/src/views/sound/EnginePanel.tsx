@@ -186,7 +186,8 @@ export function EnginePanel() {
             size="sm"
             active={soundOn}
             onClick={() => set({ soundOn: !soundOn })}
-            aria-label={soundOn ? 'Wycisz dźwięk' : 'Włącz dźwięk'}
+            aria-label={`${soundOn ? 'WŁ.' : 'WYŁ.'} dźwięk interfejsu`}
+            aria-pressed={soundOn}
             icon={soundOn ? <SpeakerHigh weight="duotone" /> : <SpeakerSlash weight="duotone" />}
           >
             {soundOn ? 'Wł.' : 'Wył.'}

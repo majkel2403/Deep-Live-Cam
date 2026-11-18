@@ -213,7 +213,6 @@ export function LedgerTab() {
                           pick(r.id)
                         }}
                         aria-current={selected ? 'true' : undefined}
-                        aria-label={`Szczegóły: ${r.name}`}
                       >
                         <span className={`font-head font-semibold tracking-wide ${selected ? 'text-white' : 'text-jx-text'}`}>{r.name}</span>
                         {r.extra && <span className="ml-1.5 jx-num text-[0.625rem] text-jx-dim align-middle">+DOD.</span>}

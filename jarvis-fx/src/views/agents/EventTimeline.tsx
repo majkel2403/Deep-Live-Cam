@@ -85,7 +85,6 @@ export function EventTimeline({ events, agents, selected, reduced, className = '
               type="button"
               className="ag-level-chip"
               aria-pressed={on}
-              aria-label={`${LEVEL_META[l].label}: ${counts[l]}`}
               style={{ color: LEVEL_META[l].css }}
               onClick={() => toggleLevel(l)}
               title={on ? `Ukryj poziom ${LEVEL_META[l].label}` : `Pokaż poziom ${LEVEL_META[l].label}`}

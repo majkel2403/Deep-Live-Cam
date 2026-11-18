@@ -135,12 +135,12 @@ export function EventLog({
             </span>
           )}
           {FILTERS.map((f) => (
-            <HudButton key={f.id} size="sm" active={filter === f.id} onClick={() => chooseFilter(f.id)} className="px-1.5! py-0.5! text-[0.625rem]!" aria-label={`${f.label} (${counts[f.id]})`}>
+            <HudButton key={f.id} size="sm" active={filter === f.id} onClick={() => chooseFilter(f.id)} className="px-1.5! py-0.5! text-[0.625rem]!">
               <span className={f.id === 'error' && counts.error ? 'text-jx-danger' : undefined}>
                 <span className="xl:hidden">{f.short}</span>
                 <span className="hidden xl:inline">{f.label}</span>
               </span>
-              <span className="jx-num text-jx-dim hidden xl:inline">{counts[f.id]}</span>
+              <span className="jx-num text-jx-dim sr-only xl:not-sr-only">{counts[f.id]}</span>
             </HudButton>
           ))}
           <HudButton size="sm" active={follow} onClick={() => (follow ? pause() : jump())} icon={<IconArrowBarToDown />} className="px-1.5! py-0.5!" aria-label="Automatyczne przewijanie" title="Automatyczne przewijanie" />

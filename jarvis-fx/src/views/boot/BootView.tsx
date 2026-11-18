@@ -85,7 +85,7 @@ export default function BootView() {
         bodyClassName="flex flex-col"
         actions={
           <div className="flex items-center gap-1.5 flex-wrap justify-end">
-            <HudButton size="sm" icon={<IconRefresh />} onClick={replay} aria-label="Odtwórz ponownie">
+            <HudButton size="sm" icon={<IconRefresh />} onClick={replay} aria-label="OD NOWA – odtwórz ponownie">
               <span className="hidden sm:inline">Od nowa</span>
             </HudButton>
             <HudButton

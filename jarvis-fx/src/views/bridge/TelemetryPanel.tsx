@@ -22,8 +22,8 @@ function Row({ k, v, tone, title }: { k: ReactNode; v: ReactNode; tone?: 'ok' | 
   const color = tone ? { ok: 'text-jx-ok', warn: 'text-jx-warn', danger: 'text-jx-danger', dim: 'text-jx-dim' }[tone] : 'text-jx-text'
   return (
     <div className="flex items-baseline justify-between gap-2 min-w-0 py-[1px]" title={title}>
-      <dt className="jx-label text-[0.625rem] tracking-[0.12em] truncate">{k}</dt>
-      <dd className={`jx-num text-[0.72rem] ${color} truncate text-right`}>{v}</dd>
+      <span className="jx-label text-[0.625rem] tracking-[0.12em] truncate">{k}</span>
+      <span className={`jx-num text-[0.72rem] ${color} truncate text-right`}>{v}</span>
     </div>
   )
 }

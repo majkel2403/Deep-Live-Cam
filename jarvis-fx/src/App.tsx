@@ -125,12 +125,12 @@ export default function App() {
               key={id}
               size="sm"
               active={route.view === id}
-              aria-label={VIEWS[id].label}
+              aria-label={VIEWS[id].label.toUpperCase()}
               aria-current={route.view === id ? 'page' : undefined}
               onClick={() => navigate(id)}
               icon={VIEWS[id].icon}
               title={`${VIEWS[id].label} (Alt+${i + 1})`}
-              className="shrink-0"
+              className="shrink-0 max-[359px]:px-1.5"
             >
               <span className="hidden xl:inline">{VIEWS[id].label}</span>
             </HudButton>
@@ -139,8 +139,8 @@ export default function App() {
 
         <span className="flex-1 min-w-0" />
         <span className="hidden sm:inline-flex">
-          <HudButton size="sm" aria-label="Paleta poleceń (Ctrl K)" onClick={() => setPaletteOpen(true)} icon={<IconCommand />} title="Paleta poleceń (Ctrl+K)">
-            <span className="hidden md:inline jx-num">Ctrl K</span>
+          <HudButton size="sm" aria-label="Ctrl K – paleta poleceń" onClick={() => setPaletteOpen(true)} icon={<IconCommand />} title="Paleta poleceń (Ctrl+K)">
+            <span className="hidden md:inline jx-num normal-case">Ctrl K</span>
           </HudButton>
         </span>
         <HudButton size="sm" aria-label={soundOn ? 'Wycisz' : 'Włącz dźwięk'} active={soundOn} onClick={() => set({ soundOn: !soundOn })} icon={soundOn ? <IconVolume /> : <IconVolumeOff />} />
