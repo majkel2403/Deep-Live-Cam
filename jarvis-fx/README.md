@@ -40,13 +40,14 @@ Zbuduj wersję ze ścieżkami względnymi i podaj folder `dist/` dowolnemu staty
 ```bash
 VITE_BASE=./ npm run build                        # macOS / Linux
 # Windows PowerShell:  $env:VITE_BASE='./'; npm run build
-cd dist && python3 -m http.server 8080            # albo: npx serve dist
+python3 scripts/serve.py                          # Windows: py scripts\serve.py   (albo: python3 scripts/serve.py 9000)
 # otwórz http://localhost:8080
 ```
 
-Nie otwieraj `index.html` z dysku (`file://`): przeglądarka blokuje moduły ES. Routing jest po haszu (`#/…`),
-więc nie wymaga żadnej konfiguracji serwera, a aplikacja działa też z podfolderu. Test klawiatury na gotowym
-buildzie: `node scripts/smoke-keyboard.mjs --base http://localhost:8080`.
+`scripts/serve.py` wysyła poprawne typy MIME. Na części komputerów Windows rejestr mapuje `.js` na `text/plain`,
+a wtedy przeglądarka odrzuca moduły i strona jest pusta. Nie otwieraj `index.html` z dysku (`file://`). Routing jest
+po haszu (`#/…`), więc nie wymaga konfiguracji serwera. Test klawiatury na gotowym buildzie:
+`node scripts/smoke-keyboard.mjs --base http://localhost:8080`.
 
 | Skrót | Działanie |
 |---|---|
